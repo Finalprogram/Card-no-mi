@@ -35,6 +35,7 @@ if (missingEnv.length > 0) {
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
+const MongoStore = require('connect-mongo');
 const methodOverride = require('method-override');
 const connectDB = require('./src/database/connection');
 const pagesRoutes = require('./src/routes/pagesRoutes');
@@ -51,7 +52,7 @@ const adminRoutes = require('./src/routes/adminRoutes');
 
 // 2. Inicialização do App
 const app = express();
-const port = 3000;
+const port = process.env.PORT || 3000;
 
 // Helper para formatar preços
 app.locals.formatPrice = function(price) {
@@ -83,10 +84,17 @@ app.use(express.urlencoded({ extended: false }));
 app.use(methodOverride('_method'));
 // Configuração da Sessão
 app.use(session({
-  secret: 'um_segredo_muito_forte_aqui',
+  secret: process.env.SESSION_SECRET || 'um_segredo_muito_forte_aqui',
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false } // Em produção, use 'true' com HTTPS
+  store: MongoStore.create({
+    mongoUrl: process.env.MONGODB_URI,
+    collectionName: 'sessions',
+    ttl: 14 * 24 * 60 * 60, // 14 days
+    autoRemove: 'interval',
+    autoRemoveInterval: 10, // In minutes. Removes expired sessions every 10 minutes
+  }),
+  cookie: { secure: process.env.NODE_ENV === 'production' } // Use secure cookies in production
 }));
 
 app.use((req, res, next) => {

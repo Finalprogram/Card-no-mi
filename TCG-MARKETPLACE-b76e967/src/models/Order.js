@@ -72,6 +72,15 @@ const orderSchema = new mongoose.Schema({
   melhorEnvioService: {
     type: String,
   },
+  shippingSelections: [
+    {
+      sellerId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+      service: String,
+      name: String,
+      price: Number,
+      deliveryTime: Number,
+    },
+  ],
 }, { timestamps: true });
 
 const Order = mongoose.model('Order', orderSchema);

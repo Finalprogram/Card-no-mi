@@ -1600,3 +1600,72 @@
 {"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
 {"level":"info","message":"Servidor rodando em http://localhost:3000"}
 {"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6ba0216fc8fdc82ba356a","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"0":{"cardId":"68e6ba0216fc8fdc82ba356a","quantity":1},"1":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #68ffa3eebe2fcec40ebb6b1a criado para Mercado Pago."}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #68ffa68a8c8761bed0c2171f criado para Mercado Pago."}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":1},"1":{"cardId":"68e6ba0216fc8fdc82ba356a","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #68ffaf9aa40c63902ff0cf7b criado para Mercado Pago."}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"MERCADO_PAGO_ACCESS_TOKEN:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":2},"1":{"cardId":"68e6ba0216fc8fdc82ba356a","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #68ffb03ea1fd1a7c7e620583 criado para Mercado Pago."}

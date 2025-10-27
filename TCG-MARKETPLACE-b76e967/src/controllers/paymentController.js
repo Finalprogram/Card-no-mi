@@ -5,6 +5,21 @@ const User = require('../models/User');
 const Listing = require('../models/Listing');
 const { MercadoPagoConfig, Preference } = require('mercadopago');
 const logger = require('../config/logger');
+const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
+const { estimatePackageDims } = require('../services/packaging');
+
+// Helper function to get seller's origin CEP
+async function getSellerOriginCep(sellerId) {
+  const globalCepOrigem = process.env.MELHOR_ENVIO_CEP_ORIGEM;
+  if (sellerId === 'sem-vendedor') return globalCepOrigem;
+
+  const seller = await User.findById(sellerId);
+  if (seller && seller.address && seller.address.cep) {
+    return seller.address.cep;
+  }
+  logger.warn(`[payment] Vendedor ${sellerId} sem CEP definido. Usando CEP global.`);
+  return globalCepOrigem;
+}
 
 // Configura as credenciais do Mercado Pago
 logger.info("MERCADO_PAGO_ACCESS_TOKEN:", process.env.MERCADO_PAGO_ACCESS_TOKEN ? "Loaded" : "Not Loaded");
@@ -28,9 +43,14 @@ async function createMercadoPagoPreference(req, res) {
       return res.status(400).json({ message: 'Carrinho vazio ou inválido.' });
     }
 
-    // Para o endereço, vamos usar um placeholder por enquanto, como definido no checkout
-    // Em um fluxo real, pegaríamos o endereço selecionado pelo usuário
-    const placeholderAddress = "Endereço de entrega placeholder"; // TODO: Obter endereço real do usuário
+    const shippingAddress = req.session.shippingAddress || "Endereço de entrega não fornecido";
+    const shippingSelections = req.session.shippingSelections || [];
+
+    // Fetch the user to get payer details
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuário não encontrado.' });
+    }
 
     const orderItems = cart.items.map(item => ({
       card: item.cardId,
@@ -49,7 +69,8 @@ async function createMercadoPagoPreference(req, res) {
       user: userId,
       items: orderItems,
       totals: totals,
-      shippingAddress: placeholderAddress,
+      shippingAddress: shippingAddress,
+      shippingSelections: shippingSelections, // Store shipping selections
       status: 'Processing', // Ou 'PendingPayment' se preferir um status mais específico
     });
 
@@ -62,22 +83,67 @@ async function createMercadoPagoPreference(req, res) {
       quantity: Number(item.qty),
     }));
 
+    // Extract address components from the shippingAddress string
+    // This is a simplified parsing. A more robust solution would involve structured address input.
+    const addressParts = shippingAddress.split(', ');
+    const streetName = addressParts[0] || 'Rua';
+    const streetNumber = addressParts[1] || 'SN';
+    const neighborhood = addressParts[2] || 'Bairro';
+    const cityState = addressParts[3] || 'Cidade - Estado';
+    const [city, state] = cityState.split(' - ');
+    const postalCodeMatch = shippingAddress.match(/\d{5}-\d{3}/);
+    const postalCode = postalCodeMatch ? postalCodeMatch[0].replace('-', '') : '00000000';
+
     const preferenceBody = {
       items,
-      external_reference: newOrder._id.toString(), // Usar o ID do pedido como referência externa
+      external_reference: newOrder._id.toString(),
       back_urls: {
-        success: `${process.env.BASE_URL}/payment/mercadopago/success`, // Usar BASE_URL
-        pending: `${process.env.BASE_URL}/payment/mercadopago/pending`, // Usar BASE_URL
-        failure: `${process.env.BASE_URL}/payment/mercadopago/failure`, // Usar BASE_URL
+        success: `${process.env.BASE_URL}/payment/mercadopago/success`,
+        pending: `${process.env.BASE_URL}/payment/mercadopago/pending`,
+        failure: `${process.env.BASE_URL}/payment/mercadopago/failure`,
       },
-      notification_url: `${process.env.BASE_URL}/payment/mercadopago/webhook`, // Adicionar URL de notificação
-      total_amount: totals.grand,
+      notification_url: `${process.env.BASE_URL}/payment/mercadopago/webhook`,
+      payer: {
+        name: user.fullName || user.username,
+        surname: '', // Assuming no surname in user model, or parse from fullName
+        email: user.email,
+        phone: {
+          area_code: user.phone ? user.phone.substring(0, 2) : '', // Assuming phone is like 11987654321
+          number: user.phone ? user.phone.substring(2) : '',
+        },
+        address: {
+          zip_code: postalCode,
+          street_name: streetName,
+          street_number: Number(streetNumber) || 0,
+          neighborhood: neighborhood,
+          city: city,
+          state: state,
+        },
+      },
+      shipments: {
+        cost: totals.shipping,
+        mode: 'not_specified', // 'not_specified', 'custom_shipping', 'me2', 'mercadopago_dropshipping'
+        receiver_address: {
+          zip_code: postalCode,
+          street_name: streetName,
+          street_number: Number(streetNumber) || 0,
+          floor: '',
+          apartment: '',
+          neighborhood: neighborhood,
+          city: city,
+          state: state,
+        },
+      },
+      // total_amount: totals.grand, // Deprecated, calculated from items
     };
 
     const response = await preference.create({ body: preferenceBody });
 
     // Limpa o carrinho da sessão após a criação da preferência
     req.session.cart = { items: [], totalQty: 0, totalPrice: 0 };
+    // Clear shipping info from session as it's now in the order
+    delete req.session.shippingAddress;
+    delete req.session.shippingSelections;
 
     res.json({ init_point: response.init_point, orderId: newOrder._id });
 
@@ -89,12 +155,11 @@ async function createMercadoPagoPreference(req, res) {
 
 async function handleMercadoPagoSuccess(req, res) {
   const { collection_id, collection_status, payment_id, status, external_reference, preference_id } = req.query;
-  logger.info("Mercado Pago Success:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
-
-  try {
-    if (external_reference) {
-      const order = await Order.findById(external_reference);
-      if (order && order.status !== 'Processing') { // Evita atualizar se já foi processado pelo webhook
+      logger.info("Mercado Pago Success:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
+  
+      try {
+        if (external_reference) {
+          const order = await Order.findById(external_reference).populate('user');      if (order && order.status !== 'Processing') { // Evita atualizar se já foi processado pelo webhook
         order.status = 'Processing'; // Ou 'Paid'
         await order.save();
         logger.info(`Pedido #${order._id} atualizado para status 'Processing' via retorno de sucesso MP.`);
@@ -115,7 +180,7 @@ async function handleMercadoPagoPending(req, res) {
 
   try {
     if (external_reference) {
-      const order = await Order.findById(external_reference);
+      const order = await Order.findById(external_reference).populate('user');
       if (order && order.status !== 'Processing') { // Evita atualizar se já foi processado pelo webhook
         order.status = 'Processing'; // Ou 'PendingPayment'
         await order.save();
@@ -136,7 +201,7 @@ async function handleMercadoPagoFailure(req, res) {
 
   try {
     if (external_reference) {
-      const order = await Order.findById(external_reference);
+      const order = await Order.findById(external_reference).populate('user');
       if (order && order.status !== 'Cancelled') { // Evita atualizar se já foi cancelado pelo webhook
         order.status = 'Cancelled';
         await order.save();
@@ -191,7 +256,7 @@ async function handleMercadoPagoWebhook(req, res) {
     }
 
     // 2. Encontrar o pedido no seu banco de dados
-    const order = await Order.findById(external_reference);
+    const order = await Order.findById(external_reference).populate('user');
 
     if (!order) {
       logger.error(`Webhook Mercado Pago: Pedido com ID ${external_reference} não encontrado.`);
@@ -202,6 +267,122 @@ async function handleMercadoPagoWebhook(req, res) {
     let newOrderStatus = order.status;
     if (status === 'approved') {
       newOrderStatus = 'Processing'; // Ou 'Paid', dependendo do seu fluxo
+
+      // --- Integração Melhor Envio ---
+      try {
+        const itemsBySeller = order.items.reduce((acc, item) => {
+          const sellerId = item.seller.toString(); // Convert ObjectId to string
+          if (!acc[sellerId]) acc[sellerId] = [];
+          acc[sellerId].push(item);
+          return acc;
+        }, {});
+
+        const melhorEnvioCartItems = [];
+        const orderMelhorEnvioIds = [];
+
+        for (const sellerId in itemsBySeller) {
+          const sellerItems = itemsBySeller[sellerId];
+          const chosenShipping = order.shippingSelections.find(sel => sel.sellerId.toString() === sellerId);
+
+          if (!chosenShipping) {
+            logger.warn(`[payment] Nenhuma opção de frete selecionada para o vendedor ${sellerId} no pedido ${order._id}.`);
+            continue;
+          }
+
+          const cepOrigem = await getSellerOriginCep(sellerId);
+          const { comprimentoCm, larguraCm, alturaCm, pesoKg } = estimatePackageDims(sellerItems);
+          const insuranceValue = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+
+          const shipmentDetails = {
+            service: chosenShipping.service,
+            agency: null, // Pode ser definido se o vendedor usar uma agência específica
+            from: {
+              name: sellerItems[0].sellerName || 'Vendedor', // Usar nome do vendedor
+              phone: '99999999999', // Placeholder, idealmente do cadastro do vendedor
+              email: 'email@vendedor.com', // Placeholder
+              document: '00000000000', // Placeholder CPF/CNPJ
+              company_document: null,
+              state_register: null,
+              address: 'Rua do Vendedor', // Placeholder
+              complement: null,
+              number: '100', // Placeholder
+              district: 'Bairro do Vendedor', // Placeholder
+              city: 'Cidade do Vendedor', // Placeholder
+              state: 'MG', // Placeholder
+              country_id: 'BR',
+              postal_code: cepOrigem,
+            },
+            to: {
+              name: order.user.name || 'Comprador', // Idealmente do cadastro do comprador
+              phone: '99999999999', // Placeholder
+              email: order.user.email || 'email@comprador.com', // Placeholder
+              document: '00000000000', // Placeholder CPF/CNPJ
+              address: order.shippingAddress, // Endereço completo do comprador
+              complement: null,
+              number: '1', // Placeholder
+              district: 'Bairro do Comprador', // Placeholder
+              city: 'Cidade do Comprador', // Placeholder
+              state: 'MG', // Placeholder
+              country_id: 'BR',
+              postal_code: order.shippingAddress.match(/\d{5}-\d{3}/)?.[0]?.replace('-', '') || '00000000', // Extrair CEP do endereço
+            },
+            volumes: [
+              {
+                height: alturaCm,
+                width: larguraCm,
+                length: comprimentoCm,
+                weight: pesoKg,
+                insurance_value: insuranceValue,
+                // product_id: 'ID_DO_PRODUTO_NO_ME', // Opcional
+                // quantity: 1, // Opcional
+              }
+            ],
+            // Aqui você pode adicionar os produtos individuais se a API do ME exigir
+            products: sellerItems.map(item => ({
+              name: item.cardName,
+              quantity: item.quantity,
+              unitary_value: item.price,
+            })),
+            // Opcional: tags para identificar o pedido no ME
+            // tags: [{ tag: `Pedido ${order._id}`, url: `${process.env.BASE_URL}/order/${order._id}` }],
+          };
+
+          const addedToCart = await addItemToCart(shipmentDetails);
+          if (addedToCart && addedToCart.id) {
+            melhorEnvioCartItems.push(addedToCart.id);
+            orderMelhorEnvioIds.push(addedToCart.id); // Coleta os IDs para a compra
+          } else {
+            logger.error(`[payment] Falha ao adicionar item ao carrinho do Melhor Envio para o pedido ${order._id}, vendedor ${sellerId}.`, addedToCart);
+          }
+        }
+
+        if (melhorEnvioCartItems.length > 0) {
+          const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
+          logger.info(`[payment] Envios comprados no Melhor Envio para o pedido ${order._id}:`, purchasedShipments);
+
+          // Assume que purchasedShipments retorna os IDs dos envios comprados
+          // E que printLabels aceita esses IDs
+          const printResponse = await printLabels(orderMelhorEnvioIds);
+          logger.info(`[payment] Links de impressão do Melhor Envio para o pedido ${order._id}:`, printResponse);
+
+          // Atualizar o pedido com as informações do Melhor Envio
+          order.melhorEnvioShipmentId = orderMelhorEnvioIds.join(','); // Armazenar todos os IDs
+          order.melhorEnvioLabelUrl = printResponse.url; // URL para imprimir todas as etiquetas
+          order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', '); // Nomes dos serviços
+          // TODO: Melhorar o rastreamento se houver múltiplos envios
+          // order.melhorEnvioTrackingUrl = 'URL de rastreamento';
+
+          logger.info(`[payment] Pedido #${order._id} atualizado com dados do Melhor Envio.`);
+        } else {
+          logger.warn(`[payment] Nenhum item adicionado ao carrinho do Melhor Envio para o pedido ${order._id}.`);
+        }
+
+      } catch (melhorEnvioError) {
+        logger.error(`[payment] Erro na integração com Melhor Envio para o pedido ${order._id}:`, melhorEnvioError);
+        // Decida como lidar com este erro: reverter status do pedido, notificar admin, etc.
+      }
+      // --- Fim da Integração Melhor Envio ---
+
     } else if (status === 'pending') {
       newOrderStatus = 'Processing'; // Ou 'PendingPayment'
     } else if (status === 'rejected' || status === 'cancelled') {
