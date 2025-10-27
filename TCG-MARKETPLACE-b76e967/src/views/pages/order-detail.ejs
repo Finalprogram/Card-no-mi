@@ -1,0 +1,151 @@
+<%- include('../partials/header') %>
+<style>
+  .order-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .order-id {
+    font-weight: 600;
+    font-size: 1.1rem;
+  }
+  .order-date {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+  }
+  .order-status {
+    background-color: var(--accent-primary-muted);
+    color: var(--accent-primary);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .order-body {
+    padding-top: 1rem;
+  }
+  .item-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .order-item {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  .item-thumb {
+    width: 60px;
+    height: 84px;
+    object-fit: cover;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+  }
+  .item-info {
+    flex: 1;
+  }
+  .item-name {
+    font-weight: 600;
+  }
+  .item-meta {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .item-price {
+    font-weight: 600;
+    text-align: right;
+  }
+  .order-footer {
+    padding-top: 1rem;
+    margin-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .address-section {
+    margin-top: 1rem;
+  }
+</style>
+
+<main class="container" style="max-width: 880px; margin-top: 24px;">
+  <%- include('../partials/navbar') %>
+
+  <div style="margin: 24px 0 16px;">
+    <a href="/meus-pedidos">&larr; Voltar para Meus Pedidos</a>
+  </div>
+
+  <% if (order) { %>
+    <div class="order-card">
+      <div class="order-header">
+        <div>
+          <div class="order-id">Detalhes do Pedido #<%= order._id.toString().slice(-6) %></div>
+          <div class="order-date"><%= new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) %></div>
+        </div>
+        <div class="order-status"><%= order.status %></div>
+        <% if (order.trackingCode) { %>
+          <div class="tracking-code-display">Código de Rastreio: <%= order.trackingCode %></div>
+        <% } %>
+        <% if (order.status === 'Shipped') { %>
+          <form action="/meus-pedidos/<%= order._id %>/confirmar-recebimento" method="POST">
+            <button type="submit" class="btn btn-success">Confirmar Recebimento</button>
+          </form>
+        <% } %>
+      </div>
+
+      <div class="order-body">
+        <h3 id="items-to-review" style="margin-top: 1rem; margin-bottom: 1rem;">Itens do Pedido</h3>
+        <ul class="item-list">
+          <% order.items.forEach(item => { %>
+            <li class="order-item">
+              <% if (item.card && item.card.imageUrl) { %>
+                <img src="<%= item.card.imageUrl %>" alt="<%= item.cardName %>" class="item-thumb">
+              <% } %>
+              <div class="item-info">
+                <div class="item-name"><%= item.cardName %></div>
+                <div class="item-meta">Vendido por: <%= item.sellerName %></div>
+                <div class="item-meta">Qtd: <%= item.quantity %></div>
+              </div>
+                                <div class="item-price"><%= formatPrice(item.price * item.quantity) %></div>
+                                <% if (order.status === 'Delivered' && !item.isReviewed) { %>
+                                  <a href="/avaliar/<%= order._id %>/<%= item._id %>" class="btn btn-sm btn-primary">Avaliar</a>
+                                <% } %>            </li>
+          <% }) %>
+        </ul>
+      </div>
+
+      <div class="order-footer">
+        <div class="address-section">
+          <h4 style="margin-bottom: 0.5rem;">Endereço de Entrega</h4>
+          <p style="margin: 0; color: var(--text-muted);"><%= order.shippingAddress %></p>
+        </div>
+        <div style="text-align: right; margin-top: 1.5rem;">
+          <div>Subtotal: <strong><%= formatPrice(order.totals.subtotal) %></strong></div>
+          <div>Frete: <strong><%= formatPrice(order.totals.shipping) %></strong></div>
+          <div>Taxa do Marketplace: <strong><%= formatPrice(order.totals.marketplaceFee) %></strong></div>
+          <div style="font-size: 1.2rem; margin-top: 8px;">Total: <strong style="color: var(--accent-primary);"><%= formatPrice(order.totals.grand) %></strong></div>
+        </div>
+      </div>
+
+    </div>
+  <% } else { %>
+    <div class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+      <h2>Pedido não encontrado</h2>
+      <p>O pedido que você está tentando visualizar não existe ou não pertence a você.</p>
+    </div>
+  <% } %>
+
+</main>
+<%- include('../partials/footer') %>
+<script src="/js/main.js"></script>

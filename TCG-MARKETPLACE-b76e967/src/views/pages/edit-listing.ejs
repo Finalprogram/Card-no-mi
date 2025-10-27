@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <%- include('../partials/header') %>
+    <title>Editar Anúncio - CardHub</title>
+</head>
+<body>
+    <div class="container">
+        <%- include('../partials/navbar') %>
+    </div>
+    <main class="container">
+        <h1>Editar Anúncio</h1>
+
+        <div class="edit-listing-card">
+            <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>" class="card-image">
+            <div class="card-info">
+                <h2><%= listing.card.name %></h2>
+                <p><%= listing.card.set_name %></p>
+            </div>
+        </div>
+
+        <form action="/listings/<%= listing._id %>?_method=PUT" method="POST" class="edit-listing-form">
+            <div class="form-group">
+                <label for="price">Preço (R$)</label>
+                <input type="number" id="price" name="price" class="form-control" value="<%= listing.price %>" step="0.01" required>
+            </div>
+            <div class="form-group">
+                <label for="quantity">Quantidade</label>
+                <input type="number" id="quantity" name="quantity" class="form-control" value="<%= listing.quantity %>" required>
+            </div>
+            <div class="form-group">
+                <label for="condition">Condição</label>
+                <select id="condition" name="condition" class="form-control">
+                    <option value="NM" <%= listing.condition === 'NM' ? 'selected' : '' %>>Near Mint (NM)</option>
+                    <option value="LP" <%= listing.condition === 'LP' ? 'selected' : '' %>>Lightly Played (LP)</option>
+                    <option value="MP" <%= listing.condition === 'MP' ? 'selected' : '' %>>Moderately Played (MP)</option>
+                    <option value="HP" <%= listing.condition === 'HP' ? 'selected' : '' %>>Heavily Played (HP)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="language">Idioma</label>
+                <input type="text" id="language" name="language" class="form-control" value="<%= listing.language %>" required>
+            </div>
+            <button type="submit" class="btn btn-primary">Salvar Alterações</button>
+            <a href="/meus-anuncios" class="btn btn-secondary">Cancelar</a>
+        </form>
+    </main>
+    <div class="container">
+        <%- include('../partials/footer') %>
+    </div>
+    <script src="/js/main.js"></script>
+</body>
+</html>

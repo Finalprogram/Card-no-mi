@@ -1,0 +1,169 @@
+<%- include('../partials/header') %>
+
+<main class="container list-page">
+  <%- include('../partials/navbar') %>
+
+  <!-- Botão flutuante do carrinho -->
+  <a href="#" id="floating-cart-button" class="floating-btn" data-action="open-cart-modal" aria-label="Abrir carrinho">
+    <span class="icon">🛒</span>
+    <span class="badge hidden" id="cart-count">0</span>
+  </a>
+
+  <div class="list-header" style="margin-top: 1rem;">
+    <h1>Sua Lista</h1>
+    <a href="/cards" class="btn btn-primary">+ Adicionar mais cartas</a>
+  </div>
+
+  <%
+    // Compat: aceita 'items' (novo) ou 'wantList' (antigo)
+    const _list = (typeof items !== 'undefined' && items && items.length)
+      ? items
+      : ((typeof wantList !== 'undefined' && wantList) ? wantList : []);
+  %>
+
+  <% if (!_list || _list.length === 0) { %>
+    <section class="empty" style="margin: 24px 0;">
+      <p>Sua lista está vazia.</p>
+      <a class="btn btn-secondary" href="/cards">Explorar Cartas</a>
+    </section>
+  <% } %>
+
+  <section class="cards-stack">
+    <% (_list || []).forEach((item, i) => {
+         const card = item.card || item;
+         const cardId = (card && (card._id || card.id || card.cardId)) || '';
+         const vendors = item.vendors || item.listings || [];
+         const desired = item.desiredQty || item.quantityWanted || 1;
+         const lowest  = item.minPrice || item.lowestPrice || (vendors && vendors.length ? vendors[0].price : null);
+         const drawerId = `sellers-${cardId || i}`;
+    %>
+      <article class="list-card" data-card-id="<%= cardId %>">
+        <div class="list-card__header">
+          <div class="list-card__left">
+            <img class="card-thumb" src="<%= card.image_url || card.imageUrl || '/img/card-placeholder.png' %>" alt="<%= card.name || 'Carta' %>">
+            <div>
+              <h3 class="card-title"><%= card.name %></h3>
+              <p class="card-sub">
+                <%- (card.set_name || card.setName || card.set || '') %>
+                <%- (card.code ? ' — [' + card.code + ']' : '') %>
+              </p>
+              <p class="card-qty">Quantidade desejada: <strong><%= desired %></strong></p>
+            </div>
+          </div>
+
+          <div class="list-card__right">
+            <div class="price-chip">
+              <span>A partir de</span>
+              <strong><%= (lowest != null) ? formatPrice(lowest) : 'N/A' %></strong>
+            </div>
+
+            <!-- Botão para abrir/fechar vendedores -->
+            <button
+              class="btn btn-outline toggle-sellers-btn"
+              data-toggle="sellers"
+              aria-controls="<%= drawerId %>">
+              Ver vendedores ▾
+            </button>
+
+            <!-- Remover item da lista (opcional) -->
+            <button class="btn icon-only remove-item" title="Remover" data-remove="<%= cardId %>">✕</button>
+          </div>
+        </div>
+
+        <!-- Gaveta de vendedores (oculta por padrão) -->
+        <div id="<%= drawerId %>" class="sellers-panel" hidden>
+          <!-- Filtros simples (opcionais) -->
+          <div class="sellers-filters">
+            <select class="filter-select" data-filter="condition">
+              <option value="">Condição (todas)</option>
+              <option value="novo">(N) Novo</option>
+              <option value="normal">Normal</option>
+              <option value="danificada">Danificada</option>
+            </select>
+
+            <select class="filter-select" data-filter="language">
+              <option value="">Idioma (todos)</option>
+              <option value="pt">Português</option>
+              <option value="en">Inglês</option>
+              <option value="jp">Japonês</option>
+            </select>
+
+            <select class="filter-select" data-filter="location">
+              <option value="">Local (todos)</option>
+              <option value="br">Brasil</option>
+              <option value="latam">LatAm</option>
+              <option value="global">Global</option>
+            </select>
+          </div>
+
+          <!-- Tabela/Lista de vendedores -->
+          <div class="sellers-table">
+            <div class="sellers-head">
+              <span>Vendedor</span>
+              <span>Condição</span>
+              <span>Idioma</span>
+              <span>Disp.</span>
+              <span class="right">Preço</span>
+              <span class="right">Qtd.</span>
+              <span class="right">Ação</span>
+            </div>
+
+            <div class="sellers-body">
+              <% (vendors || []).forEach(v => {
+                   // Normaliza campos
+                   const available  = v.availableQty || v.quantity || 0;
+                   const price      = Number(v.price || 0);
+                   const vendorId   = (v.seller && v.seller._id) || v.seller || '';
+                   const sellerName = v.sellerName || (v.seller && (v.seller.username || v.seller.name)) || v.seller || 'Vendedor';
+                   const cond       = (v.condition || '').toLowerCase();
+                   const lang       = (v.language || '').toLowerCase();
+                   const loc        = (v.location || (v.seller && v.seller.country) || '').toLowerCase();
+              %>
+                <!-- Linha do vendedor com ganchos para o JS -->
+                <div class="seller-row vendor-row"
+                     data-condition="<%= cond %>"
+                     data-language ="<%= lang %>"
+                     data-location ="<%= loc %>"
+                     data-cardid   ="<%= cardId %>"
+                     data-vendorid ="<%= vendorId %>"
+                     data-price    ="<%= price %>"
+                     data-available="<%= available %>">
+
+                  <span class="seller-name">
+                    <%= sellerName %>
+                    <% if (v.seller && v.seller.accountType === 'shop') { %>
+                      <span class="shop-badge">LOJA</span>
+                    <% } %>
+                  </span>
+
+                  <span><%= v.conditionLabel || v.condition || '—' %></span>
+                  <span><%= v.languageLabel  || v.language  || '—' %></span>
+                  <span><%= available %></span>
+
+                  <!-- Célula de preço (o JS usa como referência) -->
+                  <span class="right price js-price-cell"><%= formatPrice(price) %></span>
+
+                  <!-- Coluna de Qtd. (pode ficar vazia; JS usa se quiser) -->
+                  <span class="right qty-col"></span>
+
+                  <!-- Coluna de Ação: o JS injeta aqui os controles -->
+                  <span class="right action-cell"></span>
+                </div>
+              <% }) %>
+
+              <% if (!vendors || vendors.length === 0) { %>
+                <div class="no-sellers">Nenhum vendedor encontrado para esta carta.</div>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      </article>
+    <% }) %>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>
+
+<!-- JS principal (precisa estar depois do HTML) -->
+<script src="/js/main.js"></script>
+<script src="/js/list.js" defer></script>

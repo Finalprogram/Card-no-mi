@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= pageTitle || 'Admin Dashboard' %></title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/admin.css">
+</head>
+<body>
+    <%- include('../partials/test-dropdown') %>
+    <header class="admin-header">
+        <h1>Admin Dashboard</h1>
+        <form action="/logout" method="POST">
+            <button type="submit" class="logout-btn">Logout</button>
+        </form>
+    </header>
+    <div class="admin-wrapper">
+        <aside class="admin-sidebar">
+            <nav>
+                <ul>
+                    <li><a href="/admin/dashboard">Dashboard</a></li>
+                    <li><a href="/admin/users">Manage Users</a></li>
+                    <!-- Add more admin links here -->
+                </ul>
+            </nav>
+        </aside>
+        <main class="admin-content">
+            <%- body %>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,246 @@
+<%- include('../partials/header') %>
+<style>
+  .order-list-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  .order-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .order-info {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+  }
+  .order-id,
+  .order-date,
+  .order-buyer,
+  .order-status {
+    display: flex;
+    flex-direction: column;
+  }
+  .order-info .label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .order-info .value {
+    font-weight: 600;
+  }
+  .order-items {
+    margin-top: 1rem;
+  }
+  .item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-muted);
+  }
+  .item-row:last-child {
+    border-bottom: none;
+  }
+  /* Modal Styles */
+  .modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+  }
+  .modal-content {
+    background-color: var(--bg-surface);
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid var(--border);
+    width: 80%; /* Could be more or less, depending on screen size */
+    border-radius: 8px;
+    position: relative;
+  }
+  .close-btn {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+    font-weight: bold;
+  }
+  .close-btn:hover,
+  .close-btn:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+  }
+</style>
+
+<main class="container" style="max-width: 880px; margin-top: 24px;">
+  <%- include('../partials/navbar') %>
+
+  <h1 style="margin: 24px 0 16px;">Meus Pedidos Vendidos</h1>
+
+  <div class="orders-container">
+    <% if (orders && orders.length > 0) { %>
+      <% orders.forEach(order => { %>
+        <div class="order-list-item">
+          <div class="order-header">
+            <div class="order-info">
+              <div class="order-id">
+                <span class="label">Pedido</span>
+                <span class="value">#<%= order._id.toString().slice(-6) %></span>
+              </div>
+              <div class="order-date">
+                <span class="label">Data</span>
+                <span class="value"><%= new Date(order.createdAt).toLocaleDateString('pt-BR') %></span>
+              </div>
+              <div class="order-buyer">
+                <span class="label">Comprador</span>
+                <span class="value"><%= order.user.username %></span>
+              </div>
+              <div class="order-status">
+                <% if (order.status === 'Processing') { %>
+                  <button class="btn btn-sm btn-primary mark-as-shipped-btn" data-order-id="<%= order._id %>">Marcar como Enviado</button>
+                  <% if (!order.melhorEnvioLabelUrl) { %>
+                    <button class="btn btn-sm btn-success generate-label-btn" data-order-id="<%= order._id %>" style="margin-left: 10px;">Gerar Etiqueta ME</button>
+                  <% } %>
+                <% } else if (order.status === 'Shipped' && order.melhorEnvioLabelUrl) { %>
+                  <span class="value">Enviado</span>
+                  <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="btn btn-sm btn-info" style="margin-left: 10px;">Ver Etiqueta</a>
+                <% } else { %>
+                  <span class="value"><%= order.status %></span>
+                <% } %>
+              </div>
+            </div>
+          </div>
+          <div class="order-items">
+            <h4 style="margin-bottom: 0.5rem;">Itens Vendidos</h4>
+            <% order.items.forEach(item => { %>
+              <div class="item-row">
+                <span><%= item.cardName %> (Qtd: <%= item.quantity %>)</span>
+                <div style="text-align: right;">
+                  <div style="font-size: 0.9em; color: var(--text-muted);">Preço Bruto: <%= formatPrice(item.price * item.quantity) %></div>
+                  <div>Líquido Vendedor: <strong><%= formatPrice(item.sellerNet) %></strong></div>
+                </div>
+              </div>
+            <% }) %>
+          </div>
+          <% if (order.melhorEnvioLabelUrl) { %>
+            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+              <span class="label">Etiqueta Melhor Envio:</span>
+              <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="value">Baixar Etiqueta</a>
+              <% if (order.melhorEnvioTrackingUrl) { %>
+                <span class="label" style="margin-left: 20px;">Rastreamento:</span>
+                <a href="<%= order.melhorEnvioTrackingUrl %>" target="_blank" class="value"><%= order.trackingCode || 'Ver Rastreamento' %></a>
+              <% } %>
+            </div>
+          <% } %>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+        <p>Você ainda não vendeu nenhum item.</p>
+      </div>
+    <% } %>
+  </div>
+
+</main>
+<%- include('../partials/footer') %>
+
+<div id="shipping-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close-btn">&times;</span>
+    <h2>Informar Código de Rastreio</h2>
+    <form id="shipping-form">
+      <input type="hidden" id="order-id-input" name="orderId">
+      <div class="form-group">
+        <label for="tracking-code-input">Código de Rastreio</label>
+        <input type="text" id="tracking-code-input" name="trackingCode" class="form-control" required>
+      </div>
+      <button type="submit" class="btn btn-primary">Salvar</button>
+    </form>
+  </div>
+</div>
+
+<script>
+const modal = document.getElementById('shipping-modal');
+const closeBtn = modal.querySelector('.close-btn');
+const shippingForm = document.getElementById('shipping-form');
+const orderIdInput = document.getElementById('order-id-input');
+const trackingCodeInput = document.getElementById('tracking-code-input');
+
+document.querySelectorAll('.mark-as-shipped-btn').forEach(button => {
+  button.addEventListener('click', (event) => {
+    const orderId = event.target.dataset.orderId;
+    orderIdInput.value = orderId;
+    modal.style.display = 'block';
+  });
+});
+
+closeBtn.addEventListener('click', () => {
+  modal.style.display = 'none';
+});
+
+shippingForm.addEventListener('submit', async (event) => {
+  event.preventDefault();
+  const orderId = orderIdInput.value;
+  const trackingCode = trackingCodeInput.value;
+
+  try {
+    const response = await fetch(`/pedidos-vendidos/${orderId}/marcar-enviado`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ trackingCode })
+    });
+
+    if (response.ok) {
+      location.reload();
+    } else {
+      alert('Erro ao marcar como enviado.');
+    }
+  } catch (error) {
+    console.error('Erro ao marcar como enviado:', error);
+    alert('Erro ao marcar como enviado.');
+  }
+});
+
+document.querySelectorAll('.generate-label-btn').forEach(button => {
+  button.addEventListener('click', async (event) => {
+    const orderId = event.target.dataset.orderId;
+    event.target.disabled = true; // Disable button to prevent multiple clicks
+    event.target.textContent = 'Gerando...';
+
+    try {
+      const response = await fetch(`/seller/orders/${orderId}/generate-label`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message);
+        location.reload(); // Reload to show the new label link
+      } else {
+        const errorData = await response.json();
+        alert(`Erro ao gerar etiqueta: ${errorData.message}`);
+        event.target.disabled = false;
+        event.target.textContent = 'Gerar Etiqueta ME';
+      }
+    } catch (error) {
+      console.error('Erro ao gerar etiqueta:', error);
+      alert('Erro ao gerar etiqueta.');
+      event.target.disabled = false;
+      event.target.textContent = 'Gerar Etiqueta ME';
+    }
+  });
+});
+</script>

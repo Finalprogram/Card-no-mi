@@ -1,0 +1,99 @@
+/* public/css/admin.css */
+
+body {
+    display: flex;
+    min-height: 100vh;
+    flex-direction: column;
+}
+.admin-wrapper {
+    display: flex;
+    flex: 1;
+}
+.admin-sidebar {
+    width: 250px;
+    background-color: #343a40;
+    color: white;
+    padding: 20px;
+    flex-shrink: 0;
+}
+.admin-sidebar a {
+    color: white;
+    text-decoration: none;
+    display: block;
+    padding: 10px 0;
+}
+.admin-sidebar a:hover {
+    background-color: #495057;
+}
+.admin-content {
+    flex-grow: 1;
+    padding: 20px;
+}
+.admin-header {
+    background-color: #007bff;
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.admin-header h1 {
+    margin: 0;
+    color: white;
+}
+.admin-header .logout-btn {
+    background: none;
+    border: 1px solid white;
+    color: white;
+    padding: 8px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+}
+.admin-header .logout-btn:hover {
+    background-color: rgba(255,255,255,0.2);
+}
+
+/* Additional styles for dashboard cards */
+.card {
+    border: none;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+.card-header {
+    font-weight: bold;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+    background-color: rgba(0, 0, 0, 0.03);
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+.table {
+    margin-top: 1rem;
+}
+
+.table th,
+.table td {
+    vertical-align: middle;
+}
+
+.form-control-sm {
+    height: calc(1.8125rem + 2px);
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    border-radius: 0.2rem;
+}
+
+.input-group > .form-control:not(:last-child),
+.input-group > .custom-select:not(:last-child) {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.input-group > .btn:not(:first-child) {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}

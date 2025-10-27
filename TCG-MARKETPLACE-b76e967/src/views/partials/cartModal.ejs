@@ -1,0 +1,28 @@
+<!-- Cart Modal -->
+<div id="cart-backdrop" class="cart-backdrop" hidden></div>
+
+<aside id="cart-modal" class="cart-modal" hidden aria-hidden="true" role="dialog" aria-label="Carrinho">
+  <header class="cart-header">
+    <h3>Seu Carrinho</h3>
+    <button class="btn icon-only" id="cart-close-btn" aria-label="Fechar">✕</button>
+  </header>
+
+  <section id="cart-content" class="cart-content">
+    <!-- É preenchido via JS com os itens do /cart/json -->
+    <div class="cart-empty">
+      <p>Seu carrinho está vazio.</p>
+      <a href="/cards" class="btn btn-primary">Explorar cartas</a>
+    </div>
+  </section>
+
+  <footer class="cart-footer">
+    <div class="cart-summary">
+      <span>Total:</span>
+      <strong id="cart-total">R$ 0,00</strong>
+    </div>
+    <div class="cart-actions">
+      <button id="cart-clear-btn" class="btn btn-outline">Esvaziar</button>
+      <a href="/checkout" class="btn btn-primary">Finalizar</a>
+    </div>
+  </footer>
+</aside>

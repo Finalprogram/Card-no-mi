@@ -1,0 +1,126 @@
+<%- include('../partials/header') %>
+
+<main class="container">
+  <%- include('../partials/navbar') %>
+
+  <div class="card-detail-container">
+    <div class="card-image-section">
+      <img src="<%= card.image_url %>" alt="<%= card.name %>">
+    </div>
+    <div class="card-info-section">
+      <h1><%= card.name %></h1>
+      <p><strong>Set:</strong> <%= card.set_name %></p>
+      <p><strong>Raridade:</strong> <%= card.rarity %></p>
+      <p><strong>Tipo:</strong> <%= card.type_line %></p>
+      
+      <div class="price-trend">
+        <strong>Preço Médio:</strong> <%= formatPrice(card.averagePrice) %>
+        <% if (card.price_trend === 'up') { %>
+          <span style="color: green; font-size: 1.5em;">▲</span>
+        <% } else if (card.price_trend === 'down') { %>
+          <span style="color: red; font-size: 1.5em;">▼</span>
+        <% } else { %>
+          <span style="color: #555; font-size: 1.5em;">→</span>
+        <% } %>
+      </div>
+    </div>
+  </div>
+
+  <div class="listings-section">
+    <h2>Anúncios Disponíveis</h2>
+    <% if (listings && listings.length > 0) { %>
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Vendedor</th>
+            <th>Condição</th>
+            <th>Idioma</th>
+            <th>Preço</th>
+            <th>Quantidade</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% listings.forEach(listing => { %>
+            <tr>
+              <td><%= listing.seller.username %></td>
+              <td><%= listing.condition %></td>
+              <td><%= listing.language %></td>
+              <td><%= formatPrice(listing.price) %></td>
+              <td><%= listing.quantity %></td>
+              <td>
+                <button class="btn btn-primary add-to-cart-btn" data-listing-id="<%= listing._id %>" data-vendor-id="<%= listing.seller._id %>">Adicionar ao Carrinho</button>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>Nenhum anúncio disponível para esta carta no momento.</p>
+    <% } %>
+  </div>
+
+</main>
+
+<%- include('../partials/footer') %>
+
+<script src="/js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.add-to-cart-btn').forEach(button => {
+    button.addEventListener('click', async (event) => {
+      const listingId = event.target.dataset.listingId;
+      const vendorId = event.target.dataset.vendorId;
+      const row = event.target.closest('tr');
+      const cells = row.querySelectorAll('td');
+      
+      const sellerName = cells[0].textContent.trim();
+      const condition = cells[1].textContent.trim();
+      const language = cells[2].textContent.trim();
+      const price = parseFloat(cells[3].textContent.replace('R$', '').replace(',', '.'));
+      const quantity = 1; // Default to 1 for now
+
+      const cardName = document.querySelector('h1').textContent.trim();
+      const imageUrl = document.querySelector('.card-image-section img').src;
+      
+      const body = {
+        listingId,
+        cardId: '<%= card._id %>',
+        vendorId,
+        price,
+        qty: quantity,
+        meta: {
+          cardName,
+          imageUrl,
+          sellerName,
+          condition,
+          language,
+        }
+      };
+
+      try {
+        const response = await fetch('/cart/add', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        if (data.ok) {
+          // Update cart count in navbar
+          const cartBadge = document.querySelector('#floating-cart-button .badge');
+          if (cartBadge) {
+            cartBadge.textContent = data.count;
+            cartBadge.classList.toggle('hidden', data.count <= 0);
+          }
+          alert('Card added to cart!');
+        } else {
+          alert('Error adding card to cart.');
+        }
+      } catch (error) {
+        console.error('Error adding to cart:', error);
+        alert('Error adding card to cart.');
+      }
+    });
+  });
+});
+</script>

@@ -1,0 +1,99 @@
+<%- include('../partials/header') %>
+<style>
+  .dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .stat-card .value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+    line-height: 1.2;
+  }
+  .stat-card .label {
+    font-size: 1rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+  .recent-sales-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .recent-sales-table th,
+  .recent-sales-table td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .recent-sales-table th {
+    background-color: var(--bg-surface-muted);
+  }
+</style>
+
+<main class="container" style="max-width: 960px; margin-top: 24px;">
+  <%- include('../partials/navbar') %>
+
+  <h1 style="margin: 24px 0 16px;">Dashboard do Vendedor</h1>
+
+  <div class="dashboard-grid">
+    <div class="stat-card">
+      <div class="value"><%= formatPrice(stats.totalRevenue) %></div>
+      <div class="label">Total Vendido</div>
+    </div>
+    <div class="stat-card">
+      <div class="value"><%= stats.totalItemsSold %></div>
+      <div class="label">Itens Vendidos</div>
+    </div>
+    <div class="stat-card">
+      <div class="value"><%= stats.activeListingsCount %></div>
+      <div class="label">Anúncios Ativos</div>
+    </div>
+    <div class="stat-card">
+      <div class="value"><%= stats.sellerFeePercentage %>%</div>
+      <div class="label">Sua Taxa do Marketplace</div>
+    </div>
+  </div>
+
+  <div class="recent-sales-section panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+    <h2>Vendas Recentes</h2>
+    <a href="/meus-pedidos-vendidos" class="btn btn-primary" style="margin-bottom: 1rem;">Ver todos os pedidos</a>
+    <% if (recentSales && recentSales.length > 0) { %>
+      <table class="recent-sales-table">
+        <thead>
+          <tr>
+            <th>Data</th>
+            <th>Item</th>
+            <th>Qtd</th>
+            <th>Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% recentSales.forEach(order => { %>
+            <% order.items.forEach(item => { %>
+              <tr>
+                <td><%= new Date(order.createdAt).toLocaleDateString('pt-BR') %></td>
+                <td><%= item.cardName %></td>
+                <td><%= item.quantity %></td>
+                <td><%= formatPrice(item.price * item.quantity) %></td>
+              </tr>
+            <% }) %>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } else { %>
+      <p>Você ainda não realizou nenhuma venda.</p>
+    <% } %>
+  </div>
+
+</main>
+<%- include('../partials/footer') %>
+<script src="/js/main.js"></script>

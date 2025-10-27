@@ -1,0 +1,55 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<main class="container">
+  <h1 class="display-4">Enciclopédia de Cartas</h1>
+  <p class="lead">Explore todas as cartas de One Piece.</p>
+
+  <div class="search-container">
+    <aside class="filters">
+      <h3>Filtros</h3>
+      <form action="/encyclopedia" method="GET">
+        <% if (filterGroups && filterGroups.length > 0) { %>
+          <% filterGroups.forEach(group => { %>
+            <div class="filter-group">
+              <h4 class="filter-toggle"><%= group.name %></h4>
+              <div class="filter-options" hidden>
+              <% group.options.forEach(option => { 
+                   const value = typeof option === 'object' ? option.value : option;
+                   const label = typeof option === 'object' ? option.label : option;
+                   const checked = (filters && filters[group.key] === value) ? 'checked' : '';
+              %>
+                <label>
+                  <input type="radio" name="<%= group.key %>" value="<%= value %>" <%= checked %> onchange="this.form.submit()" />
+                  <%= label %>
+                </label>
+              <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+        <input type="search" name="q" placeholder="Buscar por nome..." value="<%= filters && filters.q ? filters.q : '' %>" class="form-control mb-3" />
+        <button type="submit" class="btn btn-primary w-100 mb-2">Buscar</button>
+        <a href="/encyclopedia" class="btn btn-secondary w-100">Limpar Filtros</a>
+      </form>
+    </aside>
+
+    <section class="results">
+      <div id="card-list" class="cards-grid">
+        <!-- As cartas serão carregadas aqui via JavaScript -->
+      </div>
+
+      <div class="pagination d-flex justify-content-center mt-4">
+          <button id="prev-page" class="btn btn-primary me-2" disabled>Anterior</button>
+          <span id="page-indicator" class="align-self-center">Página 1</span>
+          <button id="next-page" class="btn btn-primary ms-2">Próxima</button>
+      </div>
+    </section>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>
+
+<script src="/js/main.js"></script>
+<script src="/js/encyclopedia.js"></script>
+<script src="/js/accordion-filters.js"></script>

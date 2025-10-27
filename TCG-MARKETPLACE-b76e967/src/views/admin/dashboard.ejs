@@ -1,0 +1,44 @@
+<div class="container mt-4">
+    <h2>Admin Dashboard</h2>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Total Users</div>
+                <div class="card-body">
+                    <h5 class="card-title"><%= totalUsers %></h5>
+                    <p class="card-text">Registered users in the system.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Total Orders</div>
+                <div class="card-body">
+                    <h5 class="card-title"><%= totalOrders %></h5>
+                    <p class="card-text">All orders placed.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-info mb-3">
+                <div class="card-header">Marketplace Revenue</div>
+                <div class="card-body">
+                    <h5 class="card-title">R$ <%= totalMarketplaceRevenue %></h5>
+                    <p class="card-text">Total fees collected by the marketplace.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">Quick Actions</div>
+                <div class="card-body">
+                    <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+                    <!-- Add more quick actions here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

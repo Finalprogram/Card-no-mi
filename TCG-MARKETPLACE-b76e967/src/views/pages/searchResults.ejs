@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <%- include('../partials/header') %>
+    <title>Resultados para: <%= query %></title>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <main class="container">
+        <section class="search-results-section">
+            
+            <% if (query) { %>
+                <h2>Resultados da busca para: "<%= query %>"</h2>
+            <% } else { %>
+                <h2>Busca de Cartas</h2>
+            <% } %>
+
+            <% if (cards.length > 0) { %>
+                <p><%= cards.length %> carta(s) encontrada(s).</p>
+                <div class="cards-carousel">
+                    <% cards.forEach(card => { %>
+                        <div class="card-item">
+                            <% if (card.image_uris && card.image_uris.normal) { %>
+                                <img src="<%= card.image_uris.normal %>" alt="<%= card.name %>">
+                            <% } else if (card.card_faces && card.card_faces[0].image_uris) { %>
+                                <img src="<%= card.card_faces[0].image_uris.normal %>" alt="<%= card.name %>">
+                            <% } else { %>
+                                <img src="https://placehold.co/220x310?text=Sem+Imagem" alt="Sem imagem">
+                            <% } %>
+                            <h4><%= card.name %></h4>
+                        </div>
+                    <% }) %>
+                </div>
+            <% } else if (query) { %>
+                <p>Nenhuma carta encontrada com o termo "<%= query %>". Tente novamente.</p>
+            <% } %>
+
+        </section>
+    </main>
+
+    <%- include('../partials/footer') %>
+    <script src="/js/card-actions.js" defer></script>
+</body>
+</html>

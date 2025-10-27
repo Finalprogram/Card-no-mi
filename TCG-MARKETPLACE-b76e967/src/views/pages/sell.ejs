@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <%- include('../partials/header') %>
+    <title>Vender Cartas - CardHub</title>
+</head>
+<body>
+    <div class="container">
+    <%- include('../partials/navbar') %>
+</div>
+    <main class="container">
+        <div class="sell-container">
+            
+            <section class="sell-section">
+                <h1>O que você quer vender?</h1>
+                <p>Comece buscando pela carta que você deseja anunciar no CardHub.</p>
+
+                <form id="sell-search-form" class="sell-search-form">
+                    <input type="search" id="sell-search-input" class="form-control" placeholder="Digite o nome da carta..." autofocus>
+                    
+                </form>
+
+                <div id="sell-search-results"></div>
+            </section>
+
+            <section class="sell-section">
+                <h2>Anúncios para Criar</h2>
+                
+                <div id="listing-staging-area">
+                    <p class="empty-staging-message">As cartas que você adicionar aparecerão aqui.</p>
+                </div>
+
+                <button id="save-all-listings-btn" class="btn-primary btn-submit-full">Salvar Todos os Anúncios</button>
+            </section>
+
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+    <script src="/js/main.js"></script>
+    <script src="/js/sell.js"></script>
+</body>
+</html>

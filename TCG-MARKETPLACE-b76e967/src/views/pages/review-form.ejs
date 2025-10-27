@@ -1,0 +1,67 @@
+<%- include('../partials/header') %>
+<style>
+  .rating-stars {
+    display: inline-block;
+    font-size: 2rem;
+    direction: rtl;
+  }
+  .rating-stars input {
+    display: none;
+  }
+  .rating-stars label {
+    color: #ccc;
+    cursor: pointer;
+    padding: 0 0.2em;
+  }
+  .rating-stars input:checked ~ label,
+  .rating-stars label:hover,
+  .rating-stars label:hover ~ label {
+    color: #f8d347;
+  }
+</style>
+
+<main class="container" style="max-width: 720px; margin-top: 24px;">
+  <%- include('../partials/navbar') %>
+
+  <h1 style="margin: 24px 0 16px;">Avaliar Item</h1>
+
+  <div class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+    
+    <div class="order-item" style="display: flex; gap: 1rem; align-items: center; margin-bottom: 1.5rem;">
+      <% if (item.card && item.card.imageUrl) { %>
+        <img src="<%= item.card.imageUrl %>" alt="<%= item.cardName %>" style="width: 80px; border-radius: 6px;">
+      <% } %>
+      <div class="item-info">
+        <h3 style="margin: 0 0 0.5rem;"><%= item.cardName %></h3>
+        <p style="margin: 0; color: var(--text-muted);">Vendido por: <strong><%= item.sellerName %></strong></p>
+      </div>
+    </div>
+
+    <form action="/avaliar" method="POST">
+      <input type="hidden" name="orderId" value="<%= order._id %>">
+      <input type="hidden" name="itemId" value="<%= item._id %>">
+      <input type="hidden" name="sellerId" value="<%= item.seller %>">
+
+      <div class="form-group">
+        <label for="rating">Sua Avaliação (1 a 5 estrelas)</label>
+        <div class="rating-stars">
+          <input type="radio" id="star5" name="rating" value="5" required/><label for="star5">★</label>
+          <input type="radio" id="star4" name="rating" value="4" /><label for="star4">★</label>
+          <input type="radio" id="star3" name="rating" value="3" /><label for="star3">★</label>
+          <input type="radio" id="star2" name="rating" value="2" /><label for="star2">★</label>
+          <input type="radio" id="star1" name="rating" value="1" /><label for="star1">★</label>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="comment">Comentário (opcional)</label>
+        <textarea id="comment" name="comment" class="form-control" rows="4" placeholder="Descreva sua experiência com o vendedor e o produto..."></textarea>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-submit-full">Enviar Avaliação</button>
+    </form>
+  </div>
+
+</main>
+
+<%- include('../partials/footer') %>

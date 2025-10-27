@@ -1,0 +1,94 @@
+<%- include('../partials/header') %>
+<main class="container" style="max-width: 880px; margin-top: 24px;">
+  <%- include('../partials/navbar') %>
+
+  <h1 style="margin: 24px 0 16px;">Checkout</h1>
+
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="alert alert-<%= message.type %>" role="alert">
+      <%= message.text %>
+    </div>
+  <% } %>
+
+  <form action="/checkout/confirm" method="post" id="checkout-form" class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+
+    <!-- ENDEREÇO SIMPLIFICADO -->
+    <div class="form-group">
+      <label>Endereço de Entrega</label>
+      <input class="form-control" name="address" placeholder="Rua, Número, Bairro, Cidade - Estado" required>
+    </div>
+
+    <hr style="border-color: var(--border); margin: 16px 0; opacity:.4">
+
+    <!-- CÁLCULO DE FRETE -->
+    <div class="shipping-quote-section">
+      <h3 style="margin: 10px 0 6px;">Calcular Frete</h3>
+      <div class="form-group">
+        <label for="zip-input">CEP de Entrega</label>
+        <input class="form-control" id="zip-input" name="zip" placeholder="Digite seu CEP" required>
+      </div>
+      <button type="button" id="calculate-shipping-btn" class="btn btn-secondary">Calcular</button>
+      <div id="shipping-options-container" style="margin-top: 1rem;"></div>
+    </div>
+
+    <hr style="border-color: var(--border); margin: 16px 0; opacity:.4">
+
+    <h3 style="margin: 10px 0 6px;">Resumo do Pedido</h3>
+
+    <!-- listagem de pacotes + itens (server-render) -->
+    <div id="packages">
+      <% if ((groups || []).length === 0) { %>
+        <div class="empty">Seu carrinho está vazio.</div>
+      <% } %>
+
+      <% (groups || []).forEach(function(g){ %>
+        <div class="ship-package panel" data-seller="<%= g.sellerId %>" style="border:1px solid var(--border); border-radius:10px; padding:12px; margin:10px 0; background:var(--bg-surface)">
+          <h4 style="margin:6px 0 10px;">Vendedor: <%= g.sellerName %></h4>
+
+          <ul class="ck-items" style="list-style:none; margin:0 0 10px; padding:0; display:flex; flex-direction:column; gap:8px;">
+            <% g.items.forEach(function(it){ %>
+              <li class="ck-item" style="display:flex; align-items:center; gap:10px; border:1px solid var(--border); border-radius:8px; padding:8px;">
+                <% if (it.imageUrl) { %>
+                  <img src="<%= it.imageUrl %>" alt="" class="ck-thumb" style="width:48px; height:68px; object-fit:cover; border-radius:6px;">
+                <% } %>
+                <div class="ck-info" style="flex:1;">
+                  <div class="ck-title" style="font-weight:600;"><%= it.name %> <span style="opacity:.7"><%= it.condition %></span></div>
+                  <div class="ck-meta" style="opacity:.8; font-size:.92rem;">Qtd: <%= it.qty %> — Unit: <%= formatPrice(it.unit) %></div>
+                </div>
+                <div class="ck-line" style="min-width:110px; text-align:right; font-weight:700;"><%= formatPrice(it.line) %></div>
+              </li>
+            <% }) %>
+          </ul>
+        </div>
+      <% }) %>
+    </div>
+
+    <!-- selections (JSON) enviados no POST -->
+    <input type="hidden" name="shippingSelections" id="shippingSelections" value="[]">
+
+    <div class="totals" style="margin-top:14px; border-top:1px solid var(--border); padding-top:12px;">
+      <div style="display:flex; justify-content:space-between; margin:6px 0;">
+        <span>Subtotal</span><strong id="ck-subtotal"><%= formatPrice(totals.subtotal) %></strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin:6px 0;">
+        <span>Frete</span><strong id="ck-shipping"><%= formatPrice(totals.shipping) %></strong>
+      </div>
+      <div style="display:flex; justify-content:space-between; margin:6px 0;">
+        <span>Taxa do Marketplace</span><strong id="ck-marketplace-fee"><%= formatPrice(totals.marketplaceFee) %></strong>
+      </div>
+      <div class="grand" style="display:flex; justify-content:space-between; margin:10px 0; font-size:1.1rem;">
+        <span>Total</span><strong id="ck-grand" style="color:var(--accent-primary);"><%= formatPrice(totals.grand) %></strong>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-submit-full" type="submit">Ir para Pagamento</button>
+  </form>
+
+
+</main>
+
+<%- include('../partials/footer') %>
+
+<script src="/js/main.js"></script>
+<script src="/js/checkout.js"></script>
+

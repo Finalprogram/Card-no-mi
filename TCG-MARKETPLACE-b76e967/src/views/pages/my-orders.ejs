@@ -1,0 +1,84 @@
+<%- include('../partials/header') %>
+<style>
+  .order-list-item {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .order-info {
+    display: flex;
+    gap: 2rem;
+    align-items: center;
+  }
+  .order-id,
+  .order-date,
+  .order-status,
+  .order-total {
+    display: flex;
+    flex-direction: column;
+  }
+  .order-info .label {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    margin-bottom: 2px;
+  }
+  .order-info .value {
+    font-weight: 600;
+  }
+  .order-status .value {
+    color: var(--accent-primary);
+  }
+</style>
+
+<main class="container" style="max-width: 880px; margin-top: 24px;">
+  <%- include('../partials/navbar') %>
+
+  <h1 style="margin: 24px 0 16px;">Meus Pedidos</h1>
+
+  <div class="orders-container">
+    <% if (orders && orders.length > 0) { %>
+      <% orders.forEach(order => { %>
+        <div class="order-list-item">
+          <div class="order-info">
+            <div class="order-id">
+              <span class="label">Pedido</span>
+              <span class="value">#<%= order._id.toString().slice(-6) %></span>
+            </div>
+            <div class="order-date">
+              <span class="label">Data</span>
+              <span class="value"><%= new Date(order.createdAt).toLocaleDateString('pt-BR') %></span>
+            </div>
+            <div class="order-status">
+              <span class="label">Status</span>
+              <span class="value"><%= order.status %></span>
+            </div>
+            <div class="order-total">
+              <span class="label">Total</span>
+              <span class="value"><%= formatPrice(order.totals.grand) %></span>
+            </div>
+          </div>
+          <div class="order-actions">
+            <a href="/meus-pedidos/<%= order._id %>" class="btn btn-secondary">Ver Detalhes</a>
+            <% if (order.items.some(item => order.status === 'Delivered' && !item.isReviewed)) { %>
+              <a href="/meus-pedidos/<%= order._id %>#items-to-review" class="btn btn-primary">Avaliar Pedido</a>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    <% } else { %>
+      <div class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+        <p>Você ainda não fez nenhum pedido.</p>
+      </div>
+    <% } %>
+  </div>
+
+</main>
+<%- include('../partials/footer') %>
+<script src="/js/main.js"></script>

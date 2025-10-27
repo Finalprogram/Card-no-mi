@@ -1,0 +1,103 @@
+<%- include('../partials/header') %>
+
+<div class="container">
+    <%- include('../partials/navbar') %>
+
+    <main>
+        <!-- 1. Seção "Herói" -->
+        <section class="hero">
+            <h1>O seu Arsenal de Cartas em um Só Lugar</h1>
+            <p>Encontre, compre e venda cards de One Piece TCG! com segurança.</p>
+            <form action="/cards" method="GET" class="hero-search">
+  <input type="search" name="q" placeholder="Qual carta você procura?" required>
+  <button>Buscar</button>
+</form>
+        </section>
+        <section class="recently-added">
+            <h2>Recém-Adicionados</h2>
+            <div class="carousel-wrapper">
+                <button class="carousel-btn prev" aria-label="Previous slide">‹</button>
+                <div class="cards-carousel">
+                    <% if (typeof recentListings !== 'undefined' && recentListings.length) { %>
+                        <% recentListings.forEach(listing => { %>
+                            <div class="card-item">
+                                <a href="/card/<%= listing.card._id %>">
+                                    <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>">
+                                    <h4><%= listing.card.name %></h4>
+                                    <p><%= formatPrice(listing.price) %></p>
+                                </a>
+                            </div>
+                        <% }); %>
+                    <% } else { %>
+                        <p>Nenhuma carta encontrada.</p>
+                    <% } %>
+                </div>
+                <button class="carousel-btn next" aria-label="Next slide">›</button>
+            </div>
+        </section>
+
+        <!-- 4. Seção de Confiança -->
+       <section class="trust-features">
+  <h2>Negocie com Confiança</h2>
+  <div class="features-grid">
+    
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
+      </div>
+      <div class="feature-text">
+        <h3>Pagamento Protegido</h3>
+        <p>Seu dinheiro fica seguro conosco até você receber o produto.</p>
+      </div>
+    </div>
+
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"></path></svg>
+      </div>
+      <div class="feature-text">
+        <h3>Vendedores Verificados</h3>
+        <p>Compre de lojas com boa reputação e histórico na plataforma.</p>
+      </div>
+    </div>
+
+    <div class="feature-item">
+      <div class="feature-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1" y="3" width="15" height="13"></rect><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon><circle cx="5.5" cy="18.5" r="2.5"></circle><circle cx="18.5" cy="18.5" r="2.5"></circle></svg>
+      </div>
+      <div class="feature-text">
+        <h3>Envio Garantido</h3>
+        <p>Acompanhe seu pedido e tenha a garantia de recebimento.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+    </main>
+</div> <!-- A tag </div> do container é fechada aqui -->
+
+<%- include('../partials/footer') %>
+
+<script src="/js/main.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const carousel = document.querySelector('.cards-carousel');
+    const prevBtn = document.querySelector('.carousel-btn.prev');
+    const nextBtn = document.querySelector('.carousel-btn.next');
+
+    if (!carousel || !prevBtn || !nextBtn) {
+        return;
+    }
+
+    const cardWidth = 220 + 24; // card width (220px) + gap (1.5rem = 24px)
+
+    prevBtn.addEventListener('click', () => {
+        carousel.scrollBy({ left: -cardWidth, behavior: 'smooth' });
+    });
+
+    nextBtn.addEventListener('click', () => {
+        carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
+    });
+});
+</script>
+

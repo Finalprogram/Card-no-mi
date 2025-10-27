@@ -1,0 +1,39 @@
+<header class="navbar-wrapper">
+
+  <div class="container">
+
+    <nav class="navbar">
+      <a href="/" class="navbar-brand">CardHub</a>
+      
+      <div class="navbar-links">
+    <a href="/cards">Explorar Cartas</a>
+    <a href="/encyclopedia">Enciclopédia</a>
+</div>
+
+      <div class="navbar-actions">
+          <% if (user) { %>
+              <a href="/vender" class="btn-secondary">Vender Agora</a>
+              <div class="user-dropdown">
+                  <div class="dropdown-toggle">
+                      <img src="/images/default-avatar.png" alt="Avatar do usuário" class="avatar">
+                      <span class="navbar-user-greeting"><%= user.username %></span>
+                      <span class="dropdown-arrow">▼</span>
+                  </div>
+                  <div class="dropdown-menu">
+                      <a href="/perfil/<%= user.username %>" class="dropdown-item">Meu Perfil</a>
+                      <a href="/meus-anuncios" class="dropdown-item">Meus Anúncios</a>
+                      <a href="/meus-pedidos" class="dropdown-item">Meus Pedidos</a>
+                      <a href="/dashboard-vendedor" class="dropdown-item">Dashboard</a>
+                      <div class="dropdown-divider"></div>
+                      <a href="/logout" class="dropdown-item logout-btn">Sair</a>
+                  </div>
+              </div>
+          <% } else { %>
+              <a href="/auth/login" class="btn-secondary">Entrar</a>
+              <a href="/auth/register" class="btn-primary">Cadastrar</a>
+          <% } %>
+      </div>
+    </nav>
+    
+  </div>
+</header>

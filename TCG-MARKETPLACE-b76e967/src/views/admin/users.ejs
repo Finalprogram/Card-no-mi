@@ -1,0 +1,101 @@
+<div class="container mt-4">
+    <h2>Manage Users</h2>
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Account Type</th>
+                <th>Current Fee (%)</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% users.forEach(user => { %>
+                <tr>
+                    <td><%= user.username %></td>
+                    <td><%= user.email %></td>
+                    <td><%= user.accountType %></td>
+                    <td>
+                        <% if (user.fee_override_percentage !== null) { %>
+                            <%= user.fee_override_percentage %> (Override)
+                        <% } else { %>
+                            <%= defaultFees[user.accountType] || 0 %> (Default)
+                        <% } %>
+                    </td>
+                    <td>
+                        <form class="set-fee-form" data-user-id="<%= user._id %>">
+                            <div class="input-group">
+                                <input type="number" step="0.01" class="form-control form-control-sm" placeholder="New Fee %" value="<%= user.fee_override_percentage !== null ? user.fee_override_percentage : '' %>">
+                                <button type="submit" class="btn btn-sm btn-primary">Set</button>
+                                <% if (user.fee_override_percentage !== null) { %>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary reset-fee-btn">Reset</button>
+                                <% } %>
+                            </div>
+                        </form>
+                    </td>
+                </tr>
+            <% }) %>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    document.querySelectorAll('.set-fee-form').forEach(form => {
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userId = form.dataset.userId;
+            const input = form.querySelector('input[type="number"]');
+            const newFee = input.value.trim();
+
+            try {
+                const res = await fetch(`/admin/users/${userId}/set-fee`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ fee_override_percentage: newFee === '' ? 'null' : newFee }),
+                });
+                const data = await res.json();
+                if (data.success) {
+                    alert('Fee updated successfully!');
+                    location.reload();
+                } else {
+                    alert('Error: ' + (data.message || 'Could not update fee.'));
+                }
+            } catch (error) {
+                console.error('Error setting fee:', error);
+                alert('An error occurred while updating the fee.');
+            }
+        });
+
+        const resetBtn = form.querySelector('.reset-fee-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', async () => {
+                const userId = form.dataset.userId;
+                if (confirm('Are you sure you want to reset this user's fee to default?')) {
+                    try {
+                        const res = await fetch(`/admin/users/${userId}/set-fee`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ fee_override_percentage: 'null' }),
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            alert('Fee reset successfully!');
+                            location.reload();
+                        } else {
+                            alert('Error: ' + (data.message || 'Could not reset fee.'));
+                        }
+                    } catch (error) {
+                        console.error('Error resetting fee:', error);
+                        alert('An error occurred while resetting the fee.');
+                    }
+                }
+            });
+        }
+    });
+</script>
