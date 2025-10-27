@@ -22,7 +22,6 @@ async function getSellerOriginCep(sellerId) {
 }
 
 // Configura as credenciais do Mercado Pago
-logger.info("MERCADO_PAGO_ACCESS_TOKEN:", process.env.MERCADO_PAGO_ACCESS_TOKEN ? "Loaded" : "Not Loaded");
 const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN, options: { timeout: 5000 } });
 const preference = new Preference(client);
 
@@ -43,7 +42,11 @@ async function createMercadoPagoPreference(req, res) {
       return res.status(400).json({ message: 'Carrinho vazio ou inválido.' });
     }
 
-    const shippingAddress = req.session.shippingAddress || "Endereço de entrega não fornecido";
+    const shippingAddress = req.session.shippingAddress;
+    if (!shippingAddress) {
+      logger.error('Endereço de entrega não encontrado na sessão ao criar preferência de MP.');
+      return res.status(400).json({ message: 'Endereço de entrega não encontrado.' });
+    }
     const shippingSelections = req.session.shippingSelections || [];
 
     // Fetch the user to get payer details
@@ -71,7 +74,7 @@ async function createMercadoPagoPreference(req, res) {
       totals: totals,
       shippingAddress: shippingAddress,
       shippingSelections: shippingSelections, // Store shipping selections
-      status: 'Processing', // Ou 'PendingPayment' se preferir um status mais específico
+      status: 'PendingPayment', 
     });
 
     await newOrder.save();
@@ -114,7 +117,7 @@ async function createMercadoPagoPreference(req, res) {
         address: {
           zip_code: postalCode,
           street_name: streetName,
-          street_number: Number(streetNumber) || 0,
+          street_number: streetNumber,
           neighborhood: neighborhood,
           city: city,
           state: state,
@@ -126,7 +129,7 @@ async function createMercadoPagoPreference(req, res) {
         receiver_address: {
           zip_code: postalCode,
           street_name: streetName,
-          street_number: Number(streetNumber) || 0,
+          street_number: streetNumber,
           floor: '',
           apartment: '',
           neighborhood: neighborhood,
@@ -159,10 +162,11 @@ async function handleMercadoPagoSuccess(req, res) {
   
       try {
         if (external_reference) {
-          const order = await Order.findById(external_reference).populate('user');      if (order && order.status !== 'Processing') { // Evita atualizar se já foi processado pelo webhook
-        order.status = 'Processing'; // Ou 'Paid'
+          const order = await Order.findById(external_reference).populate('user');
+      if (order && order.status !== 'Paid') { 
+        order.status = 'Paid';
         await order.save();
-        logger.info(`Pedido #${order._id} atualizado para status 'Processing' via retorno de sucesso MP.`);
+        logger.info(`Pedido #${order._id} atualizado para status 'Paid' via retorno de sucesso MP.`);
       }
     }
     // Limpar o carrinho do usuário, pois o pedido foi criado e pago
@@ -181,10 +185,10 @@ async function handleMercadoPagoPending(req, res) {
   try {
     if (external_reference) {
       const order = await Order.findById(external_reference).populate('user');
-      if (order && order.status !== 'Processing') { // Evita atualizar se já foi processado pelo webhook
-        order.status = 'Processing'; // Ou 'PendingPayment'
+      if (order && order.status !== 'PendingPayment') { 
+        order.status = 'PendingPayment';
         await order.save();
-        logger.info(`Pedido #${order._id} atualizado para status 'Processing' via retorno pendente MP.`);
+        logger.info(`Pedido #${order._id} atualizado para status 'PendingPayment' via retorno pendente MP.`);
       }
     }
     // Não limpar o carrinho aqui, pois o pagamento ainda está pendente
@@ -266,7 +270,7 @@ async function handleMercadoPagoWebhook(req, res) {
     // 3. Atualizar o status do pedido
     let newOrderStatus = order.status;
     if (status === 'approved') {
-      newOrderStatus = 'Processing'; // Ou 'Paid', dependendo do seu fluxo
+      newOrderStatus = 'Paid'; // Ou 'Paid', dependendo do seu fluxo
 
       // --- Integração Melhor Envio ---
       try {
@@ -384,7 +388,7 @@ async function handleMercadoPagoWebhook(req, res) {
       // --- Fim da Integração Melhor Envio ---
 
     } else if (status === 'pending') {
-      newOrderStatus = 'Processing'; // Ou 'PendingPayment'
+      newOrderStatus = 'PendingPayment'; // Ou 'PendingPayment'
     } else if (status === 'rejected' || status === 'cancelled') {
       newOrderStatus = 'Cancelled';
     }
