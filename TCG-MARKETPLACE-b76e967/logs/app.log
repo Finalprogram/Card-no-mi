@@ -1693,3 +1693,34 @@
 {"0":{"cardId":"68e6ba0216fc8fdc82ba3546","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
 {"level":"info","message":"[melhor-envio] Payload enviado:"}
 {"level":"info","message":"[payment] Pedido #68ffb902b49fd21263f0136b criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"code":"EAUTH","command":"AUTH PLAIN","level":"error","message":"Erro ao enviar email para suporte@cardnomi.com.br (Assunto: Verifique seu Email - TCG Marketplace): Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29498d0ac07sm114791175ad.43 - gsmtp","response":"535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29498d0ac07sm114791175ad.43 - gsmtp","responseCode":535,"stack":"Error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29498d0ac07sm114791175ad.43 - gsmtp\n    at SMTPConnection._formatError (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:809:19)\n    at SMTPConnection._actionAUTHComplete (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:1595:34)\n    at SMTPConnection.<anonymous> (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:556:26)\n    at SMTPConnection._processResponse (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:993:20)\n    at SMTPConnection._onData (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:774:14)\n    at SMTPConnection._onSocketData (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:195:44)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)"}
+{"code":"EAUTH","command":"AUTH PLAIN","level":"error","message":"Erro no registro: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29498d0ac07sm114791175ad.43 - gsmtp","response":"535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29498d0ac07sm114791175ad.43 - gsmtp","responseCode":535,"stack":"Error: Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials d9443c01a7336-29498d0ac07sm114791175ad.43 - gsmtp\n    at SMTPConnection._formatError (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:809:19)\n    at SMTPConnection._actionAUTHComplete (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:1595:34)\n    at SMTPConnection.<anonymous> (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:556:26)\n    at SMTPConnection._processResponse (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:993:20)\n    at SMTPConnection._onData (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:774:14)\n    at SMTPConnection._onSocketData (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\nodemailer\\lib\\smtp-connection\\index.js:195:44)\n    at TLSSocket.emit (node:events:518:28)\n    at addChunk (node:internal/streams/readable:561:12)\n    at readableAddChunkPushByteMode (node:internal/streams/readable:512:3)\n    at Readable.push (node:internal/streams/readable:392:5)"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6900b2bc181c8e0cb48e85b8 criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}

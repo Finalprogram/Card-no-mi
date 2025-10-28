@@ -12,20 +12,11 @@
 
   <form action="/checkout/confirm" method="post" id="checkout-form" class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
 
-    <!-- ENDEREÇO SIMPLIFICADO -->
-    <div class="form-group">
-      <label>Endereço de Entrega</label>
-      <input class="form-control" name="address" placeholder="Rua, Número, Bairro, Cidade - Estado" required>
-    </div>
-
-    <hr style="border-color: var(--border); margin: 16px 0; opacity:.4">
-
-    <!-- CÁLCULO DE FRETE -->
     <div class="shipping-quote-section">
       <h3 style="margin: 10px 0 6px;">Calcular Frete</h3>
       <div class="form-group">
         <label for="zip-input">CEP de Entrega</label>
-        <input class="form-control" id="zip-input" name="zip" placeholder="Digite seu CEP" required>
+        <input class="form-control" id="zip-input" name="zip" placeholder="Digite seu CEP" value="<%= user.address.cep %>" readonly>
       </div>
       <button type="button" id="calculate-shipping-btn" class="btn btn-secondary">Calcular</button>
       <div id="shipping-options-container" style="margin-top: 1rem;"></div>

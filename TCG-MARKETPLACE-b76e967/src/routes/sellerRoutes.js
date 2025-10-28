@@ -28,8 +28,7 @@ router.get('/perfil/:username', pagesController.showProfilePage);
 // Rota de vender protegida por autenticação e verificação de endereço
 router.get('/vender', isAuthPage, ensureAddress, pagesController.showSellPage);
 
-// Nova rota para o formulário da página de perfil
-router.post('/profile/update', isAuthPage, authController.updateAddress);
+
 
 // Rota para o Dashboard do Vendedor
 router.get('/dashboard-vendedor', isAuthPage, sellerController.showSellerDashboard);

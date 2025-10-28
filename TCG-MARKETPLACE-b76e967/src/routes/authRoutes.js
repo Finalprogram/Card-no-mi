@@ -22,6 +22,6 @@ router.post('/login', authController.loginUser);
 router.get('/logout', authController.logoutUser);
 
 // Rota para atualizar o endereço do perfil
-router.post('/profile/update', isAuthPage, authController.updateAddress);
+router.post('/profile/update', isAuthPage, authController.updateProfile);
 
 module.exports = router;

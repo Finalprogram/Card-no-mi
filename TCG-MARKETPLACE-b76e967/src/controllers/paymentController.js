@@ -97,15 +97,17 @@ async function createMercadoPagoPreference(req, res) {
     const postalCodeMatch = shippingAddress.match(/\d{5}-\d{3}/);
     const postalCode = postalCodeMatch ? postalCodeMatch[0].replace('-', '') : '00000000';
 
+    const baseUrl = process.env.BASE_URL.replace(/\/$/, '');
+
     const preferenceBody = {
       items,
       external_reference: newOrder._id.toString(),
       back_urls: {
-        success: `${process.env.BASE_URL}/payment/mercadopago/success`,
-        pending: `${process.env.BASE_URL}/payment/mercadopago/pending`,
-        failure: `${process.env.BASE_URL}/payment/mercadopago/failure`,
+        success: `${baseUrl}/payment/mercadopago/success`,
+        pending: `${baseUrl}/payment/mercadopago/pending`,
+        failure: `${baseUrl}/payment/mercadopago/failure`,
       },
-      notification_url: `${process.env.BASE_URL}/payment/mercadopago/webhook`,
+      notification_url: `${baseUrl}/payment/mercadopago/webhook`,
       payer: {
         name: user.fullName || user.username,
         surname: '', // Assuming no surname in user model, or parse from fullName

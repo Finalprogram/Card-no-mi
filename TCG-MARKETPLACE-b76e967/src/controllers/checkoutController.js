@@ -72,6 +72,7 @@ async function calculateCartFees(cartItems) {
 /** GET /checkout */
 async function showCheckout(req, res) {
   const cart = getCart(req);
+  const user = await User.findById(req.session.user.id);
   const items = (cart.items || []).map(it => ({
     key: it.key,
     cardId: it.cardId,
@@ -115,13 +116,15 @@ async function showCheckout(req, res) {
     groups, // <- usado para listar cartas por vendedor
     totals: calculatedTotals, // Pass the full calculated totals object
     message, // Pass the message to the template
+    user,
   });
 }
 
 /** POST /checkout/quote-detailed */
 async function quoteDetailed(req, res) {
   try {
-    const { zip } = req.body || {};
+    const user = await User.findById(req.session.user.id);
+    const zip = user.address.cep;
     if (!zip) return res.json({ ok: false, error: 'zip required' });
 
     const cart = getCart(req);
@@ -210,7 +213,9 @@ async function quoteDetailed(req, res) {
 /** POST /checkout/confirm  (ajuste ao seu fluxo de pedido) */
 async function confirm(req, res) {
   try {
-    const { shippingSelections, address } = req.body;
+    const { shippingSelections } = req.body;
+    const user = await User.findById(req.session.user.id);
+    const address = `${user.address.street}, ${user.address.number}, ${user.address.complement}, ${user.address.city} - ${user.address.state}`;
     const cart = getCart(req);
     if (!cart || !cart.items || cart.items.length === 0) {
       return res.status(400).send('Carrinho vazio ou inválido.');

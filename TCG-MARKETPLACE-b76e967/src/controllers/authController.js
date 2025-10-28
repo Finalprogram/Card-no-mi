@@ -12,10 +12,13 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    const { username, email, password, confirmPassword } = req.body;
+    const { fullName, username, email, phone, password, confirmPassword } = req.body;
     const errors = {};
 
     // --- VALIDAÇÃO ---
+    if (!fullName) {
+      errors.fullName = 'Nome completo é obrigatório.';
+    }
     if (!username) {
       errors.username = 'Nome de usuário é obrigatório.';
     }
@@ -52,8 +55,10 @@ const registerUser = async (req, res) => {
 
     // --- CRIAÇÃO DO NOVO USUÁRIO (SEMPRE PESSOA FÍSICA) ---
     const newUser = new User({
+      fullName,
       username,
       email,
+      phone,
       password: hashedPassword,
       accountType: 'individual', // Definido como 'individual' diretamente
       isVerified: false,
@@ -141,6 +146,10 @@ const loginUser = async (req, res) => {
       accountType: user.accountType
     };
     
+    if (user.firstLogin) {
+      return res.redirect('/welcome/step1');
+    }
+
     // Redireciona para uma página de painel do usuário (que criaremos no futuro)
     res.redirect(`/perfil/${user.username}`);
 
@@ -160,25 +169,23 @@ const logoutUser = (req, res) => {
   });
 };
 
-// Atualiza o endereço do usuário
-const updateAddress = async (req, res) => {
+// Atualiza os dados do perfil do usuário
+const updateProfile = async (req, res) => {
   const userId = req.session.user.id;
-  logger.info(`[updateAddress] Iniciando atualização para o usuário ID: ${userId}`);
-  logger.info('[updateAddress] Dados recebidos:', req.body);
+  logger.info(`[updateProfile] Iniciando atualização para o usuário ID: ${userId}`);
+  logger.info('[updateProfile] Dados recebidos:', req.body);
 
   try {
-    const { cep, street, number, complement, city, state } = req.body;
+    const { fullName, phone, cep, street, number, complement, city, state } = req.body;
 
-    if (!cep || !street || !number || !city || !state) {
-        // Se houver erro de validação, busca os dados do usuário para renderizar o formulário novamente com o erro
-        const user = await User.findById(userId);
-        // Nota: Precisamos de uma forma de passar o erro para a página de perfil.
-        // Por enquanto, apenas redirecionamos de volta com uma query string de erro (pode ser melhorado).
+    if (!fullName || !cep || !street || !number || !city || !state) {
         return res.redirect(`/perfil/${req.session.user.username}?error=validation`);
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, {
       $set: {
+        fullName: fullName,
+        phone: phone,
         'address.cep': cep,
         'address.street': street,
         'address.number': number,
@@ -186,22 +193,21 @@ const updateAddress = async (req, res) => {
         'address.city': city,
         'address.state': state,
       }
-    }, { new: true }); // { new: true } retorna o documento atualizado
+    }, { new: true });
 
     if (updatedUser) {
-        logger.info('[updateAddress] Usuário após a atualização:', updatedUser.toObject());
-        logger.info('[updateAddress] Objeto de endereço salvo:', updatedUser.toObject().address);
-        // Update the session user with the new address information
+        logger.info('[updateProfile] Usuário após a atualização:', updatedUser.toObject());
         req.session.user.address = updatedUser.address;
+        req.session.user.fullName = updatedUser.fullName;
+        req.session.user.phone = updatedUser.phone;
     } else {
-        logger.warn('[updateAddress] Nenhum usuário encontrado para atualizar.');
+        logger.warn('[updateProfile] Nenhum usuário encontrado para atualizar.');
     }
 
-    // Redireciona de volta para a página de perfil.
     res.redirect(`/perfil/${req.session.user.username}`);
 
   } catch (error) {
-    logger.error('Erro ao atualizar endereço:', error.message);
+    logger.error('Erro ao atualizar perfil:', error.message);
     logger.error(error.stack);
     res.status(500).send('Erro no servidor.');
   }
@@ -213,6 +219,6 @@ module.exports = {
   showLoginPage,
   loginUser,
   logoutUser,
-  updateAddress,
+  updateProfile, // Nome da função atualizado
   verifyEmail
 };
