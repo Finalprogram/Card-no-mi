@@ -2,6 +2,7 @@
 
 const User = require('../models/User');
 const Setting = require('../models/Setting'); // NEW IMPORT
+const Coupon = require('../models/Coupon');
 // const { cotarFrete } = require('../services/correiosClient'); // Comentado para trocar para Melhor Envio
 const { cotarFreteMelhorEnvio, addItemToCart } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');

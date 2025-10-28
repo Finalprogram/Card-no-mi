@@ -57,11 +57,21 @@ const applyCoupon = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro ao aplicar cupom:', error);
-    res.status(500).json({ success: false, message: 'Erro interno do servidor ao aplicar cupom.' });
+    console.error('Erro interno do servidor ao aplicar cupom.');
+  }
+};
+
+const removeCoupon = (req, res) => {
+  try {
+    delete req.session.coupon;
+    res.json({ success: true, message: 'Cupom removido com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao remover cupom:', error);
+    res.status(500).json({ success: false, message: 'Erro interno do servidor ao remover cupom.' });
   }
 };
 
 module.exports = {
   applyCoupon,
+  removeCoupon,
 };

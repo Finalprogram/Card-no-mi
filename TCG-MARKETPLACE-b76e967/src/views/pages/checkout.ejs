@@ -76,6 +76,7 @@
       <% if (totals.couponDiscount && totals.couponDiscount > 0) { %>
         <div style="display:flex; justify-content:space-between; margin:6px 0; color: var(--accent-primary);">
           <span>Desconto do Cupom</span><strong id="ck-coupon-discount">-<%= formatPrice(totals.couponDiscount) %></strong>
+          <button type="button" id="remove-coupon-btn" class="btn btn-sm btn-secondary" style="margin-left: 10px;">Remover</button>
         </div>
       <% } %>
       <div style="display:flex; justify-content:space-between; margin:6px 0;">

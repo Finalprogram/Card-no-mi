@@ -1,3 +1,242 @@
+<style>
+    body {
+        font-family: 'Inter', sans-serif;
+color: #F0F2F5;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .admin-header {
+        background-color: #242833;
+        border-bottom: 1px solid #3C4150;
+        color: var(--text-primary);
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .admin-header h1 {
+        margin: 0;
+        font-size: 1.8rem;
+        color: var(--text-primary);
+    }
+
+    /* Logout button styling */
+    .admin-header .logout-btn {
+        background-color: #8A4FFF;
+        border: none;
+        color: white;
+        padding: 8px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        text-decoration: none; /* Ensure it looks like a button */
+        transition: background-color 0.2s;
+    }
+    .admin-header .logout-btn:hover {
+        background-color: #A479FF;
+    }
+
+    .admin-wrapper {
+        display: flex;
+        flex: 1;
+    }
+
+    .admin-sidebar {
+        width: 250px;
+        background-color: #242833;
+        border-right: 1px solid #3C4150;
+        color: #98A0B3;
+        padding: 20px;
+        flex-shrink: 0;
+    }
+
+    .admin-sidebar nav ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .admin-sidebar nav li {
+        margin-bottom: 10px;
+    }
+
+    .admin-sidebar nav a {
+        color: #98A0B3;
+        text-decoration: none;
+        display: block;
+        padding: 10px 15px;
+        border-radius: 6px;
+        transition: background-color 0.2s, color 0.2s;
+    }
+
+    .admin-sidebar nav a:hover {
+        color: #F0F2F5;
+    }
+
+    .admin-sidebar nav a.active {
+        background-color: #8A4FFF;
+        color: white;
+    }
+
+    .admin-content {
+        flex-grow: 1;
+        padding: 20px;
+    }
+
+    /* Dashboard Cards Styling */
+    .card {
+        background-color: #242833;
+        border: 1px solid #3C4150;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        margin-bottom: 20px;
+        color: #F0F2F5;
+    }
+
+    .card-header {
+        background-color: #3C4150;
+        border-bottom: 1px solid #3C4150;
+        padding: 15px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #F0F2F5;
+    }
+
+    .card-body {
+        padding: 20px;
+    }
+
+    .card-title {
+        font-size: 2.5rem;
+        font-weight: 900;
+        color: #F0F2F5;
+        margin-bottom: 10px;
+        
+    }
+
+
+    /* Form elements styling */
+    .admin-form .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .admin-form label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #98A0B3;
+    }
+
+    .admin-form .form-control {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #3C4150;
+        border: 1px solid #3C4150;
+        border-radius: 4px;
+        color: #F0F2F5;
+        font-size: 1rem;
+    }
+
+    .admin-form .form-control:focus {
+        outline: none;
+        border-color: #8A4FFF;
+        box-shadow: 0 0 0 2px rgba(129, 92, 246, 0.2);
+    }
+
+    .admin-form .btn-primary {
+        background-color: #8A4FFF;
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 700;
+        transition: background-color 0.2s;
+    }
+
+    .admin-form .btn-primary:hover {
+        background-color: #A479FF;
+    }
+
+    /* Alert / Message Styling */
+    .alert {
+        padding: 1rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 4px;
+    }
+
+    .alert-success {
+        background-color: #28a74533; /* Green with transparency */
+        color: #28a745; /* Green text */
+        border-color: #28a745;
+    }
+
+    .alert-danger,
+    .alert-error {
+        background-color: #dc354533; /* Red with transparency */
+        color: #dc3545; /* Red text */
+        border-color: #dc3545;
+    }
+
+    /* Overrides for Bootstrap-like classes to fit theme if Bootstrap is not fully loaded */
+    .container {
+        width: 90%;
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .row {
+        display: flex;
+        flex-wrap: wrap;
+        margin-right: -15px;
+        margin-left: -15px;
+    }
+
+    .col-md-4, .col-md-6 {
+        position: relative;
+        width: 100%;
+        padding-right: 15px;
+        padding-left: 15px;
+    }
+
+    @media (min-width: 768px) {
+        .col-md-4 {
+            flex: 0 0 33.333333%;
+            max-width: 33.333333%;
+        }
+        .col-md-6 {
+            flex: 0 0 50%;
+            max-width: 50%;
+        }
+    }
+
+    .mt-4 {
+        margin-top: 1.5rem !important;
+    }
+
+    .mb-3 {
+        margin-bottom: 1rem !important;
+    }
+
+    .text-white {
+        color: #F0F2F5 !important;
+    }
+
+    .bg-primary {
+        background-color: #8A4FFF !important;
+    }
+
+    .bg-success {
+        background-color: #28a745 !important; /* Example strong green, can be variable */
+    }
+
+    .bg-info {
+        background-color: #17a2b8 !important; /* Example strong info blue, can be variable */
+    }
+</style>
 <div class="container mt-4">
     <h2>Admin Dashboard</h2>
     <div class="row">
@@ -36,6 +275,7 @@
                 <div class="card-header">Quick Actions</div>
                 <div class="card-body">
                     <a href="/admin/users" class="btn btn-primary">Manage Users</a>
+                    <a href="/admin/coupons/create" class="btn btn-primary" style="margin-left: 10px;">Create Coupon</a>
                     <!-- Add more quick actions here -->
                 </div>
             </div>
