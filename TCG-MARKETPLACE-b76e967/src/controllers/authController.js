@@ -12,12 +12,14 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    const { email, phone, password, confirmPassword } = req.body;
+    const { email, username, phone, password, confirmPassword } = req.body;
     const errors = {};
 
     // --- VALIDAÇÃO ---
 
-
+    if (!username) {
+      errors.username = 'Nome de usuário é obrigatório.';
+    }
     if (!email) {
       errors.email = 'Email é obrigatório.';
     }
@@ -26,6 +28,11 @@ const registerUser = async (req, res) => {
     }
     if (password !== confirmPassword) {
       errors.confirmPassword = 'As senhas não coincidem.';
+    }
+
+    const existingUserByUsername = await User.findOne({ username });
+    if (existingUserByUsername) {
+      errors.username = 'Este nome de usuário já está em uso.';
     }
 
     const existingUserByEmail = await User.findOne({ email });
@@ -48,6 +55,7 @@ const registerUser = async (req, res) => {
 
     // --- CRIAÇÃO DO NOVO USUÁRIO (SEMPRE PESSOA FÍSICA) ---
     const newUser = new User({
+      username,
       email,
       phone,
       password: hashedPassword,

@@ -31,7 +31,16 @@ const sendEmail = async (to, subject, htmlContent) => {
 };
 
 const sendVerificationEmail = async (to, token) => {
-  const verificationUrl = new URL('/auth/verify-email', process.env.BASE_URL);
+  let baseUrl = process.env.BASE_URL;
+  // Remove 'www.' if present
+  if (baseUrl.startsWith('www.')) {
+    baseUrl = baseUrl.substring(4);
+  }
+  // If no protocol is present, default to 'https://'
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  const verificationUrl = new URL('/auth/verify-email', baseUrl);
   verificationUrl.searchParams.set('token', token);
   const verificationLink = verificationUrl.toString();
 

@@ -1820,3 +1820,933 @@
 2025-10-28 15:50:46:     }
 2025-10-28 15:50:46:   ]
 2025-10-28 15:50:46: }
+2025-10-28 15:51:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:51:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:51:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:51:46:   code: 'ECONNREFUSED',
+2025-10-28 15:51:46:   [errors]: [
+2025-10-28 15:51:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:51:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:51:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:51:46:       errno: -4078,
+2025-10-28 15:51:46:       code: 'ECONNREFUSED',
+2025-10-28 15:51:46:       syscall: 'connect',
+2025-10-28 15:51:46:       address: '::1',
+2025-10-28 15:51:46:       port: 3100
+2025-10-28 15:51:46:     },
+2025-10-28 15:51:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:51:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:51:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:51:46:       errno: -4078,
+2025-10-28 15:51:46:       code: 'ECONNREFUSED',
+2025-10-28 15:51:46:       syscall: 'connect',
+2025-10-28 15:51:46:       address: '127.0.0.1',
+2025-10-28 15:51:46:       port: 3100
+2025-10-28 15:51:46:     }
+2025-10-28 15:51:46:   ]
+2025-10-28 15:51:46: }
+2025-10-28 15:52:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:52:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:52:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:52:46:   code: 'ECONNREFUSED',
+2025-10-28 15:52:46:   [errors]: [
+2025-10-28 15:52:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:52:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:52:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:52:46:       errno: -4078,
+2025-10-28 15:52:46:       code: 'ECONNREFUSED',
+2025-10-28 15:52:46:       syscall: 'connect',
+2025-10-28 15:52:46:       address: '::1',
+2025-10-28 15:52:46:       port: 3100
+2025-10-28 15:52:46:     },
+2025-10-28 15:52:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:52:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:52:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:52:46:       errno: -4078,
+2025-10-28 15:52:46:       code: 'ECONNREFUSED',
+2025-10-28 15:52:46:       syscall: 'connect',
+2025-10-28 15:52:46:       address: '127.0.0.1',
+2025-10-28 15:52:46:       port: 3100
+2025-10-28 15:52:46:     }
+2025-10-28 15:52:46:   ]
+2025-10-28 15:52:46: }
+2025-10-28 15:53:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:53:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:53:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:53:46:   code: 'ECONNREFUSED',
+2025-10-28 15:53:46:   [errors]: [
+2025-10-28 15:53:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:53:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:53:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:53:46:       errno: -4078,
+2025-10-28 15:53:46:       code: 'ECONNREFUSED',
+2025-10-28 15:53:46:       syscall: 'connect',
+2025-10-28 15:53:46:       address: '::1',
+2025-10-28 15:53:46:       port: 3100
+2025-10-28 15:53:46:     },
+2025-10-28 15:53:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:53:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:53:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:53:46:       errno: -4078,
+2025-10-28 15:53:46:       code: 'ECONNREFUSED',
+2025-10-28 15:53:46:       syscall: 'connect',
+2025-10-28 15:53:46:       address: '127.0.0.1',
+2025-10-28 15:53:46:       port: 3100
+2025-10-28 15:53:46:     }
+2025-10-28 15:53:46:   ]
+2025-10-28 15:53:46: }
+2025-10-28 15:54:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:54:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:54:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:54:46:   code: 'ECONNREFUSED',
+2025-10-28 15:54:46:   [errors]: [
+2025-10-28 15:54:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:54:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:54:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:54:46:       errno: -4078,
+2025-10-28 15:54:46:       code: 'ECONNREFUSED',
+2025-10-28 15:54:46:       syscall: 'connect',
+2025-10-28 15:54:46:       address: '::1',
+2025-10-28 15:54:46:       port: 3100
+2025-10-28 15:54:46:     },
+2025-10-28 15:54:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:54:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:54:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:54:46:       errno: -4078,
+2025-10-28 15:54:46:       code: 'ECONNREFUSED',
+2025-10-28 15:54:46:       syscall: 'connect',
+2025-10-28 15:54:46:       address: '127.0.0.1',
+2025-10-28 15:54:46:       port: 3100
+2025-10-28 15:54:46:     }
+2025-10-28 15:54:46:   ]
+2025-10-28 15:54:46: }
+2025-10-28 15:55:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:55:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:55:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:55:46:   code: 'ECONNREFUSED',
+2025-10-28 15:55:46:   [errors]: [
+2025-10-28 15:55:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:55:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:55:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:55:46:       errno: -4078,
+2025-10-28 15:55:46:       code: 'ECONNREFUSED',
+2025-10-28 15:55:46:       syscall: 'connect',
+2025-10-28 15:55:46:       address: '::1',
+2025-10-28 15:55:46:       port: 3100
+2025-10-28 15:55:46:     },
+2025-10-28 15:55:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:55:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:55:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:55:46:       errno: -4078,
+2025-10-28 15:55:46:       code: 'ECONNREFUSED',
+2025-10-28 15:55:46:       syscall: 'connect',
+2025-10-28 15:55:46:       address: '127.0.0.1',
+2025-10-28 15:55:46:       port: 3100
+2025-10-28 15:55:46:     }
+2025-10-28 15:55:46:   ]
+2025-10-28 15:55:46: }
+2025-10-28 15:56:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:56:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:56:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:56:46:   code: 'ECONNREFUSED',
+2025-10-28 15:56:46:   [errors]: [
+2025-10-28 15:56:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:56:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:56:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:56:46:       errno: -4078,
+2025-10-28 15:56:46:       code: 'ECONNREFUSED',
+2025-10-28 15:56:46:       syscall: 'connect',
+2025-10-28 15:56:46:       address: '::1',
+2025-10-28 15:56:46:       port: 3100
+2025-10-28 15:56:46:     },
+2025-10-28 15:56:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:56:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:56:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:56:46:       errno: -4078,
+2025-10-28 15:56:46:       code: 'ECONNREFUSED',
+2025-10-28 15:56:46:       syscall: 'connect',
+2025-10-28 15:56:46:       address: '127.0.0.1',
+2025-10-28 15:56:46:       port: 3100
+2025-10-28 15:56:46:     }
+2025-10-28 15:56:46:   ]
+2025-10-28 15:56:46: }
+2025-10-28 15:57:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:57:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:57:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:57:46:   code: 'ECONNREFUSED',
+2025-10-28 15:57:46:   [errors]: [
+2025-10-28 15:57:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:57:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:57:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:57:46:       errno: -4078,
+2025-10-28 15:57:46:       code: 'ECONNREFUSED',
+2025-10-28 15:57:46:       syscall: 'connect',
+2025-10-28 15:57:46:       address: '::1',
+2025-10-28 15:57:46:       port: 3100
+2025-10-28 15:57:46:     },
+2025-10-28 15:57:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:57:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:57:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:57:46:       errno: -4078,
+2025-10-28 15:57:46:       code: 'ECONNREFUSED',
+2025-10-28 15:57:46:       syscall: 'connect',
+2025-10-28 15:57:46:       address: '127.0.0.1',
+2025-10-28 15:57:46:       port: 3100
+2025-10-28 15:57:46:     }
+2025-10-28 15:57:46:   ]
+2025-10-28 15:57:46: }
+2025-10-28 15:58:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:58:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:58:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:58:46:   code: 'ECONNREFUSED',
+2025-10-28 15:58:46:   [errors]: [
+2025-10-28 15:58:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:58:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:58:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:58:46:       errno: -4078,
+2025-10-28 15:58:46:       code: 'ECONNREFUSED',
+2025-10-28 15:58:46:       syscall: 'connect',
+2025-10-28 15:58:46:       address: '::1',
+2025-10-28 15:58:46:       port: 3100
+2025-10-28 15:58:46:     },
+2025-10-28 15:58:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:58:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:58:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:58:46:       errno: -4078,
+2025-10-28 15:58:46:       code: 'ECONNREFUSED',
+2025-10-28 15:58:46:       syscall: 'connect',
+2025-10-28 15:58:46:       address: '127.0.0.1',
+2025-10-28 15:58:46:       port: 3100
+2025-10-28 15:58:46:     }
+2025-10-28 15:58:46:   ]
+2025-10-28 15:58:46: }
+2025-10-28 15:59:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:59:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:59:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:59:46:   code: 'ECONNREFUSED',
+2025-10-28 15:59:46:   [errors]: [
+2025-10-28 15:59:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:59:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:59:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:59:46:       errno: -4078,
+2025-10-28 15:59:46:       code: 'ECONNREFUSED',
+2025-10-28 15:59:46:       syscall: 'connect',
+2025-10-28 15:59:46:       address: '::1',
+2025-10-28 15:59:46:       port: 3100
+2025-10-28 15:59:46:     },
+2025-10-28 15:59:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:59:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:59:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:59:46:       errno: -4078,
+2025-10-28 15:59:46:       code: 'ECONNREFUSED',
+2025-10-28 15:59:46:       syscall: 'connect',
+2025-10-28 15:59:46:       address: '127.0.0.1',
+2025-10-28 15:59:46:       port: 3100
+2025-10-28 15:59:46:     }
+2025-10-28 15:59:46:   ]
+2025-10-28 15:59:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:00:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:00:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:00:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:00:46:   code: 'ECONNREFUSED',
+2025-10-28 16:00:46:   [errors]: [
+2025-10-28 16:00:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:00:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:00:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:00:46:       errno: -4078,
+2025-10-28 16:00:46:       code: 'ECONNREFUSED',
+2025-10-28 16:00:46:       syscall: 'connect',
+2025-10-28 16:00:46:       address: '::1',
+2025-10-28 16:00:46:       port: 3100
+2025-10-28 16:00:46:     },
+2025-10-28 16:00:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:00:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:00:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:00:46:       errno: -4078,
+2025-10-28 16:00:46:       code: 'ECONNREFUSED',
+2025-10-28 16:00:46:       syscall: 'connect',
+2025-10-28 16:00:46:       address: '127.0.0.1',
+2025-10-28 16:00:46:       port: 3100
+2025-10-28 16:00:46:     }
+2025-10-28 16:00:46:   ]
+2025-10-28 16:00:46: }
+{"base":"www.cardnomi.com.br","code":"ERR_INVALID_URL","input":"/auth/verify-email","level":"error","message":"Erro no registro: Invalid URL","stack":"TypeError: Invalid URL\n    at new URL (node:internal/url:816:29)\n    at sendVerificationEmail (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\emailService.js:34:27)\n    at registerUser (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\authController.js:71:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+2025-10-28 16:01:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:01:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:01:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:01:46:   code: 'ECONNREFUSED',
+2025-10-28 16:01:46:   [errors]: [
+2025-10-28 16:01:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:01:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:01:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:01:46:       errno: -4078,
+2025-10-28 16:01:46:       code: 'ECONNREFUSED',
+2025-10-28 16:01:46:       syscall: 'connect',
+2025-10-28 16:01:46:       address: '::1',
+2025-10-28 16:01:46:       port: 3100
+2025-10-28 16:01:46:     },
+2025-10-28 16:01:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:01:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:01:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:01:46:       errno: -4078,
+2025-10-28 16:01:46:       code: 'ECONNREFUSED',
+2025-10-28 16:01:46:       syscall: 'connect',
+2025-10-28 16:01:46:       address: '127.0.0.1',
+2025-10-28 16:01:46:       port: 3100
+2025-10-28 16:01:46:     }
+2025-10-28 16:01:46:   ]
+2025-10-28 16:01:46: }
+2025-10-28 16:02:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:02:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:02:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:02:46:   code: 'ECONNREFUSED',
+2025-10-28 16:02:46:   [errors]: [
+2025-10-28 16:02:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:02:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:02:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:02:46:       errno: -4078,
+2025-10-28 16:02:46:       code: 'ECONNREFUSED',
+2025-10-28 16:02:46:       syscall: 'connect',
+2025-10-28 16:02:46:       address: '::1',
+2025-10-28 16:02:46:       port: 3100
+2025-10-28 16:02:46:     },
+2025-10-28 16:02:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:02:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:02:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:02:46:       errno: -4078,
+2025-10-28 16:02:46:       code: 'ECONNREFUSED',
+2025-10-28 16:02:46:       syscall: 'connect',
+2025-10-28 16:02:46:       address: '127.0.0.1',
+2025-10-28 16:02:46:       port: 3100
+2025-10-28 16:02:46:     }
+2025-10-28 16:02:46:   ]
+2025-10-28 16:02:46: }
+{"base":"www.cardnomi.com.br","code":"ERR_INVALID_URL","input":"/auth/verify-email","level":"error","message":"Erro no registro: Invalid URL","stack":"TypeError: Invalid URL\n    at new URL (node:internal/url:816:29)\n    at sendVerificationEmail (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\emailService.js:34:27)\n    at registerUser (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\authController.js:71:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:03:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:03:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:03:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:03:46:   code: 'ECONNREFUSED',
+2025-10-28 16:03:46:   [errors]: [
+2025-10-28 16:03:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:03:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:03:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:03:46:       errno: -4078,
+2025-10-28 16:03:46:       code: 'ECONNREFUSED',
+2025-10-28 16:03:46:       syscall: 'connect',
+2025-10-28 16:03:46:       address: '::1',
+2025-10-28 16:03:46:       port: 3100
+2025-10-28 16:03:46:     },
+2025-10-28 16:03:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:03:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:03:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:03:46:       errno: -4078,
+2025-10-28 16:03:46:       code: 'ECONNREFUSED',
+2025-10-28 16:03:46:       syscall: 'connect',
+2025-10-28 16:03:46:       address: '127.0.0.1',
+2025-10-28 16:03:46:       port: 3100
+2025-10-28 16:03:46:     }
+2025-10-28 16:03:46:   ]
+2025-10-28 16:03:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Email enviado para murilozqz21@gmail.com com assunto: Verifique seu Email - TCG Marketplace"}
+2025-10-28 16:04:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:04:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:04:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:04:46:   code: 'ECONNREFUSED',
+2025-10-28 16:04:46:   [errors]: [
+2025-10-28 16:04:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:04:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:04:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:04:46:       errno: -4078,
+2025-10-28 16:04:46:       code: 'ECONNREFUSED',
+2025-10-28 16:04:46:       syscall: 'connect',
+2025-10-28 16:04:46:       address: '::1',
+2025-10-28 16:04:46:       port: 3100
+2025-10-28 16:04:46:     },
+2025-10-28 16:04:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:04:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:04:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:04:46:       errno: -4078,
+2025-10-28 16:04:46:       code: 'ECONNREFUSED',
+2025-10-28 16:04:46:       syscall: 'connect',
+2025-10-28 16:04:46:       address: '127.0.0.1',
+2025-10-28 16:04:46:       port: 3100
+2025-10-28 16:04:46:     }
+2025-10-28 16:04:46:   ]
+2025-10-28 16:04:46: }
+2025-10-28 16:05:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:05:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:05:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:05:46:   code: 'ECONNREFUSED',
+2025-10-28 16:05:46:   [errors]: [
+2025-10-28 16:05:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:05:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:05:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:05:46:       errno: -4078,
+2025-10-28 16:05:46:       code: 'ECONNREFUSED',
+2025-10-28 16:05:46:       syscall: 'connect',
+2025-10-28 16:05:46:       address: '::1',
+2025-10-28 16:05:46:       port: 3100
+2025-10-28 16:05:46:     },
+2025-10-28 16:05:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:05:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:05:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:05:46:       errno: -4078,
+2025-10-28 16:05:46:       code: 'ECONNREFUSED',
+2025-10-28 16:05:46:       syscall: 'connect',
+2025-10-28 16:05:46:       address: '127.0.0.1',
+2025-10-28 16:05:46:       port: 3100
+2025-10-28 16:05:46:     }
+2025-10-28 16:05:46:   ]
+2025-10-28 16:05:46: }
+2025-10-28 16:06:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:06:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:06:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:06:46:   code: 'ECONNREFUSED',
+2025-10-28 16:06:46:   [errors]: [
+2025-10-28 16:06:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:06:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:06:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:06:46:       errno: -4078,
+2025-10-28 16:06:46:       code: 'ECONNREFUSED',
+2025-10-28 16:06:46:       syscall: 'connect',
+2025-10-28 16:06:46:       address: '::1',
+2025-10-28 16:06:46:       port: 3100
+2025-10-28 16:06:46:     },
+2025-10-28 16:06:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:06:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:06:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:06:46:       errno: -4078,
+2025-10-28 16:06:46:       code: 'ECONNREFUSED',
+2025-10-28 16:06:46:       syscall: 'connect',
+2025-10-28 16:06:46:       address: '127.0.0.1',
+2025-10-28 16:06:46:       port: 3100
+2025-10-28 16:06:46:     }
+2025-10-28 16:06:46:   ]
+2025-10-28 16:06:46: }
+2025-10-28 16:07:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:07:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:07:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:07:46:   code: 'ECONNREFUSED',
+2025-10-28 16:07:46:   [errors]: [
+2025-10-28 16:07:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:07:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:07:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:07:46:       errno: -4078,
+2025-10-28 16:07:46:       code: 'ECONNREFUSED',
+2025-10-28 16:07:46:       syscall: 'connect',
+2025-10-28 16:07:46:       address: '::1',
+2025-10-28 16:07:46:       port: 3100
+2025-10-28 16:07:46:     },
+2025-10-28 16:07:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:07:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:07:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:07:46:       errno: -4078,
+2025-10-28 16:07:46:       code: 'ECONNREFUSED',
+2025-10-28 16:07:46:       syscall: 'connect',
+2025-10-28 16:07:46:       address: '127.0.0.1',
+2025-10-28 16:07:46:       port: 3100
+2025-10-28 16:07:46:     }
+2025-10-28 16:07:46:   ]
+2025-10-28 16:07:46: }
+2025-10-28 16:08:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:08:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:08:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:08:46:   code: 'ECONNREFUSED',
+2025-10-28 16:08:46:   [errors]: [
+2025-10-28 16:08:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:08:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:08:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:08:46:       errno: -4078,
+2025-10-28 16:08:46:       code: 'ECONNREFUSED',
+2025-10-28 16:08:46:       syscall: 'connect',
+2025-10-28 16:08:46:       address: '::1',
+2025-10-28 16:08:46:       port: 3100
+2025-10-28 16:08:46:     },
+2025-10-28 16:08:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:08:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:08:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:08:46:       errno: -4078,
+2025-10-28 16:08:46:       code: 'ECONNREFUSED',
+2025-10-28 16:08:46:       syscall: 'connect',
+2025-10-28 16:08:46:       address: '127.0.0.1',
+2025-10-28 16:08:46:       port: 3100
+2025-10-28 16:08:46:     }
+2025-10-28 16:08:46:   ]
+2025-10-28 16:08:46: }
+2025-10-28 16:09:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:09:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:09:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:09:46:   code: 'ECONNREFUSED',
+2025-10-28 16:09:46:   [errors]: [
+2025-10-28 16:09:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:09:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:09:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:09:46:       errno: -4078,
+2025-10-28 16:09:46:       code: 'ECONNREFUSED',
+2025-10-28 16:09:46:       syscall: 'connect',
+2025-10-28 16:09:46:       address: '::1',
+2025-10-28 16:09:46:       port: 3100
+2025-10-28 16:09:46:     },
+2025-10-28 16:09:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:09:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:09:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:09:46:       errno: -4078,
+2025-10-28 16:09:46:       code: 'ECONNREFUSED',
+2025-10-28 16:09:46:       syscall: 'connect',
+2025-10-28 16:09:46:       address: '127.0.0.1',
+2025-10-28 16:09:46:       port: 3100
+2025-10-28 16:09:46:     }
+2025-10-28 16:09:46:   ]
+2025-10-28 16:09:46: }
+2025-10-28 16:10:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:10:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:10:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:10:46:   code: 'ECONNREFUSED',
+2025-10-28 16:10:46:   [errors]: [
+2025-10-28 16:10:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:10:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:10:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:10:46:       errno: -4078,
+2025-10-28 16:10:46:       code: 'ECONNREFUSED',
+2025-10-28 16:10:46:       syscall: 'connect',
+2025-10-28 16:10:46:       address: '::1',
+2025-10-28 16:10:46:       port: 3100
+2025-10-28 16:10:46:     },
+2025-10-28 16:10:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:10:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:10:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:10:46:       errno: -4078,
+2025-10-28 16:10:46:       code: 'ECONNREFUSED',
+2025-10-28 16:10:46:       syscall: 'connect',
+2025-10-28 16:10:46:       address: '127.0.0.1',
+2025-10-28 16:10:46:       port: 3100
+2025-10-28 16:10:46:     }
+2025-10-28 16:10:46:   ]
+2025-10-28 16:10:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:11:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:11:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:11:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:11:46:   code: 'ECONNREFUSED',
+2025-10-28 16:11:46:   [errors]: [
+2025-10-28 16:11:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:11:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:11:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:11:46:       errno: -4078,
+2025-10-28 16:11:46:       code: 'ECONNREFUSED',
+2025-10-28 16:11:46:       syscall: 'connect',
+2025-10-28 16:11:46:       address: '::1',
+2025-10-28 16:11:46:       port: 3100
+2025-10-28 16:11:46:     },
+2025-10-28 16:11:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:11:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:11:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:11:46:       errno: -4078,
+2025-10-28 16:11:46:       code: 'ECONNREFUSED',
+2025-10-28 16:11:46:       syscall: 'connect',
+2025-10-28 16:11:46:       address: '127.0.0.1',
+2025-10-28 16:11:46:       port: 3100
+2025-10-28 16:11:46:     }
+2025-10-28 16:11:46:   ]
+2025-10-28 16:11:46: }
+{"level":"info","message":"Email enviado para murilozqz21@gmail.com com assunto: Verifique seu Email - TCG Marketplace"}
+2025-10-28 16:12:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:12:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:12:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:12:46:   code: 'ECONNREFUSED',
+2025-10-28 16:12:46:   [errors]: [
+2025-10-28 16:12:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:12:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:12:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:12:46:       errno: -4078,
+2025-10-28 16:12:46:       code: 'ECONNREFUSED',
+2025-10-28 16:12:46:       syscall: 'connect',
+2025-10-28 16:12:46:       address: '::1',
+2025-10-28 16:12:46:       port: 3100
+2025-10-28 16:12:46:     },
+2025-10-28 16:12:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:12:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:12:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:12:46:       errno: -4078,
+2025-10-28 16:12:46:       code: 'ECONNREFUSED',
+2025-10-28 16:12:46:       syscall: 'connect',
+2025-10-28 16:12:46:       address: '127.0.0.1',
+2025-10-28 16:12:46:       port: 3100
+2025-10-28 16:12:46:     }
+2025-10-28 16:12:46:   ]
+2025-10-28 16:12:46: }
+2025-10-28 16:13:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:13:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:13:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:13:46:   code: 'ECONNREFUSED',
+2025-10-28 16:13:46:   [errors]: [
+2025-10-28 16:13:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:13:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:13:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:13:46:       errno: -4078,
+2025-10-28 16:13:46:       code: 'ECONNREFUSED',
+2025-10-28 16:13:46:       syscall: 'connect',
+2025-10-28 16:13:46:       address: '::1',
+2025-10-28 16:13:46:       port: 3100
+2025-10-28 16:13:46:     },
+2025-10-28 16:13:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:13:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:13:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:13:46:       errno: -4078,
+2025-10-28 16:13:46:       code: 'ECONNREFUSED',
+2025-10-28 16:13:46:       syscall: 'connect',
+2025-10-28 16:13:46:       address: '127.0.0.1',
+2025-10-28 16:13:46:       port: 3100
+2025-10-28 16:13:46:     }
+2025-10-28 16:13:46:   ]
+2025-10-28 16:13:46: }
+2025-10-28 16:14:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:14:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:14:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:14:46:   code: 'ECONNREFUSED',
+2025-10-28 16:14:46:   [errors]: [
+2025-10-28 16:14:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:14:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:14:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:14:46:       errno: -4078,
+2025-10-28 16:14:46:       code: 'ECONNREFUSED',
+2025-10-28 16:14:46:       syscall: 'connect',
+2025-10-28 16:14:46:       address: '::1',
+2025-10-28 16:14:46:       port: 3100
+2025-10-28 16:14:46:     },
+2025-10-28 16:14:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:14:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:14:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:14:46:       errno: -4078,
+2025-10-28 16:14:46:       code: 'ECONNREFUSED',
+2025-10-28 16:14:46:       syscall: 'connect',
+2025-10-28 16:14:46:       address: '127.0.0.1',
+2025-10-28 16:14:46:       port: 3100
+2025-10-28 16:14:46:     }
+2025-10-28 16:14:46:   ]
+2025-10-28 16:14:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:15:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:15:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:15:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:15:46:   code: 'ECONNREFUSED',
+2025-10-28 16:15:46:   [errors]: [
+2025-10-28 16:15:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:15:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:15:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:15:46:       errno: -4078,
+2025-10-28 16:15:46:       code: 'ECONNREFUSED',
+2025-10-28 16:15:46:       syscall: 'connect',
+2025-10-28 16:15:46:       address: '::1',
+2025-10-28 16:15:46:       port: 3100
+2025-10-28 16:15:46:     },
+2025-10-28 16:15:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:15:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:15:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:15:46:       errno: -4078,
+2025-10-28 16:15:46:       code: 'ECONNREFUSED',
+2025-10-28 16:15:46:       syscall: 'connect',
+2025-10-28 16:15:46:       address: '127.0.0.1',
+2025-10-28 16:15:46:       port: 3100
+2025-10-28 16:15:46:     }
+2025-10-28 16:15:46:   ]
+2025-10-28 16:15:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"base":"cardnomi.com.br","code":"ERR_INVALID_URL","input":"/auth/verify-email","level":"error","message":"Erro no registro: Invalid URL","stack":"TypeError: Invalid URL\n    at new URL (node:internal/url:816:29)\n    at sendVerificationEmail (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\emailService.js:38:27)\n    at registerUser (C:\\Users\\Murilo-PC\\Documents\\GitHub\\Nova pasta\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\authController.js:71:11)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:16:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:16:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:16:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:16:46:   code: 'ECONNREFUSED',
+2025-10-28 16:16:46:   [errors]: [
+2025-10-28 16:16:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:16:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:16:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:16:46:       errno: -4078,
+2025-10-28 16:16:46:       code: 'ECONNREFUSED',
+2025-10-28 16:16:46:       syscall: 'connect',
+2025-10-28 16:16:46:       address: '::1',
+2025-10-28 16:16:46:       port: 3100
+2025-10-28 16:16:46:     },
+2025-10-28 16:16:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:16:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:16:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:16:46:       errno: -4078,
+2025-10-28 16:16:46:       code: 'ECONNREFUSED',
+2025-10-28 16:16:46:       syscall: 'connect',
+2025-10-28 16:16:46:       address: '127.0.0.1',
+2025-10-28 16:16:46:       port: 3100
+2025-10-28 16:16:46:     }
+2025-10-28 16:16:46:   ]
+2025-10-28 16:16:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:17:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:17:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:17:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:17:46:   code: 'ECONNREFUSED',
+2025-10-28 16:17:46:   [errors]: [
+2025-10-28 16:17:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:17:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:17:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:17:46:       errno: -4078,
+2025-10-28 16:17:46:       code: 'ECONNREFUSED',
+2025-10-28 16:17:46:       syscall: 'connect',
+2025-10-28 16:17:46:       address: '::1',
+2025-10-28 16:17:46:       port: 3100
+2025-10-28 16:17:46:     },
+2025-10-28 16:17:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:17:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:17:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:17:46:       errno: -4078,
+2025-10-28 16:17:46:       code: 'ECONNREFUSED',
+2025-10-28 16:17:46:       syscall: 'connect',
+2025-10-28 16:17:46:       address: '127.0.0.1',
+2025-10-28 16:17:46:       port: 3100
+2025-10-28 16:17:46:     }
+2025-10-28 16:17:46:   ]
+2025-10-28 16:17:46: }
+{"level":"info","message":"Email enviado para murilozqz21@gmail.com com assunto: Verifique seu Email - TCG Marketplace"}
+2025-10-28 16:18:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:18:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:18:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:18:46:   code: 'ECONNREFUSED',
+2025-10-28 16:18:46:   [errors]: [
+2025-10-28 16:18:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:18:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:18:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:18:46:       errno: -4078,
+2025-10-28 16:18:46:       code: 'ECONNREFUSED',
+2025-10-28 16:18:46:       syscall: 'connect',
+2025-10-28 16:18:46:       address: '::1',
+2025-10-28 16:18:46:       port: 3100
+2025-10-28 16:18:46:     },
+2025-10-28 16:18:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:18:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:18:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:18:46:       errno: -4078,
+2025-10-28 16:18:46:       code: 'ECONNREFUSED',
+2025-10-28 16:18:46:       syscall: 'connect',
+2025-10-28 16:18:46:       address: '127.0.0.1',
+2025-10-28 16:18:46:       port: 3100
+2025-10-28 16:18:46:     }
+2025-10-28 16:18:46:   ]
+2025-10-28 16:18:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:19:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:19:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:19:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:19:46:   code: 'ECONNREFUSED',
+2025-10-28 16:19:46:   [errors]: [
+2025-10-28 16:19:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:19:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:19:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:19:46:       errno: -4078,
+2025-10-28 16:19:46:       code: 'ECONNREFUSED',
+2025-10-28 16:19:46:       syscall: 'connect',
+2025-10-28 16:19:46:       address: '::1',
+2025-10-28 16:19:46:       port: 3100
+2025-10-28 16:19:46:     },
+2025-10-28 16:19:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:19:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:19:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:19:46:       errno: -4078,
+2025-10-28 16:19:46:       code: 'ECONNREFUSED',
+2025-10-28 16:19:46:       syscall: 'connect',
+2025-10-28 16:19:46:       address: '127.0.0.1',
+2025-10-28 16:19:46:       port: 3100
+2025-10-28 16:19:46:     }
+2025-10-28 16:19:46:   ]
+2025-10-28 16:19:46: }
+{"level":"info","message":"Email enviado para murilozqz21@gmail.com com assunto: Verifique seu Email - TCG Marketplace"}
+2025-10-28 16:20:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:20:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:20:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:20:46:   code: 'ECONNREFUSED',
+2025-10-28 16:20:46:   [errors]: [
+2025-10-28 16:20:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:20:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:20:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:20:46:       errno: -4078,
+2025-10-28 16:20:46:       code: 'ECONNREFUSED',
+2025-10-28 16:20:46:       syscall: 'connect',
+2025-10-28 16:20:46:       address: '::1',
+2025-10-28 16:20:46:       port: 3100
+2025-10-28 16:20:46:     },
+2025-10-28 16:20:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:20:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:20:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:20:46:       errno: -4078,
+2025-10-28 16:20:46:       code: 'ECONNREFUSED',
+2025-10-28 16:20:46:       syscall: 'connect',
+2025-10-28 16:20:46:       address: '127.0.0.1',
+2025-10-28 16:20:46:       port: 3100
+2025-10-28 16:20:46:     }
+2025-10-28 16:20:46:   ]
+2025-10-28 16:20:46: }
+2025-10-28 16:21:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:21:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:21:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:21:46:   code: 'ECONNREFUSED',
+2025-10-28 16:21:46:   [errors]: [
+2025-10-28 16:21:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:21:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:21:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:21:46:       errno: -4078,
+2025-10-28 16:21:46:       code: 'ECONNREFUSED',
+2025-10-28 16:21:46:       syscall: 'connect',
+2025-10-28 16:21:46:       address: '::1',
+2025-10-28 16:21:46:       port: 3100
+2025-10-28 16:21:46:     },
+2025-10-28 16:21:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:21:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:21:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:21:46:       errno: -4078,
+2025-10-28 16:21:46:       code: 'ECONNREFUSED',
+2025-10-28 16:21:46:       syscall: 'connect',
+2025-10-28 16:21:46:       address: '127.0.0.1',
+2025-10-28 16:21:46:       port: 3100
+2025-10-28 16:21:46:     }
+2025-10-28 16:21:46:   ]
+2025-10-28 16:21:46: }
+2025-10-28 16:22:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:22:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:22:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:22:46:   code: 'ECONNREFUSED',
+2025-10-28 16:22:46:   [errors]: [
+2025-10-28 16:22:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:22:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:22:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:22:46:       errno: -4078,
+2025-10-28 16:22:46:       code: 'ECONNREFUSED',
+2025-10-28 16:22:46:       syscall: 'connect',
+2025-10-28 16:22:46:       address: '::1',
+2025-10-28 16:22:46:       port: 3100
+2025-10-28 16:22:46:     },
+2025-10-28 16:22:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:22:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:22:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:22:46:       errno: -4078,
+2025-10-28 16:22:46:       code: 'ECONNREFUSED',
+2025-10-28 16:22:46:       syscall: 'connect',
+2025-10-28 16:22:46:       address: '127.0.0.1',
+2025-10-28 16:22:46:       port: 3100
+2025-10-28 16:22:46:     }
+2025-10-28 16:22:46:   ]
+2025-10-28 16:22:46: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 16:23:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:23:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:23:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:23:46:   code: 'ECONNREFUSED',
+2025-10-28 16:23:46:   [errors]: [
+2025-10-28 16:23:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:23:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:23:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:23:46:       errno: -4078,
+2025-10-28 16:23:46:       code: 'ECONNREFUSED',
+2025-10-28 16:23:46:       syscall: 'connect',
+2025-10-28 16:23:46:       address: '::1',
+2025-10-28 16:23:46:       port: 3100
+2025-10-28 16:23:46:     },
+2025-10-28 16:23:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:23:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:23:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:23:46:       errno: -4078,
+2025-10-28 16:23:46:       code: 'ECONNREFUSED',
+2025-10-28 16:23:46:       syscall: 'connect',
+2025-10-28 16:23:46:       address: '127.0.0.1',
+2025-10-28 16:23:46:       port: 3100
+2025-10-28 16:23:46:     }
+2025-10-28 16:23:46:   ]
+2025-10-28 16:23:46: }
+2025-10-28 16:24:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:24:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:24:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:24:46:   code: 'ECONNREFUSED',
+2025-10-28 16:24:46:   [errors]: [
+2025-10-28 16:24:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:24:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:24:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:24:46:       errno: -4078,
+2025-10-28 16:24:46:       code: 'ECONNREFUSED',
+2025-10-28 16:24:46:       syscall: 'connect',
+2025-10-28 16:24:46:       address: '::1',
+2025-10-28 16:24:46:       port: 3100
+2025-10-28 16:24:46:     },
+2025-10-28 16:24:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:24:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:24:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:24:46:       errno: -4078,
+2025-10-28 16:24:46:       code: 'ECONNREFUSED',
+2025-10-28 16:24:46:       syscall: 'connect',
+2025-10-28 16:24:46:       address: '127.0.0.1',
+2025-10-28 16:24:46:       port: 3100
+2025-10-28 16:24:46:     }
+2025-10-28 16:24:46:   ]
+2025-10-28 16:24:46: }
+2025-10-28 16:25:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:25:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:25:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:25:46:   code: 'ECONNREFUSED',
+2025-10-28 16:25:46:   [errors]: [
+2025-10-28 16:25:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:25:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:25:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:25:46:       errno: -4078,
+2025-10-28 16:25:46:       code: 'ECONNREFUSED',
+2025-10-28 16:25:46:       syscall: 'connect',
+2025-10-28 16:25:46:       address: '::1',
+2025-10-28 16:25:46:       port: 3100
+2025-10-28 16:25:46:     },
+2025-10-28 16:25:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:25:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:25:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:25:46:       errno: -4078,
+2025-10-28 16:25:46:       code: 'ECONNREFUSED',
+2025-10-28 16:25:46:       syscall: 'connect',
+2025-10-28 16:25:46:       address: '127.0.0.1',
+2025-10-28 16:25:46:       port: 3100
+2025-10-28 16:25:46:     }
+2025-10-28 16:25:46:   ]
+2025-10-28 16:25:46: }
+{"level":"info","message":"Email enviado para murilozqz21@gmail.com com assunto: Verifique seu Email - TCG Marketplace"}
+2025-10-28 16:26:47: AggregateError [ECONNREFUSED]: 
+2025-10-28 16:26:47:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 16:26:47:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 16:26:47:   code: 'ECONNREFUSED',
+2025-10-28 16:26:47:   [errors]: [
+2025-10-28 16:26:47:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 16:26:47:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:26:47:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:26:47:       errno: -4078,
+2025-10-28 16:26:47:       code: 'ECONNREFUSED',
+2025-10-28 16:26:47:       syscall: 'connect',
+2025-10-28 16:26:47:       address: '::1',
+2025-10-28 16:26:47:       port: 3100
+2025-10-28 16:26:47:     },
+2025-10-28 16:26:47:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 16:26:47:         at createConnectionError (node:net:1651:14)
+2025-10-28 16:26:47:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 16:26:47:       errno: -4078,
+2025-10-28 16:26:47:       code: 'ECONNREFUSED',
+2025-10-28 16:26:47:       syscall: 'connect',
+2025-10-28 16:26:47:       address: '127.0.0.1',
+2025-10-28 16:26:47:       port: 3100
+2025-10-28 16:26:47:     }
+2025-10-28 16:26:47:   ]
+2025-10-28 16:26:47: }
