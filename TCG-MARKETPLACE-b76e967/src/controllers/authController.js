@@ -12,13 +12,11 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    const { fullName, username, email, phone, password, confirmPassword } = req.body;
+    const { username, email, phone, password, confirmPassword } = req.body;
     const errors = {};
 
     // --- VALIDAÇÃO ---
-    if (!fullName) {
-      errors.fullName = 'Nome completo é obrigatório.';
-    }
+
     if (!username) {
       errors.username = 'Nome de usuário é obrigatório.';
     }
@@ -55,7 +53,6 @@ const registerUser = async (req, res) => {
 
     // --- CRIAÇÃO DO NOVO USUÁRIO (SEMPRE PESSOA FÍSICA) ---
     const newUser = new User({
-      fullName,
       username,
       email,
       phone,

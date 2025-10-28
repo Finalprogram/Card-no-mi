@@ -3,20 +3,18 @@
 <head>
     <%- include('../partials/header') %>
     <title>Email Verificado - TCG Marketplace</title>
-    <meta http-equiv="refresh" content="5;url=/" />
+    <link rel="stylesheet" href="/css/verification-success.css">
+    <!-- Incluindo Font Awesome para o ícone -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
-<body class="auth-body">
-    <div class="container">
-    <%- include('../partials/navbar') %>
-    </div>
-    <main class="container">
-        <div class="glass-panel">
-            <h1>Email Verificado com Sucesso!</h1>
-            <p class="subtitle">Sua conta foi verificada com sucesso. Você será redirecionado para a página principal em 5 segundos.</p>
-            <p>Se você não for redirecionado, <a href="/">clique aqui</a>.</p>
+<body class="verification-success-body">
+    <div class="verification-container">
+        <div class="verification-icon">
+            <i class="fas fa-check-circle"></i>
         </div>
-    </main>
-    <script src="/js/main.js"></script>
-    <!-- v1.1 -->
+        <h1>Email Verificado com Sucesso!</h1>
+        <p>Sua conta foi ativada. Agora você pode fazer login e aproveitar todos os recursos da nossa plataforma.</p>
+        <a href="/login" class="btn-login">Ir para o Login</a>
+    </div>
 </body>
 </html>
