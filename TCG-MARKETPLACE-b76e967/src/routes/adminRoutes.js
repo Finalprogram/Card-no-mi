@@ -10,4 +10,7 @@ router.get('/dashboard', adminController.showDashboard);
 router.get('/users', adminController.listUsers);
 router.post('/users/:id/set-fee', isAdminApi, adminController.setFee);
 
+router.get('/coupons/create', adminController.showCreateCouponPage);
+router.post('/coupons', adminController.createCoupon);
+
 module.exports = router;

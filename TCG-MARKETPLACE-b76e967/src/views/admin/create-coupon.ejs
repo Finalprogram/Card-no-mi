@@ -1,0 +1,46 @@
+<div class="admin-panel">
+  <h1>Criar Novo Cupom</h1>
+
+  <% if (typeof message !== 'undefined' && message) { %>
+    <div class="alert alert-<%= message.type %>" role="alert">
+      <%= message.text %>
+    </div>
+  <% } %>
+
+  <form action="/admin/coupons" method="POST" class="admin-form">
+    <div class="form-group">
+      <label for="code">Código do Cupom</label>
+      <input type="text" id="code" name="code" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+      <label for="discountType">Tipo de Desconto</label>
+      <select id="discountType" name="discountType" class="form-control" required>
+        <option value="percentage">Porcentagem</option>
+        <option value="fixed">Valor Fixo</option>
+      </select>
+    </div>
+
+    <div class="form-group">
+      <label for="discountValue">Valor do Desconto</label>
+      <input type="number" id="discountValue" name="discountValue" class="form-control" step="0.01" required>
+    </div>
+
+    <div class="form-group">
+      <label for="expirationDate">Data de Expiração</label>
+      <input type="date" id="expirationDate" name="expirationDate" class="form-control" required>
+    </div>
+
+    <div class="form-group">
+      <label for="usageLimit">Limite de Usos</label>
+      <input type="number" id="usageLimit" name="usageLimit" class="form-control" value="1">
+    </div>
+
+    <div class="form-group">
+      <label for="minimumOrderAmount">Valor Mínimo do Pedido</label>
+      <input type="number" id="minimumOrderAmount" name="minimumOrderAmount" class="form-control" step="0.01" value="0">
+    </div>
+
+    <button type="submit" class="btn btn-primary">Criar Cupom</button>
+  </form>
+</div>

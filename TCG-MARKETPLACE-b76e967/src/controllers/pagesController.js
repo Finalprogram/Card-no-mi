@@ -22,7 +22,16 @@ const showHomePage = async (req, res) => {
 };
 const showProfilePage = async (req, res) => {
   try {
-    const userId = req.params.id;
+    let userId = req.params.id;
+
+    // If no ID is provided in the URL, try to get it from the session (logged-in user)
+    if (!userId) {
+      if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if not logged in
+      }
+      userId = req.session.user.id;
+    }
+
     const profileUser = await User.findById(userId);
 
     if (!profileUser) {
@@ -33,6 +42,7 @@ const showProfilePage = async (req, res) => {
     if (req.session.user && req.session.user.id === profileUser._id.toString()) {
       req.session.user = {
         id: profileUser._id.toString(), // Ensure ID is a string
+        username: profileUser.username,
         accountType: profileUser.accountType,
         address: profileUser.address, // Also update address if it changed
         // Add any other relevant user properties you want to keep in the session

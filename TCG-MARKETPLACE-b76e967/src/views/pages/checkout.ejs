@@ -16,10 +16,19 @@
       <h3 style="margin: 10px 0 6px;">Calcular Frete</h3>
       <div class="form-group">
         <label for="zip-input">CEP de Entrega</label>
-        <input class="form-control" id="zip-input" name="zip" placeholder="Digite seu CEP" value="<%= user.address.cep %>" readonly>
+        <input class="form-control" id="zip-input" name="zip" placeholder="Digite seu CEP" value="<%= user.address.cep %>">
       </div>
       <button type="button" id="calculate-shipping-btn" class="btn btn-secondary">Calcular</button>
       <div id="shipping-options-container" style="margin-top: 1rem;"></div>
+    </div>
+
+    <div class="coupon-section panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom: 20px;">
+      <h3 style="margin: 10px 0 6px;">Cupom de Desconto</h3>
+      <div class="form-group" style="display:flex; gap:10px;">
+        <input type="text" class="form-control" id="coupon-code-input" placeholder="Insira seu cupom" style="flex-grow:1;">
+        <button type="button" id="apply-coupon-btn" class="btn btn-secondary">Aplicar</button>
+      </div>
+      <div id="coupon-message" style="margin-top: 10px;"></div>
     </div>
 
     <hr style="border-color: var(--border); margin: 16px 0; opacity:.4">
@@ -64,6 +73,11 @@
       <div style="display:flex; justify-content:space-between; margin:6px 0;">
         <span>Frete</span><strong id="ck-shipping"><%= formatPrice(totals.shipping) %></strong>
       </div>
+      <% if (totals.couponDiscount && totals.couponDiscount > 0) { %>
+        <div style="display:flex; justify-content:space-between; margin:6px 0; color: var(--accent-primary);">
+          <span>Desconto do Cupom</span><strong id="ck-coupon-discount">-<%= formatPrice(totals.couponDiscount) %></strong>
+        </div>
+      <% } %>
       <div style="display:flex; justify-content:space-between; margin:6px 0;">
         <span>Taxa do Marketplace</span><strong id="ck-marketplace-fee"><%= formatPrice(totals.marketplaceFee) %></strong>
       </div>

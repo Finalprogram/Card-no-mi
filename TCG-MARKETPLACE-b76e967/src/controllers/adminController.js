@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Order = require('../models/Order');
 const Setting = require('../models/Setting');
+const Coupon = require('../models/Coupon');
 
 async function showDashboard(req, res) {
   try {
@@ -81,8 +82,54 @@ async function setFee(req, res) {
   }
 }
 
+async function showCreateCouponPage(req, res) {
+  res.render('admin/create-coupon', {
+    layout: 'layouts/admin',
+    pageTitle: 'Criar Novo Cupom',
+    message: req.session.message,
+  });
+  delete req.session.message;
+}
+
+async function createCoupon(req, res) {
+  try {
+    const { code, discountType, discountValue, expirationDate, usageLimit, minimumOrderAmount } = req.body;
+
+    // Basic validation
+    if (!code || !discountType || !discountValue || !expirationDate) {
+      req.session.message = { type: 'error', text: 'Por favor, preencha todos os campos obrigatórios.' };
+      return res.redirect('/admin/coupons/create');
+    }
+
+    const newCoupon = new Coupon({
+      code,
+      discountType,
+      discountValue: Number(discountValue),
+      expirationDate: new Date(expirationDate),
+      usageLimit: Number(usageLimit) || 1,
+      minimumOrderAmount: Number(minimumOrderAmount) || 0,
+    });
+
+    await newCoupon.save();
+
+    req.session.message = { type: 'success', text: 'Cupom criado com sucesso!' };
+    res.redirect('/admin/coupons/create');
+
+  } catch (error) {
+    console.error('Error creating coupon:', error);
+    if (error.code === 11000) { // Duplicate key error
+      req.session.message = { type: 'error', text: 'Código de cupom já existe. Por favor, escolha outro.' };
+    } else {
+      req.session.message = { type: 'error', text: 'Erro ao criar cupom.' };
+    }
+    res.redirect('/admin/coupons/create');
+  }
+}
+
 module.exports = {
   showDashboard,
   listUsers,
   setFee,
+  showCreateCouponPage,
+  createCoupon,
 };

@@ -252,14 +252,18 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 .card-item .card-image-container { transition: transform 0.2s ease-in-out; }
 .card-item .card-image-container:hover { transform: scale(1.6) translateY(-20%); }
 .card-item img { width: 100%; height: auto; display: block; border-radius: 6px; }
-.card-item h4 { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: auto; }
+.card-item h4 { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: auto; color: var(--text-primary); text-decoration: none !important; }
 
 .card-item a.card-link {
-  text-decoration: none;
-  color: inherit;
+  text-decoration: none !important;
+  color: var(--text-primary) !important;
   display: flex;
   flex-direction: column;
   flex-grow: 1;
+}
+.card-item a.card-link:visited,
+.card-item a.card-link:hover {
+  text-decoration: none !important;
 }
 .card-item p { color: var(--text-secondary); font-weight: 500; font-size: 0.9rem; }
 

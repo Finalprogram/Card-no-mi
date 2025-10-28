@@ -2750,3 +2750,33 @@
 2025-10-28 16:26:47:     }
 2025-10-28 16:26:47:   ]
 2025-10-28 16:26:47: }
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Email enviado para murilozqz21@gmail.com com assunto: Verifique seu Email - TCG Marketplace"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"Dados recebidos do frontend:"}
+{"0":{"cardId":"68e6ba0f16fc8fdc82ba359d","quantity":1},"1":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}

@@ -85,6 +85,15 @@ async function showCheckout(req, res) {
   // Use the new helper function to calculate fees and totals
   const calculatedTotals = await calculateCartFees(items);
 
+  // Apply coupon if present in session
+  let couponDiscount = 0;
+  if (req.session.coupon) {
+    couponDiscount = req.session.coupon.discountAmount;
+    calculatedTotals.grand = Number((calculatedTotals.grand - couponDiscount).toFixed(2));
+    calculatedTotals.subtotal = Number((calculatedTotals.subtotal - couponDiscount).toFixed(2));
+  }
+  calculatedTotals.couponDiscount = Number(couponDiscount.toFixed(2)); // Ensure couponDiscount is always present
+
   // agrupa por vendedor (this part needs to use calculatedTotals.processedItems)
   const map = new Map();
   for (const it of calculatedTotals.processedItems) { // Use processedItems here
@@ -202,6 +211,11 @@ async function quoteDetailed(req, res) {
       grand: Number((subtotal + shipping).toFixed(2)),
     };
 
+    // Apply coupon discount if present in session
+    if (req.session.coupon) {
+      totals.grand = Number((totals.grand - req.session.coupon.discountAmount).toFixed(2));
+    }
+
     res.json({ ok: true, packages, totals });
 
   } catch (e) {
@@ -272,7 +286,23 @@ async function confirm(req, res) {
     }
 
     const subtotal = cart.totalPrice || 0;
-    const grandTotal = subtotal + shippingTotal;
+    let grandTotal = subtotal + shippingTotal;
+    let couponDiscountAmount = 0;
+
+    // Apply coupon discount if present in session
+    if (req.session.coupon) {
+      couponDiscountAmount = req.session.coupon.discountAmount;
+      grandTotal = grandTotal - couponDiscountAmount;
+
+      // Increment coupon usage count
+      const coupon = await Coupon.findById(req.session.coupon.couponId);
+      if (coupon) {
+        coupon.usedCount += 1;
+        await coupon.save();
+      }
+      // Clear coupon from session after use
+      delete req.session.coupon;
+    }
 
     req.session.totals = {
       subtotal: Number(subtotal.toFixed(2)),
@@ -280,6 +310,7 @@ async function confirm(req, res) {
       grand: Number(grandTotal.toFixed(2)),
       marketplaceFee: Number(totalMarketplaceFee.toFixed(2)),
       sellerNet: Number(totalSellerNet.toFixed(2)),
+      couponDiscount: Number(couponDiscountAmount.toFixed(2)), // Add coupon discount to totals
     };
 
     // Store address and shipping selections in session for later use

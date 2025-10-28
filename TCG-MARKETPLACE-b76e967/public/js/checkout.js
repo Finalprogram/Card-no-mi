@@ -7,7 +7,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const shippingEl = document.getElementById('ck-shipping');
   const grandTotalEl = document.getElementById('ck-grand');
 
+  const couponCodeInput = document.getElementById('coupon-code-input');
+  const applyCouponBtn = document.getElementById('apply-coupon-btn');
+  const couponMessageEl = document.getElementById('coupon-message');
+  const couponDiscountEl = document.getElementById('ck-coupon-discount');
+
   let subtotal = parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'));
+  let currentCouponDiscount = 0; // Track current coupon discount
 
   if (calculateShippingBtn) {
     calculateShippingBtn.addEventListener('click', async () => {
@@ -37,6 +43,45 @@ document.addEventListener('DOMContentLoaded', () => {
       } catch (error) {
         console.error('Erro ao calcular o frete:', error);
         alert('Erro ao conectar com o servidor para calcular o frete.');
+      }
+    });
+  }
+
+  if (applyCouponBtn) {
+    applyCouponBtn.addEventListener('click', async () => {
+      const couponCode = couponCodeInput.value.trim();
+      if (!couponCode) {
+        couponMessageEl.innerHTML = '<div class="alert alert-warning">Por favor, insira um código de cupom.</div>';
+        return;
+      }
+
+      try {
+        const response = await fetch('/api/coupon/apply', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ couponCode, subtotal }),
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          currentCouponDiscount = data.discountAmount;
+          updateTotals({ subtotal: data.newTotal + data.discountAmount, shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: data.newTotal, couponDiscount: data.discountAmount });
+          couponMessageEl.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+        } else {
+          couponMessageEl.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+          currentCouponDiscount = 0; // Reset discount on error
+          // Recalculate totals without coupon if error
+          updateTotals({ subtotal: subtotal + currentCouponDiscount, shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: subtotal + parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), couponDiscount: 0 });
+        }
+      } catch (error) {
+        console.error('Erro ao aplicar cupom:', error);
+        couponMessageEl.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor para aplicar o cupom.</div>';
+        currentCouponDiscount = 0; // Reset discount on error
+        // Recalculate totals without coupon if error
+        updateTotals({ subtotal: subtotal + currentCouponDiscount, shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: subtotal + parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), couponDiscount: 0 });
       }
     });
   }
@@ -92,7 +137,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     shippingEl.textContent = formatPrice(shippingTotal);
-    grandTotalEl.textContent = formatPrice(subtotal + shippingTotal);
+    grandTotalEl.textContent = formatPrice(subtotal + shippingTotal - currentCouponDiscount);
   }
 
   function updateTotals(totals) {
@@ -101,6 +146,14 @@ document.addEventListener('DOMContentLoaded', () => {
       subtotalEl.textContent = formatPrice(totals.subtotal);
       shippingEl.textContent = formatPrice(totals.shipping);
       grandTotalEl.textContent = formatPrice(totals.grand);
+      if (couponDiscountEl) {
+        if (totals.couponDiscount && totals.couponDiscount > 0) {
+          couponDiscountEl.textContent = '- ' + formatPrice(totals.couponDiscount);
+          couponDiscountEl.closest('div').style.display = 'flex'; // Show the discount row
+        } else {
+          couponDiscountEl.closest('div').style.display = 'none'; // Hide the discount row
+        }
+      }
     }
   }
 

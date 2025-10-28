@@ -52,6 +52,7 @@ const paymentRoutes = require('./src/routes/paymentRoutes');
 const reviewRoutes = require('./src/routes/reviewRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const welcomeRoutes = require('./src/routes/welcomeRoutes');
+const couponRoutes = require('./src/routes/couponRoutes');
 
 // 2. Inicialização do App
 const app = express();
@@ -113,6 +114,7 @@ app.use('/', cardRoutes);
 app.use('/api', listRoutes);
 app.use('/', sellerRoutes);
 app.use('/api', listingRoutes);
+app.use('/api/coupon', couponRoutes);
 app.use('/cart', cartRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/payment', paymentRoutes);
