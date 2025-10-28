@@ -1758,3 +1758,65 @@
 {"level":"info","message":"MongoDB connected"}
 {"level":"info","message":"Servidor rodando em http://localhost:3000"}
 {"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 15:50:39: [dotenv@17.2.3] injecting env (11) from .env -- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild
+2025-10-28 15:50:41: [dotenv@17.2.3] injecting env (0) from .env -- tip: 🗂️ backup and recover secrets: https://dotenvx.com/ops
+2025-10-28 15:50:41: (node:12524) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+2025-10-28 15:50:41: (Use `node --trace-deprecation ...` to show where the warning was created)
+2025-10-28 15:50:41: (node:12524) [MONGODB DRIVER] Warning: useNewUrlParser is a deprecated option: useNewUrlParser has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+2025-10-28 15:50:41: (node:12524) [MONGODB DRIVER] Warning: useUnifiedTopology is a deprecated option: useUnifiedTopology has no effect since Node.js Driver version 4.0.0 and will be removed in the next major version
+2025-10-28 15:50:41: info: Servidor rodando em http://localhost:3000
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+2025-10-28 15:50:43: info: MongoDB connected
+2025-10-28 15:50:46: AggregateError [ECONNREFUSED]: 
+2025-10-28 15:50:46:     at internalConnectMultiple (node:net:1121:18)
+2025-10-28 15:50:46:     at afterConnectMultiple (node:net:1688:7) {
+2025-10-28 15:50:46:   code: 'ECONNREFUSED',
+2025-10-28 15:50:46:   [errors]: [
+2025-10-28 15:50:46:     Error: connect ECONNREFUSED ::1:3100
+2025-10-28 15:50:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:50:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:50:46:       errno: -4078,
+2025-10-28 15:50:46:       code: 'ECONNREFUSED',
+2025-10-28 15:50:46:       syscall: 'connect',
+2025-10-28 15:50:46:       address: '::1',
+2025-10-28 15:50:46:       port: 3100
+2025-10-28 15:50:46:     },
+2025-10-28 15:50:46:     Error: connect ECONNREFUSED 127.0.0.1:3100
+2025-10-28 15:50:46:         at createConnectionError (node:net:1651:14)
+2025-10-28 15:50:46:         at afterConnectMultiple (node:net:1681:16) {
+2025-10-28 15:50:46:       errno: -4078,
+2025-10-28 15:50:46:       code: 'ECONNREFUSED',
+2025-10-28 15:50:46:       syscall: 'connect',
+2025-10-28 15:50:46:       address: '127.0.0.1',
+2025-10-28 15:50:46:       port: 3100
+2025-10-28 15:50:46:     }
+2025-10-28 15:50:46:   ]
+2025-10-28 15:50:46: }

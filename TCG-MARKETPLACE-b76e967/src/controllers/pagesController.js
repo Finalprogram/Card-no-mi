@@ -22,8 +22,8 @@ const showHomePage = async (req, res) => {
 };
 const showProfilePage = async (req, res) => {
   try {
-    const username = req.params.username;
-    const profileUser = await User.findOne({ username: username });
+    const userId = req.params.id;
+    const profileUser = await User.findById(userId);
 
     if (!profileUser) {
       return res.status(404).send('Usuário não encontrado.');
@@ -33,7 +33,6 @@ const showProfilePage = async (req, res) => {
     if (req.session.user && req.session.user.id === profileUser._id.toString()) {
       req.session.user = {
         id: profileUser._id.toString(), // Ensure ID is a string
-        username: profileUser.username,
         accountType: profileUser.accountType,
         address: profileUser.address, // Also update address if it changed
         // Add any other relevant user properties you want to keep in the session
@@ -52,7 +51,7 @@ const showProfilePage = async (req, res) => {
     }
 
     const reviews = await Review.find({ seller: profileUser._id })
-                                .populate('buyer', 'username') // Popula apenas o username do comprador
+                                .populate('buyer', 'fullName') // Popula apenas o fullName do comprador
                                 .sort({ createdAt: -1 });
 
     // Calcula a média das avaliações
@@ -81,11 +80,7 @@ const showSellPage = (req, res) => {
   // No futuro, essa função também vai lidar com os resultados da busca.
   res.render('pages/sell', { searchResults: [] }); // Passamos um array vazio inicialmente
 };
-module.exports = {
-  showHomePage,
-  showProfilePage,
-  showSellPage,
-};
+
 
 const showMyListingsPage = async (req, res) => {
   try {

@@ -12,14 +12,12 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    const { username, email, phone, password, confirmPassword } = req.body;
+    const { email, phone, password, confirmPassword } = req.body;
     const errors = {};
 
     // --- VALIDAÇÃO ---
 
-    if (!username) {
-      errors.username = 'Nome de usuário é obrigatório.';
-    }
+
     if (!email) {
       errors.email = 'Email é obrigatório.';
     }
@@ -35,10 +33,7 @@ const registerUser = async (req, res) => {
       errors.email = 'Este email já está cadastrado.';
     }
 
-    const existingUserByUsername = await User.findOne({ username });
-    if (existingUserByUsername) {
-      errors.username = 'Este nome de usuário já está em uso.';
-    }
+
 
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ errors });
@@ -53,7 +48,6 @@ const registerUser = async (req, res) => {
 
     // --- CRIAÇÃO DO NOVO USUÁRIO (SEMPRE PESSOA FÍSICA) ---
     const newUser = new User({
-      username,
       email,
       phone,
       password: hashedPassword,
@@ -139,7 +133,6 @@ const loginUser = async (req, res) => {
     // Salvamos as informações do usuário na sessão para "lembrar" que ele está logado.
     req.session.user = {
       id: user._id,
-      username: user.username,
       accountType: user.accountType
     };
     
@@ -148,7 +141,7 @@ const loginUser = async (req, res) => {
     }
 
     // Redireciona para uma página de painel do usuário (que criaremos no futuro)
-    res.redirect(`/perfil/${user.username}`);
+    res.redirect(`/perfil/${user.id}`);
 
   } catch (error) {
     logger.error("Erro no login:", error);
@@ -176,7 +169,7 @@ const updateProfile = async (req, res) => {
     const { fullName, phone, cep, street, number, complement, city, state } = req.body;
 
     if (!fullName || !cep || !street || !number || !city || !state) {
-        return res.redirect(`/perfil/${req.session.user.username}?error=validation`);
+        return res.redirect(`/perfil/${req.session.user.id}?error=validation`);
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, {
@@ -201,7 +194,7 @@ const updateProfile = async (req, res) => {
         logger.warn('[updateProfile] Nenhum usuário encontrado para atualizar.');
     }
 
-    res.redirect(`/perfil/${req.session.user.username}`);
+    res.redirect(`/perfil/${req.session.user.id}`);
 
   } catch (error) {
     logger.error('Erro ao atualizar perfil:', error.message);
