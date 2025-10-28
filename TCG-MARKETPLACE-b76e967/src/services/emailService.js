@@ -1,8 +1,11 @@
 const nodemailer = require('nodemailer');
+const { URL } = require('url');
 const logger = require('../config/logger');
 
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.hostinger.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS,
@@ -28,7 +31,9 @@ const sendEmail = async (to, subject, htmlContent) => {
 };
 
 const sendVerificationEmail = async (to, token) => {
-  const verificationLink = `${process.env.BASE_URL}/auth/verify-email?token=${token}`;
+  const verificationUrl = new URL('/auth/verify-email', process.env.BASE_URL);
+  verificationUrl.searchParams.set('token', token);
+  const verificationLink = verificationUrl.toString();
 
   const subject = 'Verifique seu Email - TCG Marketplace';
   const htmlContent = `

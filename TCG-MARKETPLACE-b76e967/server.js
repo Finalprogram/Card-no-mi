@@ -7,7 +7,9 @@ const requiredEnv = [
     'CWS_TOKEN', 
     'CWS_CEP_ORIGEM',
     'MELHOR_ENVIO_TOKEN',
-    'MELHOR_ENVIO_USER_AGENT'
+    'MELHOR_ENVIO_USER_AGENT',
+    'EMAIL_USER',
+    'EMAIL_PASS'
 ];
 const missingEnv = requiredEnv.filter(v => !process.env[v]);
 

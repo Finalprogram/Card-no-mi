@@ -98,7 +98,7 @@ async function verifyEmail(req, res) {
     user.verificationTokenExpires = undefined;
     await user.save();
 
-    res.send('Email verificado com sucesso! Você já pode fazer login.');
+    res.render('pages/verification-success');
 
   } catch (error) {
     logger.error('Erro ao verificar email:', error);
