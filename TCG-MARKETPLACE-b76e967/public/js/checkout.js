@@ -12,9 +12,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const couponMessageEl = document.getElementById('coupon-message');
   const couponDiscountEl = document.getElementById('ck-coupon-discount');
   const removeCouponBtn = document.getElementById('remove-coupon-btn');
+  const couponInputGroup = document.querySelector('.coupon-section .form-group'); // Get the form-group div for coupon input
+  const couponDiscountRow = document.getElementById('coupon-discount-row'); // Get the coupon discount row
 
   let subtotal = parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'));
   let currentCouponDiscount = 0; // Track current coupon discount
+
+  // Function to update the visibility of coupon elements
+  function updateCouponDisplay(discount) {
+    console.log('updateCouponDisplay called with discount:', discount);
+    if (discount && discount > 0) {
+      console.log('Coupon active: Hiding input group, showing discount row.');
+      if (couponInputGroup) couponInputGroup.style.display = 'none';
+      if (couponDiscountRow) {
+        couponDiscountEl.textContent = '- ' + formatPrice(discount);
+        couponDiscountRow.style.display = 'flex'; // Show the discount row
+      }
+    } else {
+      console.log('No coupon active: Showing input group, hiding discount row.');
+      if (couponInputGroup) couponInputGroup.style.display = 'flex';
+      if (couponDiscountRow) {
+        couponDiscountRow.style.display = 'none'; // Hide the discount row
+      }
+    }
+  }
+
+  // Initialize coupon display based on server-rendered discount
+  const initialCouponDiscountElement = document.getElementById('ck-coupon-discount');
+  const initialCouponDiscount = initialCouponDiscountElement ? parseFloat(initialCouponDiscountElement.textContent.replace('-R$', '').replace('.', '').replace(',', '.')) : 0;
+  currentCouponDiscount = initialCouponDiscount > 0 ? initialCouponDiscount : 0;
+  updateCouponDisplay(currentCouponDiscount);
 
   if (calculateShippingBtn) {
     calculateShippingBtn.addEventListener('click', async () => {
@@ -69,20 +96,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (data.success) {
           currentCouponDiscount = data.discountAmount;
-          updateTotals({ subtotal: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: data.newTotal, couponDiscount: data.discountAmount });
+          // Pass current shipping value to updateTotals
+          const currentShipping = parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'));
+          updateTotals({ subtotal: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), shipping: currentShipping, grand: data.newTotal, couponDiscount: data.discountAmount });
           couponMessageEl.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+          updateCouponDisplay(currentCouponDiscount); // Update display after applying
         } else {
           couponMessageEl.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
           currentCouponDiscount = 0; // Reset discount on error
           // Recalculate totals without coupon if error
-          updateTotals({ subtotal: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) + parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), couponDiscount: 0 });
+          const currentShipping = parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'));
+          updateTotals({ subtotal: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), shipping: currentShipping, grand: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) + currentShipping, couponDiscount: 0 });
+          updateCouponDisplay(currentCouponDiscount); // Update display on error
         }
       } catch (error) {
         console.error('Erro ao aplicar cupom:', error);
         couponMessageEl.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor para aplicar o cupom.</div>';
         currentCouponDiscount = 0; // Reset discount on error
         // Recalculate totals without coupon if error
-        updateTotals({ subtotal: subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'), shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) + parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), couponDiscount: 0 });
+        const currentShipping = parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'));
+        updateTotals({ subtotal: subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'), shipping: currentShipping, grand: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) + currentShipping, couponDiscount: 0 });
+        updateCouponDisplay(currentCouponDiscount); // Update display on error
       }
     });
   }
@@ -104,7 +138,9 @@ document.addEventListener('DOMContentLoaded', () => {
           couponCodeInput.value = ''; // Clear input
           couponMessageEl.innerHTML = `<div class="alert alert-info">${data.message}</div>`;
           // Recalculate totals without coupon
-          updateTotals({ subtotal: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), shipping: parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), grand: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) + parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), couponDiscount: 0 });
+          const currentShipping = parseFloat(shippingEl.textContent.replace('R$', '').replace('.', '').replace(',', '.'));
+          updateTotals({ subtotal: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')), shipping: currentShipping, grand: parseFloat(subtotalEl.textContent.replace('R$', '').replace('.', '').replace(',', '.')) + currentShipping, couponDiscount: 0 });
+          updateCouponDisplay(currentCouponDiscount); // Update display after removing
         } else {
           couponMessageEl.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
         }
@@ -175,14 +211,8 @@ document.addEventListener('DOMContentLoaded', () => {
       subtotalEl.textContent = formatPrice(totals.subtotal);
       shippingEl.textContent = formatPrice(totals.shipping);
       grandTotalEl.textContent = formatPrice(totals.grand);
-      if (couponDiscountEl) {
-        if (totals.couponDiscount && totals.couponDiscount > 0) {
-          couponDiscountEl.textContent = '- ' + formatPrice(totals.couponDiscount);
-          couponDiscountEl.closest('div').style.display = 'flex'; // Show the discount row
-        } else {
-          couponDiscountEl.closest('div').style.display = 'none'; // Hide the discount row
-        }
-      }
+      // The coupon display logic is now handled by updateCouponDisplay
+      updateCouponDisplay(totals.couponDiscount);
     }
   }
 
