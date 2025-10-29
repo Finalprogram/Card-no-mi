@@ -9,6 +9,7 @@ const { isAuthApi } = require('../middleware/auth');
 router.get('/', checkout.showCheckout);
 router.post('/quote-detailed', checkout.quoteDetailed);
 router.post('/confirm', checkout.confirm);
+router.post('/get-updated-totals', checkout.getUpdatedTotals);
 
 
 module.exports = router;

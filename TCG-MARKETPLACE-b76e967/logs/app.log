@@ -2840,3 +2840,13 @@
 {"level":"info","message":"MongoDB connected"}
 {"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
 {"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}

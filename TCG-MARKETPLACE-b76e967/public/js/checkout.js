@@ -37,6 +37,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Function to fetch updated totals from the server and update the UI
+  async function fetchAndUpdateTotals() {
+    try {
+      const response = await fetch('/checkout/get-updated-totals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ shippingSelections: shippingSelectionsInput.value }),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        updateTotals(data.totals);
+      } else {
+        console.error('Error fetching updated totals:', data.error);
+      }
+    } catch (error) {
+      console.error('Error fetching updated totals:', error);
+    }
+  }
+
   // Initialize coupon display based on server-rendered discount
   const initialCouponDiscountElement = document.getElementById('ck-coupon-discount');
   const initialCouponDiscount = initialCouponDiscountElement ? parseFloat(initialCouponDiscountElement.textContent.replace('-R$', '').replace('.', '').replace(',', '.')) : 0;
@@ -98,19 +119,19 @@ document.addEventListener('DOMContentLoaded', () => {
           currentCouponDiscount = data.discountAmount;
           couponMessageEl.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
           updateCouponDisplay(currentCouponDiscount); // Update display after applying
-          recalculateTotal();
+          fetchAndUpdateTotals(); // Fetch updated totals from server
         } else {
           couponMessageEl.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
           currentCouponDiscount = 0; // Reset discount on error
           updateCouponDisplay(currentCouponDiscount); // Update display on error
-          recalculateTotal();
+          fetchAndUpdateTotals(); // Fetch updated totals from server
         }
       } catch (error) {
         console.error('Erro ao aplicar cupom:', error);
         couponMessageEl.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor para aplicar o cupom.</div>';
         currentCouponDiscount = 0; // Reset discount on error
         updateCouponDisplay(currentCouponDiscount); // Update display on error
-        recalculateTotal();
+        fetchAndUpdateTotals(); // Fetch updated totals from server
       }
     });
   }
@@ -132,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
           couponCodeInput.value = ''; // Clear input
           couponMessageEl.innerHTML = `<div class="alert alert-info">${data.message}</div>`;
           updateCouponDisplay(currentCouponDiscount); // Update display after removing
-          recalculateTotal();
+          fetchAndUpdateTotals(); // Fetch updated totals from server
         } else {
           couponMessageEl.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
         }
@@ -170,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.querySelectorAll('input[type="radio"][name^="shipping-option-"]').forEach(radio => {
       radio.addEventListener('change', () => {
         updateShippingSelections();
-        recalculateTotal();
+        fetchAndUpdateTotals(); // Fetch updated totals from server
       });
     });
   }
@@ -187,15 +208,16 @@ document.addEventListener('DOMContentLoaded', () => {
     shippingSelectionsInput.value = JSON.stringify(selections);
   }
 
-  function recalculateTotal() {
-    let shippingTotal = 0;
-    document.querySelectorAll('input[type="radio"][name^="shipping-option-"]:checked').forEach(radio => {
-      shippingTotal += parseFloat(radio.dataset.price);
-    });
+  // The recalculateTotal function is no longer needed as totals are fetched from the server
+  // function recalculateTotal() {
+  //   let shippingTotal = 0;
+  //   document.querySelectorAll('input[type="radio"][name^="shipping-option-"]:checked').forEach(radio => {
+  //     shippingTotal += parseFloat(radio.dataset.price);
+  //   });
 
-    shippingEl.textContent = formatPrice(shippingTotal);
-    grandTotalEl.textContent = formatPrice(subtotal + shippingTotal - currentCouponDiscount);
-  }
+  //   shippingEl.textContent = formatPrice(shippingTotal);
+  //   grandTotalEl.textContent = formatPrice(subtotal + shippingTotal - currentCouponDiscount);
+  // }
 
   function updateTotals(totals) {
     if (totals) {

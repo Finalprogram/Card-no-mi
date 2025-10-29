@@ -325,4 +325,47 @@ async function confirm(req, res) {
   }
 }
 
-module.exports = { showCheckout, quoteDetailed, confirm };
+
+async function getUpdatedTotals(req, res) {
+  try {
+    const cart = getCart(req);
+    const user = await User.findById(req.session.user.id);
+    const items = (cart.items || []).map(it => ({
+      key: it.key,
+      cardId: it.cardId,
+      vendorId: it.vendorId,
+      qty: Number(it.qty || 0),
+      price: toMoney(it.price),
+      meta: it.meta || {}
+    }));
+
+    const calculatedTotals = await calculateCartFees(items);
+
+    let shippingTotal = 0;
+    const { shippingSelections } = req.body;
+    if (shippingSelections) {
+      const selections = JSON.parse(shippingSelections);
+      shippingTotal = selections.reduce((total, selection) => total + selection.price, 0);
+    }
+
+    calculatedTotals.shipping = Number(shippingTotal.toFixed(2));
+    calculatedTotals.grand = Number((calculatedTotals.subtotal + shippingTotal).toFixed(2));
+
+    let couponDiscount = 0;
+    if (req.session.coupon) {
+      couponDiscount = req.session.coupon.discountAmount;
+      calculatedTotals.grand = Number((calculatedTotals.grand - couponDiscount).toFixed(2));
+      // Note: subtotal is usually before coupon discount, so we don't adjust it here.
+      // The coupon discount is a separate line item.
+    }
+    calculatedTotals.couponDiscount = Number(couponDiscount.toFixed(2));
+
+    return res.json({ ok: true, totals: calculatedTotals });
+
+  } catch (e) {
+    console.error('[checkout] getUpdatedTotals error:', e);
+    res.json({ ok: false, error: e.message || 'failed to get updated totals' });
+  }
+}
+
+module.exports = { showCheckout, quoteDetailed, confirm, getUpdatedTotals };
