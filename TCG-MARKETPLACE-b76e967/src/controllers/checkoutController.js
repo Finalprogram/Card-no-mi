@@ -327,6 +327,7 @@ async function confirm(req, res) {
 
 
 async function getUpdatedTotals(req, res) {
+  console.log('getUpdatedTotals called');
   try {
     const cart = getCart(req);
     const user = await User.findById(req.session.user.id);
@@ -343,6 +344,7 @@ async function getUpdatedTotals(req, res) {
 
     let shippingTotal = 0;
     const { shippingSelections } = req.body;
+    console.log('shippingSelections received:', shippingSelections);
     if (shippingSelections) {
       const selections = JSON.parse(shippingSelections);
       shippingTotal = selections.reduce((total, selection) => total + selection.price, 0);
