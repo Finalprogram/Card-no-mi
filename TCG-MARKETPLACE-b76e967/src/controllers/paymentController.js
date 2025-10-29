@@ -108,24 +108,27 @@ async function createMercadoPagoPreference(req, res) {
         failure: `${baseUrl}/payment/mercadopago/failure`,
       },
       notification_url: `${baseUrl}/payment/mercadopago/webhook`,
-      payer: {
-        name: user.fullName || user.username,
-        surname: '', // Assuming no surname in user model, or parse from fullName
-        email: user.email,
-        phone: {
-          area_code: user.phone ? user.phone.substring(0, 2) : '', // Assuming phone is like 11987654321
-          number: user.phone ? user.phone.substring(2) : '',
-        },
-        address: {
-          zip_code: postalCode,
-          street_name: streetName,
-          street_number: streetNumber,
-          neighborhood: neighborhood,
-          city: city,
-          state: state,
-        },
-      },
-      shipments: {
+              payer: {
+                name: user.fullName || user.username,
+                surname: '', // Assuming no surname in user model, or parse from fullName
+                email: user.email,
+                phone: {
+                  area_code: user.phone ? user.phone.substring(0, 2) : '', // Assuming phone is like 11987654321
+                  number: user.phone ? user.phone.substring(2) : '',
+                },
+                address: {
+                  zip_code: postalCode,
+                  street_name: streetName,
+                  street_number: streetNumber,
+                  neighborhood: neighborhood,
+                  city: city,
+                  state: state,
+                },
+                identification: {
+                  type: user.documentType || 'CPF', // Assuming user model has documentType
+                  number: user.documentNumber || '00000000000', // Assuming user model has documentNumber
+                },
+              },      shipments: {
         cost: totals.shipping,
         mode: 'not_specified', // 'not_specified', 'custom_shipping', 'me2', 'mercadopago_dropshipping'
         receiver_address: {
@@ -139,6 +142,11 @@ async function createMercadoPagoPreference(req, res) {
           state: state,
         },
       },
+      binary_mode: true,
+      payment_methods: {
+        installments: 1, // Força pagamento em 1x, ideal para PIX
+        default_installments: 1 // Define o número de parcelas padrão como 1
+      }
       // total_amount: totals.grand, // Deprecated, calculated from items
     };
 

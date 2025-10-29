@@ -2865,3 +2865,30 @@
 {"level":"info","message":"[updateProfile] Iniciando atualização para o usuário ID: 6900fcd1e9d01bfee8d0558d"}
 {"cep":"13273202","city":"Valinhos","complement":"","fullName":"Murilo queiroz machado","level":"info","message":"[updateProfile] Dados recebidos:","number":"163","phone":"19993955324","state":"SP","street":"valdomiro rossi "}
 {"__v":0,"_id":"6900fcd1e9d01bfee8d0558d","accountType":"admin","address":{"cep":"13273202","city":"Valinhos","complement":"","number":"163","state":"SP","street":"valdomiro rossi "},"createdAt":"2025-10-28T17:26:41.937Z","email":"murilobdf14@gmail.com","fee_override_percentage":null,"firstLogin":false,"fullName":"Murilo queiroz machado","isVerified":true,"level":"info","message":"[updateProfile] Usuário após a atualização:","password":"$2b$10$CI84jh8YioOB9OAPiq9yw.aL2t3W7UuRQ9bhylQBPLjypWd6FaMmG","phone":"19993955324","username":"Muliru","verificationToken":"815fc7902cbd6ce63404c875566c5f64431df20bd57ac392b26cc9f116924480","verificationTokenExpires":"2025-10-28T18:26:41.934Z"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #69024e60d896ed504d0fe7ae criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #69024fcb638aeffee96bb38d criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":2},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #690250da9c9e964ea152dd1b criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #690254b18f949c82b3a10975 criado para Mercado Pago."}
