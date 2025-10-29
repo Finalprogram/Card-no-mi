@@ -27,7 +27,7 @@
             position: relative;
         }
         .profile-average-rating .star-rating .star.half-filled::before {
-            content: '☆';
+            content: '★';
             position: absolute;
             left: 0;
             top: 0;
@@ -134,13 +134,9 @@
                 <h2>Meus Dados</h2>
                 <p>Este endereço será usado como origem para o cálculo de fretes.</p>
 
-                <% if (typeof error !== 'undefined' && error) { %>
-                    <div class="alert alert-danger">
-                        <%= error %>
-                    </div>
-                <% } %>
+                <div id="profile-message" class="mt-3"></div>
 
-                <form action="/profile/update" method="post" class="address-form">
+                <form id="profile-update-form" action="/auth/profile/update" method="post" class="address-form">
                     <div class="form-group">
                         <label>Nome Completo</label>
                         <input class="form-control" name="fullName" placeholder="Seu nome completo" value="<%= profileUser.fullName || '' %>" required>
@@ -274,5 +270,52 @@
         <%- include('../partials/footer') %>
     </div>
     <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const form = document.getElementById('profile-update-form');
+            const messageDiv = document.getElementById('profile-message');
+
+            if (form) {
+                form.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+
+                    const formData = new FormData(form);
+                    const data = {};
+                    formData.forEach((value, key) => {
+                        data[key] = value;
+                    });
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(data),
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            messageDiv.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
+                            // Optionally update UI elements with new data if needed
+                            // For example, update the displayed full name without a full reload
+                            const profileUsername = document.querySelector('.profile-username');
+                            if (profileUsername) profileUsername.textContent = data.fullName;
+                        } else {
+                            let errorMessage = result.message || 'Erro ao atualizar perfil.';
+                            if (result.errors) {
+                                errorMessage += '<ul class="mb-0">' + Object.values(result.errors).map(err => `<li>${err}</li>`).join('') + '</ul>';
+                            }
+                            messageDiv.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
+                        }
+                    } catch (error) {
+                        console.error('Erro ao enviar formulário:', error);
+                        messageDiv.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor.</div>';
+                    }
+                });
+            }
+        });
+    </script>
 </body>
 </html>

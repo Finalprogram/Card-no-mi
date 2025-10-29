@@ -175,9 +175,17 @@ const updateProfile = async (req, res) => {
 
   try {
     const { fullName, phone, cep, street, number, complement, city, state } = req.body;
+    const errors = {};
 
-    if (!fullName || !cep || !street || !number || !city || !state) {
-        return res.redirect(`/perfil/${req.session.user.id}?error=validation`);
+    if (!fullName) errors.fullName = 'Nome completo é obrigatório.';
+    if (!cep) errors.cep = 'CEP é obrigatório.';
+    if (!street) errors.street = 'Rua é obrigatória.';
+    if (!number) errors.number = 'Número é obrigatório.';
+    if (!city) errors.city = 'Cidade é obrigatória.';
+    if (!state) errors.state = 'Estado é obrigatório.';
+
+    if (Object.keys(errors).length > 0) {
+      return res.status(400).json({ success: false, message: 'Erro de validação', errors });
     }
 
     const updatedUser = await User.findByIdAndUpdate(userId, {
@@ -198,16 +206,16 @@ const updateProfile = async (req, res) => {
         req.session.user.address = updatedUser.address;
         req.session.user.fullName = updatedUser.fullName;
         req.session.user.phone = updatedUser.phone;
+        return res.json({ success: true, message: 'Perfil atualizado com sucesso!' });
     } else {
         logger.warn('[updateProfile] Nenhum usuário encontrado para atualizar.');
+        return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
     }
-
-    res.redirect(`/perfil/${req.session.user.id}`);
 
   } catch (error) {
     logger.error('Erro ao atualizar perfil:', error.message);
     logger.error(error.stack);
-    res.status(500).send('Erro no servidor.');
+    return res.status(500).json({ success: false, message: 'Erro no servidor ao atualizar perfil.' });
   }
 };
 
