@@ -4,7 +4,6 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const Listing = require('../models/Listing');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
-const paymentClient = new Payment(client);
 const logger = require('../config/logger');
 const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
@@ -24,6 +23,7 @@ async function getSellerOriginCep(sellerId) {
 
 // Configura as credenciais do Mercado Pago
 const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN, options: { timeout: 5000 } });
+const paymentClient = new Payment(client);
 logger.info('[payment] Mercado Pago Access Token sendo usado (parcial): ', process.env.MERCADO_PAGO_ACCESS_TOKEN ? process.env.MERCADO_PAGO_ACCESS_TOKEN.substring(0, 10) + '...' : 'Não definido');
 const preference = new Preference(client);
 
