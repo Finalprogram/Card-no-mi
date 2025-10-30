@@ -307,6 +307,12 @@ async function handleMercadoPagoWebhook(req, res) {
             continue;
           }
 
+          const seller = await User.findById(sellerId);
+          if (!seller) {
+            logger.warn(`[payment] Vendedor ${sellerId} não encontrado para o pedido ${order._id}.`);
+            continue;
+          }
+
           const cepOrigem = await getSellerOriginCep(sellerId);
           const { comprimentoCm, larguraCm, alturaCm, pesoKg } = estimatePackageDims(sellerItems);
           const insuranceValue = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
@@ -317,8 +323,7 @@ async function handleMercadoPagoWebhook(req, res) {
             from: {
               name: sellerItems[0].sellerName || 'Vendedor', // Usar nome do vendedor
               phone: '99999999999', // Placeholder, idealmente do cadastro do vendedor
-              email: 'email@vendedor.com', // Placeholder
-              document: '00000000000', // Placeholder CPF/CNPJ
+              document: seller.documentNumber || '00000000000', // Placeholder CPF/CNPJ
               company_document: null,
               state_register: null,
               address: 'Rua do Vendedor', // Placeholder
@@ -334,15 +339,15 @@ async function handleMercadoPagoWebhook(req, res) {
               name: order.user.name || 'Comprador', // Idealmente do cadastro do comprador
               phone: '99999999999', // Placeholder
               email: order.user.email || 'email@comprador.com', // Placeholder
-              document: '00000000000', // Placeholder CPF/CNPJ
-              address: order.shippingAddress, // Endereço completo do comprador
+              document: order.user.documentNumber || '00000000000', // Placeholder CPF/CNPJ
+              address: `${order.shippingAddress.street}, ${order.shippingAddress.number} - ${order.shippingAddress.neighborhood}, ${order.shippingAddress.city} - ${order.shippingAddress.state}`.trim(), // Endereço completo do comprador
               complement: null,
               number: '1', // Placeholder
               district: 'Bairro do Comprador', // Placeholder
               city: 'Cidade do Comprador', // Placeholder
               state: 'MG', // Placeholder
               country_id: 'BR',
-              postal_code: order.shippingAddress.match(/\d{5}-\d{3}/)?.[0]?.replace('-', '') || '00000000', // Extrair CEP do endereço
+              postal_code: order.shippingAddress.cep.replace('-', '') || '00000000', // Extrair CEP do endereço
             },
             volumes: [
               {
@@ -420,5 +425,6 @@ async function handleMercadoPagoWebhook(req, res) {
     res.status(500).send('Erro interno do servidor.');
   }
 }
+
 
 module.exports = { showPayment, createMercadoPagoPreference, handleMercadoPagoSuccess, handleMercadoPagoPending, handleMercadoPagoFailure, handleMercadoPagoWebhook };

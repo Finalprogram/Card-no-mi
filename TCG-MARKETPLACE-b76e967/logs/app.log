@@ -3058,3 +3058,129 @@
 {"level":"info","message":"[melhor-envio] Payload enviado:"}
 {"level":"info","message":"[payment] Pedido #6902ca5d92869d285ec9e977 criado para Mercado Pago."}
 {"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902ca5d92869d285ec9e977","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilozqz21@gmail.com","identification":{"number":"12091633810","type":"CPF"},"name":"guilherme maluco","phone":{"area_code":"19","number":"993595258"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902cb0a5f6decf6a1cd9592 criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902cb0a5f6decf6a1cd9592","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902cbfffc9dc16bbd4828ed criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902cbfffc9dc16bbd4828ed","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902ccfe10098992e3039834 criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902ccfe10098992e3039834","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902ce22aaab1c20e940aa6d criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902ce22aaab1c20e940aa6d","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902ce7bbd5346cbdd940e39 criado para Mercado Pago."}
+{"blocked_by":"PolicyAgent","code":"PA_UNAUTHORIZED_RESULT_FROM_POLICIES","level":"error","message":"Erro ao criar preferência do Mercado Pago: At least one policy returned UNAUTHORIZED.","status":403}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902ceccd125d87d7e4e4b6e criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902ceccd125d87d7e4e4b6e","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilozqz21@gmail.com","identification":{"number":"12091633810","type":"CPF"},"name":"guilherme maluco","phone":{"area_code":"19","number":"993595258"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902d05df6253f18723b444f criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902d05df6253f18723b444f","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":2},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902d164f6253f18723b446c criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902d164f6253f18723b446c","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":3},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902d28ef6253f18723b4489 criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902d28ef6253f18723b4489","items":[{"quantity":1,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilobdf14@gmail.com","identification":{"number":"48370358845","type":"CPF"},"name":"Murilo Queiroz Machado","phone":{"area_code":"19","number":"993955324"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Webhook Mercado Pago recebido:","test":"true"}
+{"level":"warn","message":"Rodando em modo de teste de webhook."}
+{"level":"error","message":"[payment] Erro na integração com Melhor Envio para o pedido 6902d28ef6253f18723b4489: order.shippingAddress.match is not a function","stack":"TypeError: order.shippingAddress.match is not a function\n    at processWebhookLogic (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:370:50)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async handleMercadoPagoWebhook (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:249:12)"}
+{"level":"info","message":"Pedido #6902d28ef6253f18723b4489 atualizado para o status: Paid via webhook MP."}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Running daily price history recording..."}
+{"level":"info","message":"Starting price history recording..."}
+{"level":"info","message":"2 active listings found."}
+{"level":"info","message":"Found 1 unique cards with active listings."}
+{"level":"info","message":"Price history recording complete."}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Webhook Mercado Pago recebido:","test":"true"}
+{"level":"warn","message":"Rodando em modo de teste de webhook."}
+{"level":"info","message":"[melhor-envio] Adicionando item ao carrinho com payload:"}
+{"level":"error","message":"[melhor-envio] Falha ao adicionar item ao carrinho: [melhor-envio] 422 Unprocessable Content {\"message\":\"O campo from.document deve ter um CPF v\\u00e1lido (and 2 more errors)\",\"errors\":{\"from.document\":[\"O campo from.document deve ter um CPF v\\u00e1lido\"],\"to.document\":[\"O campo to.document deve ter um CPF v\\u00e1lido\"],\"to.address\":[\"O campo to.address deve ser uma string.\"]}}"}
+{"level":"error","message":"[payment] Erro na integração com Melhor Envio para o pedido 6902d28ef6253f18723b4489: [melhor-envio] 422 Unprocessable Content {\"message\":\"O campo from.document deve ter um CPF v\\u00e1lido (and 2 more errors)\",\"errors\":{\"from.document\":[\"O campo from.document deve ter um CPF v\\u00e1lido\"],\"to.document\":[\"O campo to.document deve ter um CPF v\\u00e1lido\"],\"to.address\":[\"O campo to.address deve ser uma string.\"]}}","stack":"Error: [melhor-envio] 422 Unprocessable Content {\"message\":\"O campo from.document deve ter um CPF v\\u00e1lido (and 2 more errors)\",\"errors\":{\"from.document\":[\"O campo from.document deve ter um CPF v\\u00e1lido\"],\"to.document\":[\"O campo to.document deve ter um CPF v\\u00e1lido\"],\"to.address\":[\"O campo to.address deve ser uma string.\"]}}\n    at addItemToCart (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\melhorEnvioClient.js:98:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async processWebhookLogic (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:393:31)\n    at async handleMercadoPagoWebhook (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:249:12)"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Webhook Mercado Pago recebido:","test":"true"}
+{"level":"warn","message":"Rodando em modo de teste de webhook."}
+{"level":"error","message":"[payment] Erro na integração com Melhor Envio para o pedido 6902d28ef6253f18723b4489: seller is not defined","stack":"ReferenceError: seller is not defined\n    at processWebhookLogic (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:345:25)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async handleMercadoPagoWebhook (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:249:12)"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Webhook Mercado Pago recebido:","test":"true"}
+{"level":"warn","message":"Rodando em modo de teste de webhook."}
+{"level":"info","message":"[melhor-envio] Adicionando item ao carrinho com payload:"}
+{"level":"error","message":"[melhor-envio] Falha ao adicionar item ao carrinho: [melhor-envio] 422 Unprocessable Content {\"message\":\"Endere\\u00e7o de destino - 64 caracteres\",\"errors\":{\"to.address\":[\"Endere\\u00e7o de destino - 64 caracteres\"]}}"}
+{"level":"error","message":"[payment] Erro na integração com Melhor Envio para o pedido 6902d28ef6253f18723b4489: [melhor-envio] 422 Unprocessable Content {\"message\":\"Endere\\u00e7o de destino - 64 caracteres\",\"errors\":{\"to.address\":[\"Endere\\u00e7o de destino - 64 caracteres\"]}}","stack":"Error: [melhor-envio] 422 Unprocessable Content {\"message\":\"Endere\\u00e7o de destino - 64 caracteres\",\"errors\":{\"to.address\":[\"Endere\\u00e7o de destino - 64 caracteres\"]}}\n    at addItemToCart (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\melhorEnvioClient.js:98:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async processWebhookLogic (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:398:31)\n    at async handleMercadoPagoWebhook (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:249:12)"}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Webhook Mercado Pago recebido:","test":"true"}
+{"level":"warn","message":"Rodando em modo de teste de webhook."}
+{"level":"info","message":"[melhor-envio] Adicionando item ao carrinho com payload:"}
+{"level":"error","message":"[melhor-envio] Falha ao adicionar item ao carrinho: [melhor-envio] 422 Unprocessable Content {\"error\":\"O CPF do remetente e do destinat\\u00e1rio n\\u00e3o podem ser iguais\"}"}
+{"level":"error","message":"[payment] Erro na integração com Melhor Envio para o pedido 6902d28ef6253f18723b4489: [melhor-envio] 422 Unprocessable Content {\"error\":\"O CPF do remetente e do destinat\\u00e1rio n\\u00e3o podem ser iguais\"}","stack":"Error: [melhor-envio] 422 Unprocessable Content {\"error\":\"O CPF do remetente e do destinat\\u00e1rio n\\u00e3o podem ser iguais\"}\n    at addItemToCart (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\melhorEnvioClient.js:98:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async processWebhookLogic (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:398:31)\n    at async handleMercadoPagoWebhook (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:249:12)"}
+{"level":"info","message":"Webhook Mercado Pago recebido:","test":"true"}
+{"level":"warn","message":"Rodando em modo de teste de webhook."}
+{"level":"info","message":"[melhor-envio] Adicionando item ao carrinho com payload:"}
+{"level":"info","message":"[melhor-envio] Realizando checkout com payload:"}
+{"level":"error","message":"[melhor-envio] Falha ao realizar checkout: [melhor-envio] 422 Unprocessable Content {\"error\":\"Seu saldo de R$ 0.00 \\u00e9 insuficiente para o pagamento com a carteira no valor de R$ 11.53\"}"}
+{"level":"error","message":"[payment] Erro na integração com Melhor Envio para o pedido 6902c06d9de54f82813935d2: [melhor-envio] 422 Unprocessable Content {\"error\":\"Seu saldo de R$ 0.00 \\u00e9 insuficiente para o pagamento com a carteira no valor de R$ 11.53\"}","stack":"Error: [melhor-envio] 422 Unprocessable Content {\"error\":\"Seu saldo de R$ 0.00 \\u00e9 insuficiente para o pagamento com a carteira no valor de R$ 11.53\"}\n    at purchaseShipments (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\services\\melhorEnvioClient.js:135:13)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n    at async processWebhookLogic (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:408:38)\n    at async handleMercadoPagoWebhook (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:249:12)"}
+{"level":"info","message":"Pedido #6902c06d9de54f82813935d2 atualizado para o status: Paid via webhook MP."}
+{"level":"info","message":"[payment] Mercado Pago Access Token sendo usado (parcial): "}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}

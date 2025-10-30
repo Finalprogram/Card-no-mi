@@ -4,7 +4,7 @@ const logger = require('../config/logger');
 
 const connectDB = async () => {
   try {
-    const MONGO_URI = "mongodb+srv://murilozqz21_db_user:DA0LlTV8vG6NIfJm@cluster0.ayosgna.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"; // <-- COLOQUE SUA STRING COMPLETA AQUI
+    const MONGO_URI = process.env.MONGODB_URI;
     await mongoose.connect(MONGO_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
