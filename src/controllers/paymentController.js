@@ -3,7 +3,8 @@
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Listing = require('../models/Listing');
-const { MercadoPagoConfig, Preference } = require('mercadopago');
+const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+const paymentClient = new Payment(client);
 const logger = require('../config/logger');
 const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
@@ -277,7 +278,7 @@ async function handleMercadoPagoWebhook(req, res) {
     }
 
     // 1. Buscar detalhes do pagamento na API do Mercado Pago
-    const payment = await client.payments.get({ id: Number(paymentId) });
+    const payment = await paymentClient.get({ id: Number(paymentId) });
     logger.info('Detalhes do pagamento do Mercado Pago:', payment);
 
     const { status, external_reference } = payment;
