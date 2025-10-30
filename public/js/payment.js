@@ -18,7 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
         if (response.ok) {
           const data = await response.json();
           // Redireciona o usuário para a URL de pagamento do Mercado Pago
-          window.location.href = data.init_point;
+          window.open(data.init_point, '_blank');
         } else {
           // Se houver um erro, exibe no console e reabilita o botão
           console.error('Erro ao criar a preferência de pagamento.');
