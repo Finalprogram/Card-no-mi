@@ -5,7 +5,7 @@ const isAuthPage = (req, res, next) => {
   if (req.session.user) {
     return next();
   }
-  res.redirect('/login');
+  res.redirect('/auth/login');
 };
 
 // Middleware para APIs: se não estiver logado, retorna um erro 401 em JSON
@@ -22,7 +22,7 @@ const isAdminPage = (req, res, next) => {
     return next();
   }
   // If not authenticated or not admin, redirect to login or show an error
-  res.redirect('/login'); // Or render an unauthorized page
+  res.redirect('/auth/login'); // Or render an unauthorized page
 };
 
 const isAdminApi = (req, res, next) => {
