@@ -145,6 +145,19 @@
                         <label>Telefone</label>
                         <input class="form-control" name="phone" placeholder="(00) 00000-0000" value="<%= profileUser.phone || '' %>">
                     </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Tipo de Documento</label>
+                            <select class="form-control" name="documentType">
+                                <option value="CPF" <%= profileUser.documentType === 'CPF' ? 'selected' : '' %>>CPF</option>
+                                <option value="CNPJ" <%= profileUser.documentType === 'CNPJ' ? 'selected' : '' %>>CNPJ</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Número do Documento</label>
+                            <input class="form-control" name="documentNumber" placeholder="CPF ou CNPJ" value="<%= profileUser.documentNumber || '' %>" required>
+                        </div>
+                    </div>
                     <div class="form-group">
                         <label>CEP</label>
                         <input class="form-control" name="cep" placeholder="00000-000" value="<%= profileUser.address?.cep || '' %>" required>
@@ -152,6 +165,10 @@
                     <div class="form-group">
                         <label>Rua / Avenida</label>
                         <input class="form-control" name="street" placeholder="Sua rua ou avenida" value="<%= profileUser.address?.street || '' %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Bairro</label>
+                        <input class="form-control" name="neighborhood" placeholder="Seu bairro" value="<%= profileUser.address?.neighborhood || '' %>" required>
                     </div>
                     <div class="form-row">
                         <div class="form-group">

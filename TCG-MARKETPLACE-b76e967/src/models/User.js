@@ -19,13 +19,15 @@ const UserSchema = new mongoose.Schema({
   },
 
   businessName: { type: String },
-  taxId: { type: String },
+  documentType: { type: String, enum: ['CPF', 'CNPJ'], default: 'CPF' }, // Novo campo
+  documentNumber: { type: String }, // Novo campo
 
   address: {
     cep: { type: String },
     street: { type: String },
     number: { type: String },
     complement: { type: String },
+    neighborhood: { type: String }, // Novo campo
     city: { type: String },
     state: { type: String },
   },

@@ -315,7 +315,7 @@ async function confirm(req, res) {
     };
 
     // Store address and shipping selections in session for later use
-    req.session.shippingAddress = address;
+    req.session.shippingAddress = user.address;
     req.session.shippingSelections = JSON.parse(shippingSelections);
 
     res.redirect('/payment');

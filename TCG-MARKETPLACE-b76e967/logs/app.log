@@ -2892,3 +2892,119 @@
 {"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
 {"level":"info","message":"[melhor-envio] Payload enviado:"}
 {"level":"info","message":"[payment] Pedido #690254b18f949c82b3a10975 criado para Mercado Pago."}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #690257748f949c82b3a10996 criado para Mercado Pago."}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #690258b28f949c82b3a109b7 criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[updateProfile] Iniciando atualização para o usuário ID: 6900fcd1e9d01bfee8d0558d"}
+{"cep":"13273202","city":"Valinhos","complement":"","documentNumber":"48370358845","documentType":"CPF","fullName":"Murilo queiroz machado","level":"info","message":"[updateProfile] Dados recebidos:","number":"163","phone":"19993955324","state":"SP","street":"valdomiro rossi "}
+{"__v":0,"_id":"6900fcd1e9d01bfee8d0558d","accountType":"admin","address":{"cep":"13273202","city":"Valinhos","complement":"","number":"163","state":"SP","street":"valdomiro rossi "},"createdAt":"2025-10-28T17:26:41.937Z","documentNumber":"48370358845","documentType":"CPF","email":"murilobdf14@gmail.com","fee_override_percentage":null,"firstLogin":false,"fullName":"Murilo queiroz machado","isVerified":true,"level":"info","message":"[updateProfile] Usuário após a atualização:","password":"$2b$10$CI84jh8YioOB9OAPiq9yw.aL2t3W7UuRQ9bhylQBPLjypWd6FaMmG","phone":"19993955324","username":"Muliru","verificationToken":"815fc7902cbd6ce63404c875566c5f64431df20bd57ac392b26cc9f116924480","verificationTokenExpires":"2025-10-28T18:26:41.934Z"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":2},"level":"info","message":"Sessão da Lista atualizada:"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":2},"level":"info","message":"Sessão da Lista atualizada:"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":3},"level":"info","message":"Sessão da Lista atualizada:"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":4},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #690262e7cb3ea20a1862fddb criado para Mercado Pago."}
+{"level":"error","message":"Erro na API do MP:"}
+{"level":"info","message":"[payment] Pedido #690262eecb3ea20a1862fde0 criado para Mercado Pago."}
+{"level":"error","message":"Erro na API do MP:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #69026730a7bbe98c601eb37e criado para Mercado Pago."}
+{"level":"error","message":"Erro ao criar preferência do Mercado Pago: Cannot read properties of undefined (reading 'replace')","stack":"TypeError: Cannot read properties of undefined (reading 'replace')\n    at createMercadoPagoPreference (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:101:60)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[updateProfile] Iniciando atualização para o usuário ID: 6900fcd1e9d01bfee8d0558d"}
+{"cep":"13273202","city":"Valinhos","complement":"","documentNumber":"48370358845","documentType":"CPF","fullName":"Murilo Queiroz Machado","level":"info","message":"[updateProfile] Dados recebidos:","number":"163","phone":"19993955324","state":"SP","street":"valdomiro rossi"}
+{"__v":0,"_id":"6900fcd1e9d01bfee8d0558d","accountType":"admin","address":{"cep":"13273202","city":"Valinhos","complement":"","number":"163","state":"SP","street":"valdomiro rossi"},"createdAt":"2025-10-28T17:26:41.937Z","documentNumber":"48370358845","documentType":"CPF","email":"murilobdf14@gmail.com","fee_override_percentage":null,"firstLogin":false,"fullName":"Murilo Queiroz Machado","isVerified":true,"level":"info","message":"[updateProfile] Usuário após a atualização:","password":"$2b$10$CI84jh8YioOB9OAPiq9yw.aL2t3W7UuRQ9bhylQBPLjypWd6FaMmG","phone":"19993955324","username":"Muliru","verificationToken":"815fc7902cbd6ce63404c875566c5f64431df20bd57ac392b26cc9f116924480","verificationTokenExpires":"2025-10-28T18:26:41.934Z"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"_message":"Order validation failed","errors":{"shippingAddress":{"kind":"string","message":"Cast to string failed for value \"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP'\n}\" (type Object) at path \"shippingAddress\"","name":"CastError","path":"shippingAddress","reason":null,"stringValue":"\"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP'\n}\"","value":{"cep":"13273202","city":"Valinhos","complement":"","number":"163","state":"SP","street":"valdomiro rossi"},"valueType":"Object"}},"level":"error","message":"Erro ao criar preferência do Mercado Pago: Order validation failed: shippingAddress: Cast to string failed for value \"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP'\n}\" (type Object) at path \"shippingAddress\"","stack":"ValidationError: Order validation failed: shippingAddress: Cast to string failed for value \"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP'\n}\" (type Object) at path \"shippingAddress\"\n    at Document.invalidate (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:3358:32)\n    at model.$set (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:1480:12)\n    at model.$set (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:1132:16)\n    at model.Document (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:178:12)\n    at model.Model (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\model.js:127:12)\n    at new model (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\model.js:4834:15)\n    at createMercadoPagoPreference (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:80:22)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[updateProfile] Iniciando atualização para o usuário ID: 6900fcd1e9d01bfee8d0558d"}
+{"cep":"13273202","city":"Valinhos","complement":"","documentNumber":"48370358845","documentType":"CPF","fullName":"Murilo Queiroz Machado","level":"info","message":"[updateProfile] Dados recebidos:","neighborhood":"jd nova espirito santo","number":"163","phone":"19993955324","state":"SP","street":"valdomiro rossi"}
+{"__v":0,"_id":"6900fcd1e9d01bfee8d0558d","accountType":"admin","address":{"cep":"13273202","city":"Valinhos","complement":"","neighborhood":"jd nova espirito santo","number":"163","state":"SP","street":"valdomiro rossi"},"createdAt":"2025-10-28T17:26:41.937Z","documentNumber":"48370358845","documentType":"CPF","email":"murilobdf14@gmail.com","fee_override_percentage":null,"firstLogin":false,"fullName":"Murilo Queiroz Machado","isVerified":true,"level":"info","message":"[updateProfile] Usuário após a atualização:","password":"$2b$10$CI84jh8YioOB9OAPiq9yw.aL2t3W7UuRQ9bhylQBPLjypWd6FaMmG","phone":"19993955324","username":"Muliru","verificationToken":"815fc7902cbd6ce63404c875566c5f64431df20bd57ac392b26cc9f116924480","verificationTokenExpires":"2025-10-28T18:26:41.934Z"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"_message":"Order validation failed","errors":{"shippingAddress":{"kind":"string","message":"Cast to string failed for value \"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP',\n  neighborhood: 'jd nova espirito santo'\n}\" (type Object) at path \"shippingAddress\"","name":"CastError","path":"shippingAddress","reason":null,"stringValue":"\"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP',\n  neighborhood: 'jd nova espirito santo'\n}\"","value":{"cep":"13273202","city":"Valinhos","complement":"","neighborhood":"jd nova espirito santo","number":"163","state":"SP","street":"valdomiro rossi"},"valueType":"Object"}},"level":"error","message":"Erro ao criar preferência do Mercado Pago: Order validation failed: shippingAddress: Cast to string failed for value \"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP',\n  neighborhood: 'jd nova espirito santo'\n}\" (type Object) at path \"shippingAddress\"","stack":"ValidationError: Order validation failed: shippingAddress: Cast to string failed for value \"{\n  cep: '13273202',\n  street: 'valdomiro rossi',\n  number: '163',\n  complement: '',\n  city: 'Valinhos',\n  state: 'SP',\n  neighborhood: 'jd nova espirito santo'\n}\" (type Object) at path \"shippingAddress\"\n    at Document.invalidate (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:3358:32)\n    at model.$set (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:1480:12)\n    at model.$set (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:1132:16)\n    at model.Document (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\document.js:178:12)\n    at model.Model (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\model.js:127:12)\n    at new model (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\node_modules\\mongoose\\lib\\model.js:4834:15)\n    at createMercadoPagoPreference (C:\\Users\\Murilo\\Documents\\GitHub\\Card-no-mi\\TCG-MARKETPLACE-b76e967\\src\\controllers\\paymentController.js:80:22)\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"[payment] Pedido #6902ba66d717cd24fbd0dc4a criado para Mercado Pago."}
+{"level":"info","message":"[updateProfile] Iniciando atualização para o usuário ID: 69013d02591886f5945a63c1"}
+{"cep":"13273202","city":"Valinhos","complement":"","documentNumber":"12091633810","documentType":"CPF","fullName":"guilherme maluco","level":"info","message":"[updateProfile] Dados recebidos:","neighborhood":"jd nova espirito santo","number":"163","phone":"19993595258","state":"SP","street":"valdomiro rossi"}
+{"__v":0,"_id":"69013d02591886f5945a63c1","accountType":"individual","address":{"cep":"13273202","city":"Valinhos","complement":"","neighborhood":"jd nova espirito santo","number":"163","state":"SP","street":"valdomiro rossi"},"createdAt":"2025-10-28T22:00:34.237Z","documentNumber":"12091633810","documentType":"CPF","email":"murilozqz21@gmail.com","fee_override_percentage":null,"firstLogin":false,"fullName":"guilherme maluco","isVerified":true,"level":"info","message":"[updateProfile] Usuário após a atualização:","password":"$2b$10$5ouPL9nK.6axwCInVBg/9.ftqjpNxFEPFY27QN5Y8ifCAS1DQsujO","phone":"19993595258","username":"Muliruuu"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902bac5d717cd24fbd0dc6e criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":11},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902bd73ac8d9879bd243e3a criado para Mercado Pago."}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902bff0d6b5702f8b82ab2e criado para Mercado Pago."}
+{"level":"info","message":"[payment] preferenceBody enviado:"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902c06d9de54f82813935d2 criado para Mercado Pago."}
+{"back_urls":{"failure":"cardnomi.com.br/payment/mercadopago/failure","pending":"cardnomi.com.br/payment/mercadopago/pending","success":"cardnomi.com.br/payment/mercadopago/success"},"binary_mode":true,"external_reference":"6902c06d9de54f82813935d2","items":[{"quantity":12,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"cardnomi.com.br/payment/mercadopago/webhook","payer":{"address":{"city":"Valinhos","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"},"email":"murilozqz21@gmail.com","identification":{"number":"12091633810","type":"CPF"},"name":"guilherme maluco","phone":{"area_code":"19","number":"993595258"},"surname":""},"payment_methods":{"default_installments":1,"installments":1},"shipments":{"cost":11.53,"mode":"not_specified","receiver_address":{"apartment":"","city":"Valinhos","floor":"","neighborhood":"jd nova espirito santo","state":"SP","street_name":"valdomiro rossi","street_number":"163","zip_code":"13273202"}}}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":1},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902c31969108ca55f55aebf criado para Mercado Pago."}
+{"back_urls":{"failure":"cardnomi.com.br/payment/mercadopago/failure","pending":"cardnomi.com.br/payment/mercadopago/pending","success":"cardnomi.com.br/payment/mercadopago/success"},"external_reference":"6902c31969108ca55f55aebf","items":[{"quantity":10,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"cardnomi.com.br/payment/mercadopago/webhook","payer":{"email":"murilozqz21@gmail.com"}}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"level":"info","message":"Servidor rodando em http://localhost:3000"}
+{"level":"info","message":"MongoDB connected"}
+{"0":{"cardId":"68e6b97716fc8fdc82ba3389","quantity":2},"level":"info","message":"Sessão da Lista atualizada:"}
+{"level":"info","message":"[melhor-envio] Payload enviado:"}
+{"level":"info","message":"[payment] Pedido #6902c41bc06168de522dd0c1 criado para Mercado Pago."}
+{"back_urls":{"failure":"localhost:3000/payment/mercadopago/failure","pending":"localhost:3000/payment/mercadopago/pending","success":"localhost:3000/payment/mercadopago/success"},"external_reference":"6902c41bc06168de522dd0c1","items":[{"quantity":12,"title":"Monkey.D.Luffy","unit_price":1}],"level":"info","message":"[payment] preferenceBody enviado:","notification_url":"localhost:3000/payment/mercadopago/webhook","payer":{"email":"murilozqz21@gmail.com"}}

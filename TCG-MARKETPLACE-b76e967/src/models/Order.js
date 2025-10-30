@@ -1,5 +1,14 @@
-// src/models/Order.js
 const mongoose = require('mongoose');
+
+const addressSchema = new mongoose.Schema({
+  cep: { type: String, required: true },
+  street: { type: String, required: true },
+  number: { type: String, required: true },
+  complement: { type: String },
+  neighborhood: { type: String, required: true },
+  city: { type: String, required: true },
+  state: { type: String, required: true },
+}, { _id: false }); // _id: false para não criar um _id para o subdocumento
 
 const orderItemSchema = new mongoose.Schema({
   card: {
@@ -48,7 +57,7 @@ const orderSchema = new mongoose.Schema({
     sellerNet: { type: Number, required: true }
   },
   shippingAddress: {
-    type: String, // For simplicity, storing the formatted address string
+    type: addressSchema,
     required: true
   },
   status: {

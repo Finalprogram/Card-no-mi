@@ -7,10 +7,16 @@ const showStep1 = (req, res) => {
 
 const handleStep1 = async (req, res) => {
     try {
-        const { fullName, phone } = req.body;
+        const { fullName, phone, documentNumber } = req.body;
         const userId = req.session.user.id;
 
-        await User.findByIdAndUpdate(userId, { $set: { fullName, phone } });
+        // Basic validation for documentNumber
+        if (!documentNumber) {
+            logger.error(`[welcome] Usuário ${userId} tentou completar o passo 1 sem CPF.`);
+            return res.redirect('/welcome/step1?error=cpfRequired');
+        }
+
+        await User.findByIdAndUpdate(userId, { $set: { fullName, phone, documentType: 'CPF', documentNumber } });
 
         res.redirect('/welcome/step2');
     } catch (error) {
@@ -25,14 +31,21 @@ const showStep2 = (req, res) => {
 
 const handleStep2 = async (req, res) => {
     try {
-        const { cep, street, number, complement, city, state } = req.body;
+        const { cep, street, number, complement, neighborhood, city, state } = req.body;
         const userId = req.session.user.id;
+
+        // Basic validation for neighborhood
+        if (!neighborhood) {
+          logger.error(`[welcome] Usuário ${userId} tentou completar o passo 2 sem bairro.`);
+          return res.redirect('/welcome/step2?error=neighborhoodRequired');
+        }
 
         const address = {
             cep,
             street,
             number,
             complement,
+            neighborhood,
             city,
             state,
         };

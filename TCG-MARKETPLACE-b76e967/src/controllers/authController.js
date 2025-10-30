@@ -12,7 +12,7 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    const { email, username, phone, password, confirmPassword } = req.body;
+    const { email, username, phone, password, confirmPassword, documentType, documentNumber } = req.body;
     const errors = {};
 
     // --- VALIDAÇÃO ---
@@ -28,6 +28,9 @@ const registerUser = async (req, res) => {
     }
     if (password !== confirmPassword) {
       errors.confirmPassword = 'As senhas não coincidem.';
+    }
+    if (!documentNumber) {
+      errors.documentNumber = 'CPF/CNPJ é obrigatório.';
     }
 
     const existingUserByUsername = await User.findOne({ username });
@@ -63,6 +66,8 @@ const registerUser = async (req, res) => {
       isVerified: false,
       verificationToken,
       verificationTokenExpires,
+      documentType: documentType || 'CPF', // Default to CPF if not provided
+      documentNumber,
     });
 
     await newUser.save();
@@ -174,15 +179,17 @@ const updateProfile = async (req, res) => {
   logger.info('[updateProfile] Dados recebidos:', req.body);
 
   try {
-    const { fullName, phone, cep, street, number, complement, city, state } = req.body;
+    const { fullName, phone, cep, street, number, complement, neighborhood, city, state, documentType, documentNumber } = req.body;
     const errors = {};
 
     if (!fullName) errors.fullName = 'Nome completo é obrigatório.';
     if (!cep) errors.cep = 'CEP é obrigatório.';
     if (!street) errors.street = 'Rua é obrigatória.';
     if (!number) errors.number = 'Número é obrigatório.';
+    if (!neighborhood) errors.neighborhood = 'Bairro é obrigatório.';
     if (!city) errors.city = 'Cidade é obrigatória.';
     if (!state) errors.state = 'Estado é obrigatório.';
+    if (!documentNumber) errors.documentNumber = 'CPF/CNPJ é obrigatório.';
 
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ success: false, message: 'Erro de validação', errors });
@@ -196,8 +203,11 @@ const updateProfile = async (req, res) => {
         'address.street': street,
         'address.number': number,
         'address.complement': complement,
+        'address.neighborhood': neighborhood,
         'address.city': city,
         'address.state': state,
+        documentType: documentType || 'CPF',
+        documentNumber: documentNumber,
       }
     }, { new: true });
 
@@ -206,6 +216,8 @@ const updateProfile = async (req, res) => {
         req.session.user.address = updatedUser.address;
         req.session.user.fullName = updatedUser.fullName;
         req.session.user.phone = updatedUser.phone;
+        req.session.user.documentType = updatedUser.documentType;
+        req.session.user.documentNumber = updatedUser.documentNumber;
         return res.json({ success: true, message: 'Perfil atualizado com sucesso!' });
     } else {
         logger.warn('[updateProfile] Nenhum usuário encontrado para atualizar.');

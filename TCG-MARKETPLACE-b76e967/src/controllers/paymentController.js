@@ -42,18 +42,27 @@ async function createMercadoPagoPreference(req, res) {
       return res.status(400).json({ message: 'Carrinho vazio ou inválido.' });
     }
 
-    const shippingAddress = req.session.shippingAddress;
-    if (!shippingAddress) {
-      logger.error('Endereço de entrega não encontrado na sessão ao criar preferência de MP.');
-      return res.status(400).json({ message: 'Endereço de entrega não encontrado.' });
-    }
-    const shippingSelections = req.session.shippingSelections || [];
-
     // Fetch the user to get payer details
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: 'Usuário não encontrado.' });
     }
+
+    // 1. Validação Primeiro
+    if (!user.documentNumber) {
+      return res.status(400).json({ message: 'CPF/CNPJ do usuário é obrigatório para o pagamento.' });
+    }
+    if (!user.phone) {
+      return res.status(400).json({ message: 'Telefone do usuário é obrigatório para o pagamento.' });
+    }
+    if (!req.session.shippingAddress) {
+      logger.error('Endereço de entrega não encontrado na sessão ao criar preferência de MP.');
+      return res.status(400).json({ message: 'Endereço de entrega é obrigatório.' });
+    }
+
+    // 3. Endereço Estruturado
+    const shippingAddress = req.session.shippingAddress;
+    const shippingSelections = req.session.shippingSelections || [];
 
     const orderItems = cart.items.map(item => ({
       card: item.cardId,
@@ -67,7 +76,7 @@ async function createMercadoPagoPreference(req, res) {
       sellerNet: item.sellerNet,
     }));
 
-    // Cria o pedido no banco de dados com status 'Processing' (ou 'PendingPayment')
+    // Cria o pedido no banco de dados com status 'PendingPayment'
     const newOrder = new Order({
       user: userId,
       items: orderItems,
@@ -86,18 +95,10 @@ async function createMercadoPagoPreference(req, res) {
       quantity: Number(item.qty),
     }));
 
-    // Extract address components from the shippingAddress string
-    // This is a simplified parsing. A more robust solution would involve structured address input.
-    const addressParts = shippingAddress.split(', ');
-    const streetName = addressParts[0] || 'Rua';
-    const streetNumber = addressParts[1] || 'SN';
-    const neighborhood = addressParts[2] || 'Bairro';
-    const cityState = addressParts[3] || 'Cidade - Estado';
-    const [city, state] = cityState.split(' - ');
-    const postalCodeMatch = shippingAddress.match(/\d{5}-\d{3}/);
-    const postalCode = postalCodeMatch ? postalCodeMatch[0].replace('-', '') : '00000000';
-
     const baseUrl = process.env.BASE_URL.replace(/\/$/, '');
+
+    // 5. Formate o CEP
+    const formattedPostalCode = shippingAddress.cep.replace('-', '');
 
     const preferenceBody = {
       items,
@@ -108,49 +109,13 @@ async function createMercadoPagoPreference(req, res) {
         failure: `${baseUrl}/payment/mercadopago/failure`,
       },
       notification_url: `${baseUrl}/payment/mercadopago/webhook`,
-              payer: {
-                name: user.fullName || user.username,
-                surname: '', // Assuming no surname in user model, or parse from fullName
-                email: user.email,
-                phone: {
-                  area_code: user.phone ? user.phone.substring(0, 2) : '', // Assuming phone is like 11987654321
-                  number: user.phone ? user.phone.substring(2) : '',
-                },
-                address: {
-                  zip_code: postalCode,
-                  street_name: streetName,
-                  street_number: streetNumber,
-                  neighborhood: neighborhood,
-                  city: city,
-                  state: state,
-                },
-                identification: {
-                  type: user.documentType || 'CPF', // Assuming user model has documentType
-                  number: user.documentNumber || '00000000000', // Assuming user model has documentNumber
-                },
-              },      shipments: {
-        cost: totals.shipping,
-        mode: 'not_specified', // 'not_specified', 'custom_shipping', 'me2', 'mercadopago_dropshipping'
-        receiver_address: {
-          zip_code: postalCode,
-          street_name: streetName,
-          street_number: streetNumber,
-          floor: '',
-          apartment: '',
-          neighborhood: neighborhood,
-          city: city,
-          state: state,
-        },
+      payer: {
+        email: user.email,
       },
-      binary_mode: true,
-      payment_methods: {
-        installments: 1, // Força pagamento em 1x, ideal para PIX
-        default_installments: 1 // Define o número de parcelas padrão como 1
-      }
-      // total_amount: totals.grand, // Deprecated, calculated from items
     };
 
     const response = await preference.create({ body: preferenceBody });
+    logger.info('[payment] preferenceBody enviado:', preferenceBody);
 
     // Limpa o carrinho da sessão após a criação da preferência
     req.session.cart = { items: [], totalQty: 0, totalPrice: 0 };
@@ -161,6 +126,7 @@ async function createMercadoPagoPreference(req, res) {
     res.json({ init_point: response.init_point, orderId: newOrder._id });
 
   } catch (error) {
+    // Log de erro melhorado para capturar o objeto completo
     logger.error("Erro ao criar preferência do Mercado Pago:", error);
     res.status(500).json({ message: "Erro ao criar preferência de pagamento." });
   }
