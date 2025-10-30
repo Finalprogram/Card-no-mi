@@ -23,6 +23,7 @@ async function getSellerOriginCep(sellerId) {
 
 // Configura as credenciais do Mercado Pago
 const client = new MercadoPagoConfig({ accessToken: process.env.MERCADO_PAGO_ACCESS_TOKEN, options: { timeout: 5000 } });
+logger.info('[payment] Mercado Pago Access Token sendo usado (parcial): ', process.env.MERCADO_PAGO_ACCESS_TOKEN ? process.env.MERCADO_PAGO_ACCESS_TOKEN.substring(0, 10) + '...' : 'Não definido');
 const preference = new Preference(client);
 
 /** GET /payment */
@@ -110,8 +111,45 @@ async function createMercadoPagoPreference(req, res) {
       },
       notification_url: `${baseUrl}/payment/mercadopago/webhook`,
       payer: {
+        name: user.fullName || user.username,
+        surname: '', // Assumindo que não tem sobrenome
         email: user.email,
+        phone: {
+          area_code: user.phone.substring(0, 2),
+          number: user.phone.substring(2),
+        },
+        address: {
+          zip_code: formattedPostalCode,
+          street_name: shippingAddress.street,
+          street_number: shippingAddress.number,
+          neighborhood: shippingAddress.neighborhood,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+        },
+        identification: {
+          type: user.documentType || 'CPF',
+          number: user.documentNumber,
+        },
       },
+      shipments: {
+        cost: totals.shipping,
+        mode: 'not_specified',
+        receiver_address: {
+          apartment: '',
+          city: shippingAddress.city,
+          floor: '',
+          neighborhood: shippingAddress.neighborhood,
+          state: shippingAddress.state,
+          street_name: shippingAddress.street,
+          street_number: shippingAddress.number,
+          zip_code: formattedPostalCode,
+        },
+      },
+      binary_mode: true,
+      payment_methods: {
+        installments: 1,
+        default_installments: 1
+      }
     };
 
     const response = await preference.create({ body: preferenceBody });
