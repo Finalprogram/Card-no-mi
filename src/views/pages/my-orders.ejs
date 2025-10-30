@@ -57,7 +57,18 @@
             </div>
             <div class="order-status">
               <span class="label">Status</span>
-              <span class="value"><%= order.status %></span>
+              <% 
+                const statusTranslations = {
+                  'PendingPayment': 'Pagamento Pendente',
+                  'Paid': 'Pago',
+                  'Shipped': 'Enviado',
+                  'Delivered': 'Entregue',
+                  'Cancelled': 'Cancelado',
+                  'Processing': 'Processando',
+                };
+                const translatedStatus = statusTranslations[order.status] || order.status;
+              %>
+              <span class="value"><%= translatedStatus %></span>
             </div>
             <div class="order-total">
               <span class="label">Total</span>

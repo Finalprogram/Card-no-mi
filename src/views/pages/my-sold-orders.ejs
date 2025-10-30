@@ -108,16 +108,27 @@
                 <span class="value"><%= order.user.username %></span>
               </div>
               <div class="order-status">
+                <% 
+                  const statusTranslations = {
+                    'PendingPayment': 'Pagamento Pendente',
+                    'Paid': 'Pago',
+                    'Shipped': 'Enviado',
+                    'Delivered': 'Entregue',
+                    'Cancelled': 'Cancelado',
+                    'Processing': 'Processando',
+                  };
+                  const translatedStatus = statusTranslations[order.status] || order.status;
+                %>
                 <% if (order.status === 'Processing') { %>
                   <button class="btn btn-sm btn-primary mark-as-shipped-btn" data-order-id="<%= order._id %>">Marcar como Enviado</button>
                   <% if (!order.melhorEnvioLabelUrl) { %>
                     <button class="btn btn-sm btn-success generate-label-btn" data-order-id="<%= order._id %>" style="margin-left: 10px;">Gerar Etiqueta ME</button>
                   <% } %>
                 <% } else if (order.status === 'Shipped' && order.melhorEnvioLabelUrl) { %>
-                  <span class="value">Enviado</span>
+                  <span class="value"><%= translatedStatus %></span>
                   <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="btn btn-sm btn-info" style="margin-left: 10px;">Ver Etiqueta</a>
                 <% } else { %>
-                  <span class="value"><%= order.status %></span>
+                  <span class="value"><%= translatedStatus %></span>
                 <% } %>
               </div>
             </div>

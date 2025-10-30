@@ -93,7 +93,20 @@
           <div class="order-id">Detalhes do Pedido #<%= order._id.toString().slice(-6) %></div>
           <div class="order-date"><%= new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) %></div>
         </div>
-        <div class="order-status"><%= order.status %></div>
+        <div class="order-status">
+          <% 
+            const statusTranslations = {
+              'PendingPayment': 'Pagamento Pendente',
+              'Paid': 'Pago',
+              'Shipped': 'Enviado',
+              'Delivered': 'Entregue',
+              'Cancelled': 'Cancelado',
+              'Processing': 'Processando',
+            };
+            const translatedStatus = statusTranslations[order.status] || order.status;
+          %>
+          <%= translatedStatus %>
+        </div>
         <% if (order.trackingCode) { %>
           <div class="tracking-code-display">Código de Rastreio: <%= order.trackingCode %></div>
         <% } %>

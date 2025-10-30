@@ -33,24 +33,32 @@ const recordPriceHistory = async () => {
         date: new Date()
       });
       await newPriceHistory.save();
+      logger.info(`PriceHistory saved for card ${cardId}: price=${avgPrice.toFixed(2)}, date=${newPriceHistory.date.toISOString()}`);
 
       data.card.averagePrice = avgPrice;
 
       const history = await PriceHistory.find({ card: cardId }).sort({ date: -1 }).limit(2);
+      logger.info(`Price history for card ${cardId} (last 2 entries): ${JSON.stringify(history)}`);
 
       if (history.length < 2) {
         data.card.price_trend = 'stable';
+        logger.info(`Price trend for card ${cardId}: stable (less than 2 history entries)`);
       } else {
         const [recentPrice, previousPrice] = history;
+        logger.info(`Recent price: ${recentPrice.price}, Previous price: ${previousPrice.price}`);
         if (recentPrice.price > previousPrice.price) {
           data.card.price_trend = 'up';
+          logger.info(`Price trend for card ${cardId}: up`);
         } else if (recentPrice.price < previousPrice.price) {
           data.card.price_trend = 'down';
+          logger.info(`Price trend for card ${cardId}: down`);
         } else {
           data.card.price_trend = 'stable';
+          logger.info(`Price trend for card ${cardId}: stable (prices are equal)`);
         }
       }
       await data.card.save();
+      logger.info(`Card ${cardId} updated with averagePrice=${data.card.averagePrice.toFixed(2)} and price_trend=${data.card.price_trend}`);
     }
 
     logger.info('Price history recording complete.');

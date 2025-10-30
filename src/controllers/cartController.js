@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const Listing = require('../models/Listing');
 
 /** Cria/retorna o carrinho na sessão */
 function getCart(req) {
@@ -48,9 +49,30 @@ async function add(req, res) {
     const q = Number(qty);
     const p = Number(price);
 
-    if (!cardId || !vendorId || !Number.isFinite(p) || !Number.isFinite(q) || q < 1) {
-      return res.status(400).json({ error: 'Dados inválidos' });
+    if (!cardId || !vendorId || !Number.isFinite(p) || !Number.isFinite(q) || q < 1 || !listingId) {
+      return res.status(400).json({ error: 'Dados inválidos ou listingId ausente.' });
     }
+
+    // --- VALIDAÇÃO DE ESTOQUE ---
+    const listing = await Listing.findById(listingId);
+    if (!listing) {
+      return res.status(404).json({ error: 'Anúncio não encontrado ou removido.' });
+    }
+    if (listing.stock < 1) {
+      return res.status(400).json({ error: 'Produto sem estoque disponível.' });
+    }
+
+    const cart = getCart(req);
+    const key = `${cardId}:${vendorId}:${listingId}`; // Incluir listingId na chave para unicidade
+
+    let found = cart.items.find(i => i.key === key);
+    let currentQtyInCart = found ? found.qty : 0;
+    let requestedTotalQty = currentQtyInCart + q;
+
+    if (requestedTotalQty > listing.stock) {
+      return res.status(400).json({ error: `Quantidade solicitada excede o estoque disponível (${listing.stock}).` });
+    }
+    // --- FIM DA VALIDAÇÃO DE ESTOQUE ---
 
     // --- NOVA VALIDAÇÃO ---
     // Verifica se o vendedor realmente existe antes de adicionar ao carrinho
@@ -60,10 +82,6 @@ async function add(req, res) {
     }
     // --- FIM DA VALIDAÇÃO ---
 
-    const cart = getCart(req);
-    const key = `${cardId}:${vendorId}`;
-
-    let found = cart.items.find(i => i.key === key);
     if (!found) {
       found = {
         key,
@@ -80,7 +98,7 @@ async function add(req, res) {
       found.meta = normalizeMeta({ ...(found.meta || {}), ...(meta || {}) }, { cardId, vendorId });
     }
 
-    found.qty = Math.min(999, found.qty + q);
+    found.qty = requestedTotalQty; // Atualiza com a quantidade total solicitada
     recompute(cart);
 
     return res.json({ ok: true, count: cart.totalQty, total: cart.totalPrice });

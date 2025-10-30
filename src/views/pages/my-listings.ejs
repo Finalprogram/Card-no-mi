@@ -2,7 +2,7 @@
 <html lang="pt-br">
 <head>
     <%- include('../partials/header') %>
-    <title>Meus Anúncios - CardHub</title>
+    <title>Meus Anúncios - Car'D No Mi</title>
     <style>
         .listings-grid {
             display: grid;
@@ -105,7 +105,7 @@
                             </div>
                         </div>
                         <div class="listing-card__actions">
-                            <a href="/listings/<%= listing._id %>/edit" class="btn btn-secondary">Editar</a>
+                            <a href="/api/listings/<%= listing._id %>/edit" class="btn btn-secondary">Editar</a>
                             <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST">
                                 <button type="submit" class="btn btn-danger">Excluir</button>
                             </form>

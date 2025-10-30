@@ -312,6 +312,19 @@ async function processWebhookLogic(status, external_reference, res) {
     if (status === 'approved') {
       newOrderStatus = 'Paid'; // Ou 'Paid', dependendo do seu fluxo
 
+      // --- Reduzir estoque dos listings ---
+      for (const item of order.items) {
+        const listing = await Listing.findById(item.listing);
+        if (listing) {
+          listing.stock -= item.quantity;
+          await listing.save();
+          logger.info(`[payment] Estoque do listing ${listing._id} reduzido em ${item.quantity}. Novo estoque: ${listing.stock}`);
+        } else {
+          logger.warn(`[payment] Listing ${item.listing} não encontrado para reduzir estoque no pedido ${order._id}.`);
+        }
+      }
+      // --- Fim da redução de estoque ---
+
       // --- Integração Melhor Envio ---
       try {
         const itemsBySeller = order.items.reduce((acc, item) => {
