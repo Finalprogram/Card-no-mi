@@ -118,13 +118,13 @@ document.addEventListener('DOMContentLoaded', () => {
             cartBadge.textContent = data.count;
             cartBadge.classList.toggle('hidden', data.count <= 0);
           }
-          alert('Card added to cart!');
+          window.showToast('Carta adicionada ao carrinho!', 'success');
         } else {
-          alert('Error adding card to cart.');
+          window.showToast('Erro ao adicionar ao carrinho.', 'error');
         }
       } catch (error) {
         console.error('Error adding to cart:', error);
-        alert('Error adding card to cart.');
+        window.showToast('Erro ao adicionar ao carrinho.', 'error');
       }
     });
   });
