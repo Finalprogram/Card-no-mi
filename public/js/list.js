@@ -62,6 +62,7 @@
       // dados
       const cardId   = row.dataset.cardid   || '';
       const vendorId = row.dataset.vendorid || '';
+      const listingId = row.dataset.listingid || '';
       let   price    = Number(row.dataset.price || 0);
       const max      = Math.max(1, Number(row.dataset.available || 99));
 
@@ -152,6 +153,7 @@
         const body = {
           cardId,
           vendorId,
+          listingId,
           price,
           qty,
           meta: {
@@ -163,6 +165,7 @@
             available: availableLabel
           }
         };
+
 
         const old = addBtn.textContent;
         addBtn.disabled = true;
@@ -316,7 +319,8 @@
 
             const isShop     = v.seller && v.seller.accountType === 'shop';
 
-  
+            const listingId  = v._id;
+
 
             return `
 
@@ -328,7 +332,9 @@
 
                    data-price="${price}"
 
-                   data-available="${available}">
+                   data-available="${available}"
+
+                   data-listingid="${listingId}">
 
                 <span class="seller-name">${sellerName} ${isShop ? '<span class="shop-badge">LOJA</span>' : ''}</span>
 

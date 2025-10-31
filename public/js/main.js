@@ -66,9 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     */
 
 
-  });
-});
-
+    });
 /* ========================================================================
    CARRINHO — Modal lateral (abre pelo botão flutuante)
 ========================================================================= */
@@ -351,3 +349,4 @@ document.addEventListener('DOMContentLoaded', () => {
       toast.addEventListener('transitionend', () => toast.remove());
     }, 3000);
   };
+});
