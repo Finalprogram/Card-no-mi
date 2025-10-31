@@ -336,9 +336,7 @@
                         const result = await response.json();
 
                         if (result.success) {
-                            messageDiv.innerHTML = `<div class="alert alert-success">${result.message}</div>`;
-                            // Optionally update UI elements with new data if needed
-                            // For example, update the displayed full name without a full reload
+                            window.showToast(result.message, 'success');
                             const profileUsername = document.querySelector('.profile-username');
                             if (profileUsername) profileUsername.textContent = data.fullName;
                         } else {
@@ -346,7 +344,7 @@
                             if (result.errors) {
                                 errorMessage += '<ul class="mb-0">' + Object.values(result.errors).map(err => `<li>${err}</li>`).join('') + '</ul>';
                             }
-                            messageDiv.innerHTML = `<div class="alert alert-danger">${errorMessage}</div>`;
+                            window.showToast(errorMessage, 'error');
                         }
                     } catch (error) {
                         console.error('Erro ao enviar formulário:', error);
