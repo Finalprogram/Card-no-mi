@@ -127,6 +127,7 @@
                         <% } else { %>
                             <a href="/dashboard-vendedor" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Acessar Dashboard</a>
                         <% } %>
+                        <button type="button" id="show-address-section-btn" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;">Meus Dados</button>
                     <% } %>
                 </div>
             </div>
@@ -134,7 +135,7 @@
 
         <section class="profile-main">
             <% if (user && user.id === profileUser.id.toString()) { %>
-            <div class="address-section card">
+            <div class="address-section card" hidden>
                 <h2>Meus Dados</h2>
                 <p>Este endereço será usado como origem para o cálculo de fretes.</p>
 
@@ -224,7 +225,7 @@
                         </div>
                     </div>
                     <button class="btn btn-primary" type="submit">Salvar Dados</button>
-                    <button type="button" id="open-address-modal-btn" class="btn btn-secondary" style="margin-left: 1rem;">Gerenciar Endereço</button>
+                    <button type="button" id="hide-address-section-btn" class="btn btn-secondary" style="margin-left: 1rem;">Recolher</button>
                 </form>
             </div>
             <% } %>
@@ -287,7 +288,8 @@
                                         <% for(let i = 0; i < 5; i++) { %>
                                             <% if (i < review.rating) { %>
                                                 <span class="star filled">★</span>
-                                            <% } else { %>
+                                            <% } else {
+                                                %>
                                                 <span class="star">☆</span>
                                             <% } %>
                                         <% } %>
@@ -353,21 +355,18 @@
                 });
             }
 
-            // Logic for opening the address modal
-            const openAddressModalBtn = document.getElementById('open-address-modal-btn');
-            if (openAddressModalBtn && window.openAddressModal) {
-                openAddressModalBtn.addEventListener('click', () => {
-                    // Pass current user address data to the modal
-                    const currentUserAddress = {
-                        cep: '<%= profileUser.address?.cep || '' %>',
-                        street: '<%= profileUser.address?.street || '' %>',
-                        number: '<%= profileUser.address?.number || '' %>',
-                        complement: '<%= profileUser.address?.complement || '' %>',
-                        neighborhood: '<%= profileUser.address?.neighborhood || '' %>',
-                        city: '<%= profileUser.address?.city || '' %>',
-                        state: '<%= profileUser.address?.state || '' %>'
-                    };
-                    window.openAddressModal(currentUserAddress);
+            const showAddressSectionBtn = document.getElementById('show-address-section-btn');
+            const addressSection = document.querySelector('.address-section');
+            if (showAddressSectionBtn && addressSection) {
+                showAddressSectionBtn.addEventListener('click', () => {
+                    addressSection.removeAttribute('hidden');
+                });
+            }
+
+            const hideAddressSectionBtn = document.getElementById('hide-address-section-btn');
+            if (hideAddressSectionBtn && addressSection) {
+                hideAddressSectionBtn.addEventListener('click', () => {
+                    addressSection.setAttribute('hidden', 'true');
                 });
             }
         });

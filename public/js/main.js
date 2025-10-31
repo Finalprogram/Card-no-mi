@@ -245,13 +245,13 @@ document.addEventListener('DOMContentLoaded', () => {
       form.elements['state'].value = addressData.state || '';
     }
 
-    modalOverlay.classList.add('is-open');
+    modalOverlay.removeAttribute('hidden');
     document.body.style.overflow = 'hidden'; // Disable background scrolling
     modalContent.focus(); // Focus on the modal content for accessibility
   }
 
   function closeAddressModal() {
-    modalOverlay.classList.remove('is-open');
+    modalOverlay.setAttribute('hidden', 'true');
     document.body.style.overflow = ''; // Re-enable background scrolling
     lastFocusElement?.focus(); // Return focus to the element that opened the modal
   }
@@ -265,7 +265,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && modalOverlay.classList.contains('is-open')) {
+    if (e.key === 'Escape' && !modalOverlay.hasAttribute('hidden')) {
       closeAddressModal();
     }
   });
