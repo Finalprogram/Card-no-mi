@@ -176,8 +176,9 @@ async function handleMercadoPagoSuccess(req, res) {
       logger.info("Mercado Pago Success:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
   
       try {
+        let order = null;
         if (external_reference) {
-          const order = await Order.findById(external_reference).populate('user');
+          order = await Order.findById(external_reference).populate('user');
       if (order && order.status !== 'Paid') { 
         order.status = 'Paid';
         await order.save();
@@ -186,10 +187,10 @@ async function handleMercadoPagoSuccess(req, res) {
     }
     // Limpar o carrinho do usuário, pois o pedido foi criado e pago
     req.session.cart = { items: [], totalQty: 0, totalPrice: 0 };
-    res.render('pages/checkout-success', { message: "Pagamento aprovado!", paymentStatus: status, totals: order.totals });
+    res.render('pages/checkout-success', { message: "Pagamento aprovado!", paymentStatus: status, totals: order ? order.totals : null });
   } catch (error) {
     logger.error('Erro ao processar retorno de sucesso do Mercado Pago:', error);
-    res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status });
+    res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status, totals: null });
   }
 }
 
@@ -198,8 +199,9 @@ async function handleMercadoPagoPending(req, res) {
   logger.info("Mercado Pago Pending:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
 
   try {
+    let order = null;
     if (external_reference) {
-      const order = await Order.findById(external_reference).populate('user');
+      order = await Order.findById(external_reference).populate('user');
       if (order && order.status !== 'PendingPayment') { 
         order.status = 'PendingPayment';
         await order.save();
@@ -207,10 +209,10 @@ async function handleMercadoPagoPending(req, res) {
       }
     }
     // Não limpar o carrinho aqui, pois o pagamento ainda está pendente
-    res.render('pages/checkout-success', { message: "Pagamento pendente.", paymentStatus: status, totals: order.totals });
+    res.render('pages/checkout-success', { message: "Pagamento pendente.", paymentStatus: status, totals: order ? order.totals : null });
   } catch (error) {
     logger.error('Erro ao processar retorno pendente do Mercado Pago:', error);
-    res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status });
+    res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status, totals: null });
   }
 }
 
@@ -219,8 +221,9 @@ async function handleMercadoPagoFailure(req, res) {
   logger.info("Mercado Pago Failure:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
 
   try {
+    let order = null;
     if (external_reference) {
-      const order = await Order.findById(external_reference).populate('user');
+      order = await Order.findById(external_reference).populate('user');
       if (order && order.status !== 'Cancelled') { // Evita atualizar se já foi cancelado pelo webhook
         order.status = 'Cancelled';
         await order.save();
@@ -228,10 +231,10 @@ async function handleMercadoPagoFailure(req, res) {
       }
     }
     // Não limpar o carrinho aqui, pois o pagamento falhou e o usuário pode tentar novamente
-    res.render('pages/checkout-success', { message: "Pagamento falhou.", paymentStatus: status, totals: order.totals });
+    res.render('pages/checkout-success', { message: "Pagamento falhou.", paymentStatus: status, totals: order ? order.totals : null });
   } catch (error) {
     logger.error('Erro ao processar retorno de falha do Mercado Pago:', error);
-    res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status });
+    res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status, totals: null });
   }
 }
 async function handleMercadoPagoWebhook(req, res) {

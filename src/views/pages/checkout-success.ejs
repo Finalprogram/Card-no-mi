@@ -7,6 +7,7 @@
     <h1>Pedido recebido!</h1>
     <p>Recebemos seu pedido e já estamos processando.</p>
 
+    <% if (totals) { %>
     <div style="margin-top:12px;">
       <div style="display:flex; justify-content:space-between; margin: 6px 0;">
         <span>Subtotal</span><strong>R$ <%= totals.subtotal.toFixed(2) %></strong>
@@ -18,6 +19,7 @@
         <span>Total</span><strong>R$ <%= totals.grand.toFixed(2) %></strong>
       </div>
     </div>
+    <% } %>
 
     <a class="btn btn-primary" href="/meus-pedidos">Ver meus pedidos</a>
   </section>
