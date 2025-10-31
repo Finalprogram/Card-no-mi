@@ -23,6 +23,12 @@
           <span style="color: #555; font-size: 1.5em;">→</span>
         <% } %>
       </div>
+      <% if (card.lowestPrice !== null) { %>
+        <p><strong>Menor Preço:</strong> <%= formatPrice(card.lowestPrice) %></p>
+      <% } %>
+      <% if (card.highestPrice !== null) { %>
+        <p><strong>Maior Preço:</strong> <%= formatPrice(card.highestPrice) %></p>
+      <% } %>
     </div>
   </div>
 

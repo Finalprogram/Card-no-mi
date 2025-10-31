@@ -27,14 +27,31 @@ const showCardsPage = async (req, res) => {
     const totalCards = await Card.countDocuments({ _id: { $in: distinctCardIds }, ...cardMatchQuery });
 
     const cards = await Card.aggregate([
-      { $match: { _id: { $in: distinctCardIds }, ...cardMatchQuery }},
-      { $lookup: { from: 'listings', localField: '_id', foreignField: 'card', as: 'listings' }},
-      { $addFields: { lowestPrice: { $min: '$listings.price' }}},
+      { $match: { game: 'onepiece', ...cardMatchQuery }},
+      { $lookup: {
+          from: 'listings',
+          localField: '_id',
+          foreignField: 'card',
+          as: 'listings'
+      }},
+      { $unwind: { path: '$listings', preserveNullAndEmptyArrays: true } },
+      { $match: { 'listings.quantity': { $gt: 0 } } }, // Filter for available listings
+      { $group: {
+          _id: '$_id',
+          name: { $first: '$name' },
+          image_url: { $first: '$image_url' },
+          set_name: { $first: '$set_name' },
+          rarity: { $first: '$rarity' },
+          type_line: { $first: '$type_line' },
+          averagePrice: { $first: '$averagePrice' }, // Keep the averagePrice from Card model
+          price_trend: { $first: '$price_trend' },   // Keep the price_trend from Card model
+          lowestAvailablePrice: { $min: '$listings.price' } // Calculate lowest available price
+      }},
       { $sort: { name: 1 }},
       { $skip: (currentPage - 1) * limit },
       { $limit: limit }
     ]);
-    const formattedCards = cards.map(card => ({ ...card, averagePrice: card.lowestPrice }));
+    const formattedCards = cards; // No need for further mapping, use as is
 
     // Busca as opções de filtro dinamicamente do banco de dados
     const rarities = await Card.distinct('rarity');
@@ -108,18 +125,21 @@ const showCardDetailPage = async (req, res) => {
                                   .sort({ price: 1 })
                                   .populate('seller', 'username accountType');
 
-    // Calcula o preço médio
-    let averagePrice = 0;
+    let lowestPrice = null;
+    let highestPrice = null;
+
     if (listings.length > 0) {
-      const total = listings.reduce((acc, listing) => acc + listing.price, 0);
-      averagePrice = total / listings.length;
+      lowestPrice = listings[0].price; // Listings are sorted by price ascending
+      highestPrice = listings[listings.length - 1].price;
     }
 
-    // Adiciona o preço médio e a tendência ao objeto card
+    // Use averagePrice e price_trend diretamente do objeto card
     const cardData = {
       ...card.toObject(),
-      averagePrice: averagePrice,
-      price_trend: 'neutral' // Lógica de tendência pode ser adicionada aqui
+      averagePrice: card.averagePrice, // Usar o averagePrice já calculado e salvo no modelo Card
+      price_trend: card.price_trend,   // Usar o price_trend já calculado e salvo no modelo Card
+      lowestPrice: lowestPrice,  // Adicionar menor preço
+      highestPrice: highestPrice // Adicionar maior preço
     };
 
     res.render('pages/card-detail', { card: cardData, listings });

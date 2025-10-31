@@ -1193,6 +1193,45 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   margin-bottom: 1rem;
 }
 
+.listings-section .table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden; /* Ensures rounded corners apply to children */
+}
+
+.listings-section .table th,
+.listings-section .table td {
+  padding: 12px 15px; /* Increased padding */
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.listings-section .table th {
+  background-color: var(--bg-surface-2);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.listings-section .table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.listings-section .table tbody tr:hover {
+  background-color: var(--bg-surface-2); /* Highlight row on hover */
+}
+
+.listings-section .table td:last-child {
+  text-align: right; /* Align action button to the right */
+}
+
+.listings-section .table .add-to-cart-btn {
+  padding: 8px 12px;
+  font-size: 0.9rem;
+}
+
 .card-link {
   text-decoration: none;
   color: inherit;

@@ -52,7 +52,7 @@
                 </div>
                 <h4><%= card.name %></h4>
                 <p>
-                  Preço Médio: <%= card.averagePrice ? formatPrice(card.averagePrice) : 'N/A' %>
+                  Menor Preço: <%= card.lowestAvailablePrice ? formatPrice(card.lowestAvailablePrice) : 'N/A' %>
                   <% if (card.price_trend === 'up') { %>
                     <span style="color: green; font-size: 1.5em;">▲</span>
                   <% } else if (card.price_trend === 'down') { %>
@@ -69,7 +69,6 @@
                   <button class="quantity-btn plus" type="button">+</button>
                 </div> -->
                 <button class="add-to-list-btn" data-cardid="<%= card._id %>">+ Lista</button>
-              </div>
             </div>
           <% }) %>
         <% } else { %>
