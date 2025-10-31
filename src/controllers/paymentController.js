@@ -240,58 +240,48 @@ async function handleMercadoPagoFailure(req, res) {
 async function handleMercadoPagoWebhook(req, res) {
   logger.info('Webhook Mercado Pago recebido:', req.query, req.body);
 
-  // Modo de teste
-  if (req.query.test === 'true') {
-    logger.warn('Rodando em modo de teste de webhook.');
-    const { external_reference, status } = req.body;
-
-    if (!external_reference || !status) {
-      return res.status(400).send('Em modo de teste, "external_reference" e "status" são obrigatórios no corpo da requisição.');
-    }
-    
-    // Simula a lógica principal do webhook com dados do corpo da requisição
-    return await processWebhookLogic(status, external_reference, res);
-  }
-
-
-  const { topic, id } = req.query; // 'id' aqui é o ID da notificação, não do pagamento
-
-  if (!topic || !id) {
-    logger.warn('Webhook Mercado Pago: Tópico ou ID ausente.', req.query);
-    return res.status(400).send('Tópico ou ID ausente.');
-  }
-
   try {
-    let paymentId;
-    if (topic === 'payment') {
-      paymentId = id; // Para o tópico 'payment', o ID é o ID do pagamento
-    } else if (topic === 'merchant_order') {
-      // Se for merchant_order, precisamos buscar os pagamentos associados
-      // Para simplificar, vamos focar no tópico 'payment' por enquanto.
-      logger.info(`Webhook Mercado Pago: Tópico ${topic} recebido, ignorando por enquanto.`);
+    const { body } = req;
+
+    // Novo formato de webhook (a partir de 2023)
+    if (body.action && body.data && body.data.id) {
+      const paymentId = body.data.id;
+      const payment = await paymentClient.get({ id: paymentId });
+      logger.info('Detalhes do pagamento do Mercado Pago (via body):', payment);
+      const { status, external_reference } = payment;
+
+      if (!external_reference) {
+        logger.error('Webhook Mercado Pago: external_reference ausente no pagamento.', payment);
+        return res.status(400).send('external_reference ausente.');
+      }
+
+      await processWebhookLogic(status, external_reference, res);
+
+    } else if (body.topic === 'merchant_order' || req.query.topic === 'merchant_order') {
+      logger.info(`Webhook Mercado Pago: Tópico merchant_order recebido, ignorando por enquanto.`);
       return res.status(200).send('OK');
+
+    } else if (body.topic === 'payment' || req.query.topic === 'payment') {
+      const paymentId = body.id || req.query.id;
+      if (!paymentId) {
+        logger.warn('Webhook Mercado Pago: ID do pagamento não determinado para o tópico payment.');
+        return res.status(400).send('ID do pagamento não determinado.');
+      }
+      const payment = await paymentClient.get({ id: Number(paymentId) });
+      logger.info('Detalhes do pagamento do Mercado Pago (via topic):', payment);
+      const { status, external_reference } = payment;
+
+      if (!external_reference) {
+        logger.error('Webhook Mercado Pago: external_reference ausente no pagamento.', payment);
+        return res.status(400).send('external_reference ausente.');
+      }
+
+      await processWebhookLogic(status, external_reference, res);
+
     } else {
-      logger.info(`Webhook Mercado Pago: Tópico ${topic} desconhecido, ignorando.`);
-      return res.status(200).send('OK');
+      logger.warn('Webhook Mercado Pago: Formato de webhook não reconhecido ou informações ausentes.', { query: req.query, body: req.body });
+      return res.status(400).send('Formato de webhook não reconhecido.');
     }
-
-    if (!paymentId) {
-      logger.warn('Webhook Mercado Pago: ID do pagamento não determinado.');
-      return res.status(400).send('ID do pagamento não determinado.');
-    }
-
-    // 1. Buscar detalhes do pagamento na API do Mercado Pago
-    const payment = await paymentClient.get({ id: Number(paymentId) });
-    logger.info('Detalhes do pagamento do Mercado Pago:', payment);
-
-    const { status, external_reference } = payment;
-
-    if (!external_reference) {
-      logger.error('Webhook Mercado Pago: external_reference ausente no pagamento.', payment);
-      return res.status(400).send('external_reference ausente.');
-    }
-
-    await processWebhookLogic(status, external_reference, res);
 
   } catch (error) {
     logger.error('Erro no webhook do Mercado Pago:', error);
@@ -306,7 +296,6 @@ async function processWebhookLogic(status, external_reference, res) {
 
     if (!order) {
       logger.error(`Webhook Mercado Pago: Pedido com ID ${external_reference} não encontrado.`);
-      // Em modo de teste, é útil retornar um 404. Em produção, o MP pode reenviar.
       return res.status(404).send('Pedido não encontrado.');
     }
 
@@ -319,9 +308,9 @@ async function processWebhookLogic(status, external_reference, res) {
       for (const item of order.items) {
         const listing = await Listing.findById(item.listing);
         if (listing) {
-          listing.stock -= item.quantity;
+          listing.quantity -= item.quantity;
           await listing.save();
-          logger.info(`[payment] Estoque do listing ${listing._id} reduzido em ${item.quantity}. Novo estoque: ${listing.stock}`);
+          logger.info(`[payment] Estoque do listing ${listing._id} reduzido em ${item.quantity}. Novo estoque: ${listing.quantity}`);
         } else {
           logger.warn(`[payment] Listing ${item.listing} não encontrado para reduzir estoque no pedido ${order._id}.`);
         }
@@ -359,8 +348,6 @@ async function processWebhookLogic(status, external_reference, res) {
           const { comprimentoCm, larguraCm, alturaCm, pesoKg } = estimatePackageDims(sellerItems);
           const insuranceValue = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
-          const toAddress = order.shippingAddress ? `${order.shippingAddress.street}, ${order.shippingAddress.number} - ${order.shippingAddress.neighborhood}, ${order.shippingAddress.city} - ${order.shippingAddress.state}`.trim() : '';
-
           const shipmentDetails = {
             service: chosenShipping.service,
             agency: null, // Pode ser definido se o vendedor usar uma agência específica
@@ -371,12 +358,12 @@ async function processWebhookLogic(status, external_reference, res) {
               document: seller.documentNumber,
               company_document: null,
               state_register: null,
-              address: 'Rua do Vendedor', // Placeholder
-              complement: null,
-              number: '100', // Placeholder
-              district: 'Bairro do Vendedor', // Placeholder
-              city: 'Cidade do Vendedor', // Placeholder
-              state: 'MG', // Placeholder
+              address: seller.address.street,
+              complement: seller.address.complement,
+              number: seller.address.number,
+              district: seller.address.neighborhood,
+              city: seller.address.city,
+              state_abbr: seller.address.state,
               country_id: 'BR',
               postal_code: cepOrigem,
             },
@@ -385,12 +372,12 @@ async function processWebhookLogic(status, external_reference, res) {
               phone: order.user.phone,
               email: order.user.email,
               document: order.user.documentNumber,
-              address: toAddress,
+              address: order.shippingAddress.street, // Apenas a rua
               complement: order.shippingAddress.complement,
               number: order.shippingAddress.number,
               district: order.shippingAddress.neighborhood,
               city: order.shippingAddress.city,
-              state: order.shippingAddress.state,
+              state_abbr: order.shippingAddress.state,
               country_id: 'BR',
               postal_code: order.shippingAddress.cep.replace('-', '') || '00000000',
             },
@@ -401,18 +388,13 @@ async function processWebhookLogic(status, external_reference, res) {
                 length: comprimentoCm,
                 weight: pesoKg,
                 insurance_value: insuranceValue,
-                // product_id: 'ID_DO_PRODUTO_NO_ME', // Opcional
-                // quantity: 1, // Opcional
               }
             ],
-            // Aqui você pode adicionar os produtos individuais se a API do ME exigir
             products: sellerItems.map(item => ({
               name: item.cardName,
               quantity: item.quantity,
               unitary_value: item.price,
             })),
-            // Opcional: tags para identificar o pedido no ME
-            // tags: [{ tag: `Pedido ${order._id}`, url: `${process.env.BASE_URL}/order/${order._id}` }],
           };
 
           const addedToCart = await addItemToCart(shipmentDetails);
@@ -428,16 +410,13 @@ async function processWebhookLogic(status, external_reference, res) {
           const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
           logger.info(`[payment] Envios comprados no Melhor Envio para o pedido ${order._id}:`, purchasedShipments);
 
-          // Assume que purchasedShipments retorna os IDs dos envios comprados
-          // E que printLabels aceita esses IDs
           const printResponse = await printLabels(orderMelhorEnvioIds);
           logger.info(`[payment] Links de impressão do Melhor Envio para o pedido ${order._id}:`, printResponse);
 
-          // Atualizar o pedido com as informações do Melhor Envio
-          order.melhorEnvioShipmentId = orderMelhorEnvioIds.join(','); // Armazenar todos os IDs
-          order.melhorEnvioLabelUrl = printResponse.url; // URL para imprimir todas as etiquetas
-          order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', '); // Nomes dos serviços
-          order.melhorEnvioTrackingUrl = purchasedShipments[0]?.tracking; // TODO: verify this is the correct tracking url
+          order.melhorEnvioShipmentId = orderMelhorEnvioIds.join(',');
+          order.melhorEnvioLabelUrl = printResponse.url;
+          order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', ');
+          order.melhorEnvioTrackingUrl = purchasedShipments[0]?.tracking;
 
           logger.info(`[payment] Pedido #${order._id} atualizado com dados do Melhor Envio.`);
         } else {
@@ -446,16 +425,18 @@ async function processWebhookLogic(status, external_reference, res) {
 
       } catch (melhorEnvioError) {
         logger.error(`[payment] Erro na integração com Melhor Envio para o pedido ${order._id}:`, melhorEnvioError);
-        // Decida como lidar com este erro: reverter status do pedido, notificar admin, etc.
-        const { sendEmail } = require('../services/emailService');
-        const subject = `Erro na integração com Melhor Envio - Pedido ${order._id}`;
-        const content = `<p>Ocorreu um erro ao processar o envio para o pedido ${order._id}.</p><p>Erro: ${melhorEnvioError.message}</p>`;
-        sendEmail(process.env.ADMIN_EMAIL, subject, content);
+        if (process.env.ADMIN_EMAIL) {
+          const { sendEmail } = require('../services/emailService');
+          const subject = `Erro na integração com Melhor Envio - Pedido ${order._id}`;
+          const content = `<p>Ocorreu um erro ao processar o envio para o pedido ${order._id}.</p><p>Erro: ${melhorEnvioError.message}</p>`;
+          sendEmail(process.env.ADMIN_EMAIL, subject, content);
+        } else {
+          logger.warn('[payment] ADMIN_EMAIL não definido. Não foi possível enviar email de notificação de erro.');
+        }
       }
-      // --- Fim da Integração Melhor Envio ---
 
     } else if (status === 'pending') {
-      newOrderStatus = 'PendingPayment'; // Ou 'PendingPayment'
+      newOrderStatus = 'PendingPayment';
     } else if (status === 'rejected' || status === 'cancelled') {
       newOrderStatus = 'Cancelled';
     }
@@ -467,11 +448,6 @@ async function processWebhookLogic(status, external_reference, res) {
     }
 
     res.status(200).send('OK');
-  } catch (error) {
-    logger.error('Erro no webhook do Mercado Pago:', error);
-    res.status(500).send('Erro interno do servidor.');
-  }
-}
 
 
 
