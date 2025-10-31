@@ -87,7 +87,7 @@
 <main class="container" style="max-width: 880px; margin-top: 24px;">
   <%- include('../partials/navbar') %>
 
-  <h1 style="margin: 24px 0 16px;">Meus Pedidos Vendidos</h1>
+  <h1 style="margin: 24px 0 16px;">Minhas Vendas</h1>
 
   <div class="orders-container">
     <% if (orders && orders.length > 0) { %>
@@ -119,11 +119,12 @@
                   };
                   const translatedStatus = statusTranslations[order.status] || order.status;
                 %>
-                <% if (order.status === 'Processing') { %>
-                  <button class="btn btn-sm btn-primary mark-as-shipped-btn" data-order-id="<%= order._id %>">Marcar como Enviado</button>
+                <% if (order.status === 'Paid') { %>
                   <% if (!order.melhorEnvioLabelUrl) { %>
-                    <button class="btn btn-sm btn-success generate-label-btn" data-order-id="<%= order._id %>" style="margin-left: 10px;">Gerar Etiqueta ME</button>
+                    <button class="btn btn-sm btn-success generate-label-btn" data-order-id="<%= order._id %>">Gerar Etiqueta ME</button>
                   <% } %>
+                <% } else if (order.status === 'Processing') { %>
+                  <button class="btn btn-sm btn-primary mark-as-shipped-btn" data-order-id="<%= order._id %>">Marcar como Enviado</button>
                 <% } else if (order.status === 'Shipped' && order.melhorEnvioLabelUrl) { %>
                   <span class="value"><%= translatedStatus %></span>
                   <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="btn btn-sm btn-info" style="margin-left: 10px;">Ver Etiqueta</a>

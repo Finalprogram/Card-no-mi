@@ -29,9 +29,7 @@ const registerUser = async (req, res) => {
     if (password !== confirmPassword) {
       errors.confirmPassword = 'As senhas não coincidem.';
     }
-    if (!documentNumber) {
-      errors.documentNumber = 'CPF/CNPJ é obrigatório.';
-    }
+
 
     const existingUserByUsername = await User.findOne({ username });
     if (existingUserByUsername) {
