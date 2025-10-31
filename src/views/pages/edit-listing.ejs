@@ -19,7 +19,7 @@
             </div>
         </div>
 
-        <form action="/listings/<%= listing._id %>?_method=PUT" method="POST" class="edit-listing-form">
+        <form action="/api/listings/<%= listing._id %>?_method=PUT" method="POST" class="edit-listing-form">
             <div class="form-group">
                 <label for="price">Preço (R$)</label>
                 <input type="number" id="price" name="price" class="form-control" value="<%= listing.price %>" step="0.01" required>
