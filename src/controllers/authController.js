@@ -3,6 +3,7 @@ const bcrypt = require('bcryptjs');
 const logger = require('../config/logger');
 const crypto = require('crypto');
 const { sendVerificationEmail } = require('../services/emailService');
+const { validateCPF } = require('../utils/validation');
 
 // Função para MOSTRAR a página de registro
 const showRegisterPage = (req, res) => {
@@ -82,16 +83,22 @@ const registerUser = async (req, res) => {
 };
 
 async function verifyEmail(req, res) {
+  logger.info('[verifyEmail] Função de verificação de email chamada.');
   try {
     const { token } = req.query;
+    logger.info(`[verifyEmail] Token recebido: ${token}`);
 
     const user = await User.findOne({ verificationToken: token });
 
     if (!user) {
+      logger.warn(`[verifyEmail] Token inválido ou não encontrado: ${token}`);
       return res.status(400).send('Token de verificação inválido ou expirado.');
     }
 
+    logger.info(`[verifyEmail] Usuário encontrado para o token: ${user.username}`);
+
     if (user.verificationTokenExpires < Date.now()) {
+      logger.warn(`[verifyEmail] Token expirado para o usuário: ${user.username}`);
       return res.status(400).send('Token de verificação expirado. Por favor, registre-se novamente.');
     }
 
@@ -100,6 +107,7 @@ async function verifyEmail(req, res) {
     user.verificationTokenExpires = undefined;
     await user.save();
 
+    logger.info(`[verifyEmail] Usuário ${user.username} verificado com sucesso.`);
     res.render('pages/verification-success');
 
   } catch (error) {
@@ -188,7 +196,11 @@ const updateProfile = async (req, res) => {
     if (!neighborhood) errors.neighborhood = 'Bairro é obrigatório.';
     if (!city) errors.city = 'Cidade é obrigatória.';
     if (!state) errors.state = 'Estado é obrigatório.';
-    if (!documentNumber) errors.documentNumber = 'CPF/CNPJ é obrigatório.';
+    if (!documentNumber) {
+      errors.documentNumber = 'CPF/CNPJ é obrigatório.';
+    } else if (documentType === 'CPF' && !validateCPF(documentNumber)) {
+      errors.documentNumber = 'CPF inválido.';
+    }
 
     if (Object.keys(errors).length > 0) {
       return res.status(400).json({ success: false, message: 'Erro de validação', errors });

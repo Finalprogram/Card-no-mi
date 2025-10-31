@@ -33,5 +33,21 @@
             </form>
         </div>
     </main>
+    <script src="/js/main.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const error = urlParams.get('error');
+            if (error) {
+                let message = 'Ocorreu um erro.';
+                if (error === 'cpfInvalid') {
+                    message = 'CPF inválido. Por favor, verifique os dados e tente novamente.';
+                } else if (error === 'cpfRequired') {
+                    message = 'O CPF é obrigatório.';
+                }
+                window.showToast(message, 'error');
+            }
+        });
+    </script>
 </body>
 </html>

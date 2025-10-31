@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { validateCPF } = require('../utils/validation'); // Importar a função de validação
 
 const showStep1 = (req, res) => {
     res.render('pages/welcome/step1');
@@ -10,10 +11,14 @@ const handleStep1 = async (req, res) => {
         const { fullName, phone, documentNumber } = req.body;
         const userId = req.session.user.id;
 
-        // Basic validation for documentNumber
+        // Validação do CPF
         if (!documentNumber) {
             logger.error(`[welcome] Usuário ${userId} tentou completar o passo 1 sem CPF.`);
             return res.redirect('/welcome/step1?error=cpfRequired');
+        }
+        if (!validateCPF(documentNumber)) {
+            logger.error(`[welcome] Usuário ${userId} forneceu um CPF inválido: ${documentNumber}`);
+            return res.redirect('/welcome/step1?error=cpfInvalid');
         }
 
         await User.findByIdAndUpdate(userId, { $set: { fullName, phone, documentType: 'CPF', documentNumber } });
