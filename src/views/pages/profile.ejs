@@ -97,7 +97,10 @@
         <aside class="profile-sidebar">
             <div class="profile-card new-design">
                 <div class="profile-card-header">
-                    <img src="/images/default-avatar.png" alt="Avatar de <%= profileUser.fullName %>" class="profile-avatar">
+                    <form id="avatar-upload-form" style="display: none;">
+                        <input type="file" id="avatar-input" name="avatar" accept="image/*">
+                    </form>
+                    <img src="<%= profileUser.avatar || '/images/default-avatar.png' %>" alt="Avatar de <%= profileUser.fullName %>" class="profile-avatar" id="profile-avatar-img">
                     <h2 class="profile-username"><%= profileUser.fullName %></h2>
                     <p class="profile-account-type"><%= profileUser.accountType === 'shop' ? 'Loja' : 'Pessoa Física' %></p>
                     <% if (profileUser.accountType === 'shop' && profileUser.businessName) { %>
@@ -288,8 +291,7 @@
                                         <% for(let i = 0; i < 5; i++) { %>
                                             <% if (i < review.rating) { %>
                                                 <span class="star filled">★</span>
-                                            <% } else {
-                                                %>
+                                            <% } else { %>
                                                 <span class="star">☆</span>
                                             <% } %>
                                         <% } %>
@@ -365,6 +367,42 @@
             if (hideAddressSectionBtn && addressSection) {
                 hideAddressSectionBtn.addEventListener('click', () => {
                     addressSection.setAttribute('hidden', 'true');
+                });
+            }
+
+            const avatarImg = document.getElementById('profile-avatar-img');
+            const avatarInput = document.getElementById('avatar-input');
+
+            if (avatarImg && avatarInput) {
+                avatarImg.addEventListener('click', () => {
+                    avatarInput.click();
+                });
+
+                avatarInput.addEventListener('change', async () => {
+                    const file = avatarInput.files[0];
+                    if (!file) return;
+
+                    const formData = new FormData();
+                    formData.append('avatar', file);
+
+                    try {
+                        const response = await fetch('/auth/profile/avatar', {
+                            method: 'POST',
+                            body: formData,
+                        });
+
+                        const result = await response.json();
+
+                        if (result.success) {
+                            avatarImg.src = result.avatar;
+                            window.showToast(result.message, 'success');
+                        } else {
+                            window.showToast(result.message || 'Erro ao atualizar avatar.', 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao enviar avatar:', error);
+                        window.showToast('Erro ao conectar com o servidor.', 'error');
+                    }
                 });
             }
         });

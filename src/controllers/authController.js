@@ -231,6 +231,28 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const updateAvatar = async (req, res) => {
+  try {
+    const userId = req.session.user.id;
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
+    }
+
+    if (req.file) {
+      user.avatar = `/uploads/avatars/${req.file.filename}`;
+      await user.save();
+      res.json({ success: true, message: 'Avatar atualizado com sucesso!', avatar: user.avatar });
+    } else {
+      res.status(400).json({ success: false, message: 'Nenhum arquivo foi enviado.' });
+    }
+  } catch (error) {
+    logger.error('Erro ao atualizar avatar:', error);
+    res.status(500).json({ success: false, message: 'Erro no servidor ao atualizar avatar.' });
+  }
+};
+
 module.exports = {
   showRegisterPage,
   registerUser,
@@ -238,5 +260,6 @@ module.exports = {
   loginUser,
   logoutUser,
   updateProfile, // Nome da função atualizado
-  verifyEmail
+  verifyEmail,
+  updateAvatar
 };

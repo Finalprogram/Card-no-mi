@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
+const upload = require('../middleware/upload');
 
 const { isAuthPage } = require('../middleware/auth');
 
@@ -23,5 +24,8 @@ router.get('/logout', authController.logoutUser);
 
 // Rota para atualizar o endereço do perfil
 router.post('/profile/update', isAuthPage, authController.updateProfile);
+
+// Rota para atualizar o avatar do perfil
+router.post('/profile/avatar', isAuthPage, upload, authController.updateAvatar);
 
 module.exports = router;
