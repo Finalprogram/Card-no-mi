@@ -95,36 +95,40 @@
     </div>
     <main class="container profile-grid">
         <aside class="profile-sidebar">
-            <div class="profile-card">
-                <img src="/images/default-avatar.png" alt="Avatar de <%= profileUser.fullName %>" class="profile-avatar">
-                <h2 class="profile-username"><%= profileUser.fullName %></h2>
-                <div class="profile-average-rating">
-                    <span class="rating-value"><%= averageRating.toFixed(1) %></span>
-                    <span class="star-rating">
-                        <% for(let i = 1; i <= 5; i++) { %>
-                            <% if (i <= averageRating) { %>
-                                <span class="star filled">★</span>
-                            <% } else if (i - 0.5 <= averageRating) { %>
-                                <span class="star half-filled">★</span>
-                            <% } else { %>
-                                <span class="star">☆</span>
-                            <% } %>
-                        <% } %>
-                    </span>
-                    <span class="review-count">(<%= reviews.length %> avaliações)</span>
-                </div>
-                <p class="profile-account-type"><%= profileUser.accountType === 'shop' ? 'Loja' : 'Pessoa Física' %></p>
-                <% if (profileUser.accountType === 'shop' && profileUser.businessName) { %>
-                    <p class="profile-business-name"><strong><%= profileUser.businessName %></strong></p>
-                <% } %>
-                <p class="profile-member-since">Membro desde <%= profileUser.createdAt.toLocaleDateString('pt-BR') %></p>
-                <% if (user && user.id === profileUser.id.toString()) { %>
-                    <% if (user.accountType === 'admin') { %>
-                        <a href="/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Admin Dashboard</a>
-                    <% } else { %>
-                        <a href="/dashboard-vendedor" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Acessar Dashboard</a>
+            <div class="profile-card new-design">
+                <div class="profile-card-header">
+                    <img src="/images/default-avatar.png" alt="Avatar de <%= profileUser.fullName %>" class="profile-avatar">
+                    <h2 class="profile-username"><%= profileUser.fullName %></h2>
+                    <p class="profile-account-type"><%= profileUser.accountType === 'shop' ? 'Loja' : 'Pessoa Física' %></p>
+                    <% if (profileUser.accountType === 'shop' && profileUser.businessName) { %>
+                        <p class="profile-business-name"><strong><%= profileUser.businessName %></strong></p>
                     <% } %>
-                <% } %>
+                </div>
+                <div class="profile-card-body">
+                    <div class="profile-average-rating">
+                        <span class="rating-value"><%= averageRating.toFixed(1) %></span>
+                        <span class="star-rating">
+                            <% for(let i = 1; i <= 5; i++) { %>
+                                <% if (i <= averageRating) { %>
+                                    <span class="star filled">★</span>
+                                <% } else if (i - 0.5 <= averageRating) { %>
+                                    <span class="star half-filled">★</span>
+                                <% } else { %>
+                                    <span class="star">☆</span>
+                                <% } %>
+                            <% } %>
+                        </span>
+                        <span class="review-count">(<%= reviews.length %> avaliações)</span>
+                    </div>
+                    <p class="profile-member-since">Membro desde <%= profileUser.createdAt.toLocaleDateString('pt-BR') %></p>
+                    <% if (user && user.id === profileUser.id.toString()) { %>
+                        <% if (user.accountType === 'admin') { %>
+                            <a href="/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Admin Dashboard</a>
+                        <% } else { %>
+                            <a href="/dashboard-vendedor" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Acessar Dashboard</a>
+                        <% } %>
+                    <% } %>
+                </div>
             </div>
         </aside>
 
@@ -137,60 +141,90 @@
                 <div id="profile-message" class="mt-3"></div>
 
                 <form id="profile-update-form" action="/auth/profile/update" method="post" class="address-form">
-                    <div class="form-group">
-                        <label>Nome Completo</label>
-                        <input class="form-control" name="fullName" placeholder="Seu nome completo" value="<%= profileUser.fullName || '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Telefone</label>
-                        <input class="form-control" name="phone" placeholder="(00) 00000-0000" value="<%= profileUser.phone || '' %>">
-                    </div>
-                    <div class="form-row">
+                    <div class="form-grid-2-col">
+                        <div class="form-group">
+                            <label>Nome Completo</label>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-user"></i>
+                                <input class="form-control" name="fullName" placeholder="Seu nome completo" value="<%= profileUser.fullName || '' %>" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Telefone</label>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-phone"></i>
+                                <input class="form-control" name="phone" placeholder="(00) 00000-0000" value="<%= profileUser.phone || '' %>">
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>Tipo de Documento</label>
-                            <select class="form-control" name="documentType">
-                                <option value="CPF" <%= profileUser.documentType === 'CPF' ? 'selected' : '' %>>CPF</option>
-                                <option value="CNPJ" <%= profileUser.documentType === 'CNPJ' ? 'selected' : '' %>>CNPJ</option>
-                            </select>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-id-card"></i>
+                                <select class="form-control" name="documentType">
+                                    <option value="CPF" <%= profileUser.documentType === 'CPF' ? 'selected' : '' %>>CPF</option>
+                                    <option value="CNPJ" <%= profileUser.documentType === 'CNPJ' ? 'selected' : '' %>>CNPJ</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Número do Documento</label>
-                            <input class="form-control" name="documentNumber" placeholder="CPF ou CNPJ" value="<%= profileUser.documentNumber || '' %>" required>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-hashtag"></i>
+                                <input class="form-control" name="documentNumber" placeholder="CPF ou CNPJ" value="<%= profileUser.documentNumber || '' %>" required>
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label>CEP</label>
-                        <input class="form-control" name="cep" placeholder="00000-000" value="<%= profileUser.address?.cep || '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Rua / Avenida</label>
-                        <input class="form-control" name="street" placeholder="Sua rua ou avenida" value="<%= profileUser.address?.street || '' %>" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Bairro</label>
-                        <input class="form-control" name="neighborhood" placeholder="Seu bairro" value="<%= profileUser.address?.neighborhood || '' %>" required>
-                    </div>
-                    <div class="form-row">
+                        <div class="form-group">
+                            <label>CEP</label>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-map-pin"></i>
+                                <input class="form-control" name="cep" placeholder="00000-000" value="<%= profileUser.address?.cep || '' %>" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Rua / Avenida</label>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-road"></i>
+                                <input class="form-control" name="street" placeholder="Sua rua ou avenida" value="<%= profileUser.address?.street || '' %>" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Bairro</label>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-map-marker-alt"></i>
+                                <input class="form-control" name="neighborhood" placeholder="Seu bairro" value="<%= profileUser.address?.neighborhood || '' %>" required>
+                            </div>
+                        </div>
                         <div class="form-group">
                             <label>Número</label>
-                            <input class="form-control" name="number" value="<%= profileUser.address?.number || '' %>" required>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-sort-numeric-up"></i>
+                                <input class="form-control" name="number" value="<%= profileUser.address?.number || '' %>" required>
+                            </div>
                         </div>
                         <div class="form-group">
                             <label>Complemento (opcional)</label>
-                            <input class="form-control" name="complement" value="<%= profileUser.address?.complement || '' %>">
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-info-circle"></i>
+                                <input class="form-control" name="complement" value="<%= profileUser.address?.complement || '' %>">
+                            </div>
                         </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group city-group">
+                        <div class="form-group">
                             <label>Cidade</label>
-                            <input class="form-control" name="city" value="<%= profileUser.address?.city || '' %>" required>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-city"></i>
+                                <input class="form-control" name="city" value="<%= profileUser.address?.city || '' %>" required>
+                            </div>
                         </div>
-                        <div class="form-group state-group">
+                        <div class="form-group">
                             <label>UF</label>
-                            <input class="form-control" name="state" maxlength="2" value="<%= profileUser.address?.state || '' %>" required>
+                            <div class="input-icon-wrapper">
+                                <i class="fas fa-globe-americas"></i>
+                                <input class="form-control" name="state" maxlength="2" value="<%= profileUser.address?.state || '' %>" required>
+                            </div>
                         </div>
                     </div>
                     <button class="btn btn-primary" type="submit">Salvar Dados</button>
+                    <button type="button" id="open-address-modal-btn" class="btn btn-secondary" style="margin-left: 1rem;">Gerenciar Endereço</button>
                 </form>
             </div>
             <% } %>
@@ -198,53 +232,34 @@
             <div class="user-listings card">
                 <h2>Anúncios de <%= profileUser.fullName %></h2>
                 <% if (listings && listings.length > 0) { %>
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Imagem</th>
-                                <th>Carta</th>
-                                <th>Condição</th>
-                                <th>Idioma</th>
-                                <th>Preço</th>
-                                <th>Quantidade</th>
-                                <% if (user && user.id === profileUser.id.toString()) { %>
-                                    <th>Ações</th>
-                                <% } %>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <% listings.forEach(listing => { %>
-                                <tr>
-                                    <td>
-                                        <% if (listing.card.image_url) { %>
-                                            <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>" style="width: 50px; border-radius: 4px;">
-                                        <% } %>
-                                    </td>
-                                    <td><%= listing.card.name %></td>
-                                    <td><%= listing.condition %></td>
-                                    <td><%= listing.language %></td>
-                                    <td>
-                                        <% 
-                                            let priceStr = 'R$ ' + Number(listing.price || 0).toFixed(2).replace('.', ',');
-                                            if (priceStr.endsWith(',00')) {
-                                                priceStr = priceStr.slice(0, -3);
-                                            }
-                                        %>
-                                        <%= priceStr %>
-                                    </td>
-                                    <td><%= listing.quantity %></td>
-                                    <% if (user && user.id === profileUser.id.toString()) { %>
-                                        <td>
-                                            <a href="/listings/<%= listing._id %>/edit" class="btn btn-sm btn-secondary">Editar</a>
-                                            <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" style="display: inline;">
-                                                <button type="submit" class="btn btn-sm btn-danger">Excluir</button>
-                                            </form>
-                                        </td>
+                    <div class="listings-grid-profile">
+                        <% listings.forEach(listing => { %>
+                            <div class="listing-card-profile">
+                                <div class="listing-card-profile__image-container">
+                                    <% if (listing.card && listing.card.image_url) { %>
+                                        <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>" class="listing-card-profile__image">
                                     <% } %>
-                                </tr>
-                            <% }) %>
-                        </tbody>
-                    </table>
+                                    <div class="listing-card-profile__tags">
+                                        <span class="tag condition-<%= listing.condition.toLowerCase().replace(' ', '-') %>"><%= listing.condition %></span>
+                                        <span class="tag language-<%= listing.language.toLowerCase() %>"><%= listing.language %></span>
+                                    </div>
+                                </div>
+                                <div class="listing-card-profile__info">
+                                    <h3 class="listing-card-profile__name"><%= listing.card ? listing.card.name : 'Carta não encontrada' %></h3>
+                                    <p class="listing-card-profile__price"><%= formatPrice(listing.price) %></p>
+                                    <p class="listing-card-profile__quantity">Qtd: <%= listing.quantity %></p>
+                                </div>
+                                <% if (user && user.id === profileUser.id.toString()) { %>
+                                    <div class="listing-card-profile__actions">
+                                        <a href="/api/listings/<%= listing._id %>/edit" class="btn btn-sm btn-icon" title="Editar"><i class="fas fa-edit"></i></a>
+                                        <form action="/listings/<%= listing._id %>?_method=DELETE" method="POST" style="display: inline;">
+                                            <button type="submit" class="btn btn-sm btn-icon btn-danger" title="Excluir"><i class="fas fa-trash-alt"></i></button>
+                                        </form>
+                                    </div>
+                                <% } %>
+                            </div>
+                        <% }) %>
+                    </div>
                     <div style="text-align: right; margin-top: 1rem;">
                         <a href="/meus-anuncios" class="btn btn-secondary">Ver todos os anúncios</a>
                     </div>
@@ -257,12 +272,18 @@
             <div class="user-reviews card">
                 <h2>Avaliações de <%= profileUser.fullName %></h2>
                 <% if (reviews && reviews.length > 0) { %>
-                    <div class="reviews-list">
+                    <div class="reviews-grid">
                         <% reviews.forEach(review => { %>
-                            <div class="review-item">
-                                <div class="review-header">
-                                    <span class="reviewer-name"><%= review.buyer.fullName %></span>
-                                    <span class="review-rating">
+                            <div class="review-card">
+                                <div class="review-card-header">
+                                    <img src="/images/default-avatar.png" alt="Avatar de <%= review.buyer.fullName %>" class="review-avatar">
+                                    <div class="review-meta">
+                                        <span class="reviewer-name"><%= review.buyer.fullName %></span>
+                                        <span class="review-date"><%= new Date(review.createdAt).toLocaleDateString('pt-BR') %></span>
+                                    </div>
+                                </div>
+                                <div class="review-card-body">
+                                    <div class="review-rating">
                                         <% for(let i = 0; i < 5; i++) { %>
                                             <% if (i < review.rating) { %>
                                                 <span class="star filled">★</span>
@@ -270,10 +291,9 @@
                                                 <span class="star">☆</span>
                                             <% } %>
                                         <% } %>
-                                    </span>
+                                    </div>
+                                    <p class="review-comment"><%= review.comment %></p>
                                 </div>
-                                <p class="review-comment"><%= review.comment %></p>
-                                <p class="review-date"><%= new Date(review.createdAt).toLocaleDateString('pt-BR') %></p>
                             </div>
                         <% }) %>
                     </div>
@@ -330,6 +350,24 @@
                         console.error('Erro ao enviar formulário:', error);
                         messageDiv.innerHTML = '<div class="alert alert-danger">Erro ao conectar com o servidor.</div>';
                     }
+                });
+            }
+
+            // Logic for opening the address modal
+            const openAddressModalBtn = document.getElementById('open-address-modal-btn');
+            if (openAddressModalBtn && window.openAddressModal) {
+                openAddressModalBtn.addEventListener('click', () => {
+                    // Pass current user address data to the modal
+                    const currentUserAddress = {
+                        cep: '<%= profileUser.address?.cep || '' %>',
+                        street: '<%= profileUser.address?.street || '' %>',
+                        number: '<%= profileUser.address?.number || '' %>',
+                        complement: '<%= profileUser.address?.complement || '' %>',
+                        neighborhood: '<%= profileUser.address?.neighborhood || '' %>',
+                        city: '<%= profileUser.address?.city || '' %>',
+                        state: '<%= profileUser.address?.state || '' %>'
+                    };
+                    window.openAddressModal(currentUserAddress);
                 });
             }
         });

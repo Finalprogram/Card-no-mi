@@ -215,9 +215,98 @@ document.addEventListener('DOMContentLoaded', () => {
     await fetch('/cart/update', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ key, qty: val }) });
     loadCart();
   });
-
   // expõe compat para recarregar se o modal estiver aberto
   window.refreshCartIfOpen = () => { if (!modal.hasAttribute('hidden')) loadCart(); };
+})(); // <--- Added this closing brace
+
+/* ========================================================================
+   ADDRESS MODAL
+========================================================================= */
+(() => {
+  const modalOverlay = qs('#address-modal-overlay');
+  const modalContent = qs('.address-modal-content');
+  const closeBtn = qs('#address-modal-close-btn');
+  const cancelBtn = qs('#address-modal-cancel-btn');
+  const form = qs('#address-form');
+
+  if (!modalOverlay || !form) return; // If modal elements are not present, do nothing
+
+  let lastFocusElement; // To store the element that had focus before the modal opened
+
+  function openAddressModal(addressData = {}) {
+    lastFocusElement = document.activeElement; // Save the currently focused element
+
+    // Populate form fields if addressData is provided
+    if (addressData) {
+      form.elements['cep'].value = addressData.cep || '';
+      form.elements['street'].value = addressData.street || '';
+      form.elements['number'].value = addressData.number || '';
+      form.elements['complement'].value = addressData.complement || '';
+      form.elements['neighborhood'].value = addressData.neighborhood || '';
+      form.elements['city'].value = addressData.city || '';
+      form.elements['state'].value = addressData.state || '';
+    }
+
+    modalOverlay.classList.add('is-open');
+    document.body.style.overflow = 'hidden'; // Disable background scrolling
+    modalContent.focus(); // Focus on the modal content for accessibility
+  }
+
+  function closeAddressModal() {
+    modalOverlay.classList.remove('is-open');
+    document.body.style.overflow = ''; // Re-enable background scrolling
+    lastFocusElement?.focus(); // Return focus to the element that opened the modal
+  }
+
+  // Event Listeners
+  closeBtn?.addEventListener('click', closeAddressModal);
+  cancelBtn?.addEventListener('click', closeAddressModal);
+  modalOverlay.addEventListener('click', (e) => {
+    if (e.target === modalOverlay) { // Close only if clicking on the overlay itself
+      closeAddressModal();
+    }
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && modalOverlay.classList.contains('is-open')) {
+      closeAddressModal();
+    }
+  });
+
+  // Expose open function globally or attach to a specific button
+  // For now, we'll just expose it. The button on profile.ejs will call this.
+  window.openAddressModal = openAddressModal;
+
+  // Form submission (will need to be implemented in profile.ejs or a dedicated JS file)
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+
+    // Here you would send 'data' to your backend API to save the address
+    console.log('Address form submitted:', data);
+    // Example:
+    // try {
+    //   const response = await fetch('/auth/profile/update-address', {
+    //     method: 'POST',
+    //     headers: { 'Content-Type': 'application/json' },
+    //     body: JSON.stringify(data)
+    //   });
+    //   if (response.ok) {
+    //     window.showToast('Endereço salvo com sucesso!', 'success');
+    //     closeAddressModal();
+    //     // Optionally refresh the profile page or update UI
+    //   } else {
+    //     const errorData = await response.json();
+    //     window.showToast(errorData.message || 'Erro ao salvar endereço.', 'error');
+    //   }
+    // } catch (error) {
+    //   console.error('Error saving address:', error);
+    //   window.showToast('Erro de conexão ao salvar endereço.', 'error');
+    // }
+    window.showToast('Endereço salvo com sucesso! (Simulado)', 'success'); // Simulated success
+    closeAddressModal();
+  });
+
 })();
 
   // Função para exibir notificações toast
