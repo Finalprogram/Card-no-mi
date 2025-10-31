@@ -15,7 +15,7 @@
               <a href="/vender" class="btn-secondary">Vender Agora</a>
               <div class="user-dropdown">
                   <div class="dropdown-toggle">
-                      <img src="/images/default-avatar.png" alt="Avatar do usuário" class="avatar">
+                      <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="Avatar do usuário" class="avatar">
                       <span class="navbar-user-greeting"><%= user.username %></span>
                       <span class="dropdown-arrow">▼</span>
                   </div>

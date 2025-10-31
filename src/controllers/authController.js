@@ -146,7 +146,8 @@ const loginUser = async (req, res) => {
     // Salvamos as informações do usuário na sessão para "lembrar" que ele está logado.
     req.session.user = {
       id: user._id,
-      accountType: user.accountType
+      accountType: user.accountType,
+      avatar: user.avatar
     };
     
     if (user.firstLogin) {
@@ -243,6 +244,7 @@ const updateAvatar = async (req, res) => {
     if (req.file) {
       user.avatar = `/uploads/avatars/${req.file.filename}`;
       await user.save();
+      req.session.user.avatar = user.avatar;
       res.json({ success: true, message: 'Avatar atualizado com sucesso!', avatar: user.avatar });
     } else {
       res.status(400).json({ success: false, message: 'Nenhum arquivo foi enviado.' });
