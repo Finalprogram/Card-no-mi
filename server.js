@@ -39,6 +39,7 @@ const express = require('express');
 const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const methodOverride = require('method-override');
+const flash = require('connect-flash');
 const connectDB = require('./src/database/connection');
 const pagesRoutes = require('./src/routes/pagesRoutes');
 const cardRoutes = require('./src/routes/cardRoutes');
@@ -101,8 +102,13 @@ app.use(session({
   cookie: { secure: process.env.NODE_ENV === 'production' } // Use secure cookies in production
 }));
 
+app.use(flash());
+
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
+  res.locals.success_msg = req.flash('success_msg');
+  res.locals.error_msg = req.flash('error_msg');
+  res.locals.error = req.flash('error');
   next();
 });
 

@@ -127,26 +127,30 @@ const loginUser = async (req, res) => {
 
     // Validação básica
     if (!email || !password) {
-      return res.status(400).send('Por favor, preencha todos os campos.');
+      req.flash('error', 'Por favor, preencha todos os campos.');
+      return res.redirect('/auth/login');
     }
 
     // Encontra o usuário no banco de dados pelo email
     const user = await User.findOne({ email });
     if (!user) {
       // Usamos uma mensagem genérica por segurança
-      return res.status(400).send('Email ou senha inválidos.');
+      req.flash('error', 'Email ou senha inválidos.');
+      return res.redirect('/auth/login');
     }
 
     // Compara a senha digitada com a senha criptografada (hash) no banco
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(400).send('Email ou senha inválidos.');
+      req.flash('error', 'Email ou senha inválidos.');
+      return res.redirect('/auth/login');
     }
 
     // SUCESSO! A senha corresponde.
     // Verifica se o email do usuário foi verificado
     if (!user.isVerified) {
-      return res.status(401).send('Por favor, verifique seu email para ativar sua conta.');
+      req.flash('error', 'Por favor, verifique seu email para ativar sua conta.');
+      return res.redirect('/auth/login');
     }
 
     // Salvamos as informações do usuário na sessão para "lembrar" que ele está logado.

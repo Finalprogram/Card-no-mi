@@ -448,8 +448,12 @@ async function processWebhookLogic(status, external_reference, res) {
     }
 
     res.status(200).send('OK');
-
-
+  } catch (error) {
+    logger.error(`Erro no processamento do webhook para external_reference ${external_reference}:`, error);
+    // Decide what to do. Maybe send a 500 to make MercadoPago retry?
+    res.status(500).send('Erro interno ao processar webhook.');
+  }
+}
 
 
 module.exports = { showPayment, createMercadoPagoPreference, handleMercadoPagoSuccess, handleMercadoPagoPending, handleMercadoPagoFailure, handleMercadoPagoWebhook };

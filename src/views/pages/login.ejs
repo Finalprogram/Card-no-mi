@@ -50,6 +50,15 @@
                 alert('Usuário registrado com sucesso! Faça login para continuar.');
             }
         }
+
+        const errorMessage = "<%= error %>";
+        if (errorMessage) {
+          if (window.showToast) {
+            window.showToast(errorMessage, 'error');
+          } else {
+            alert(errorMessage);
+          }
+        }
     });
     </script>
 </body>
