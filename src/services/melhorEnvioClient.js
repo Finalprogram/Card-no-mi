@@ -146,24 +146,24 @@ async function purchaseShipments(orders) {
 const PRINT_PATH = '/api/v2/me/shipment/print';
 
 /**
- * Obtém as etiquetas do Melhor Envio como um buffer de PDF.
- * @param {Array<string>} orders - IDs dos pedidos para os quais as etiquetas serão impressas.
- * @returns {Promise<ArrayBuffer>} - O ArrayBuffer do PDF contendo as etiquetas.
+ * Obtém um link público para impressão das etiquetas do Melhor Envio.
+ * @param {Array<string>} orders - IDs dos pedidos para os quais os links serão gerados.
+ * @returns {Promise<object>} - A resposta da API contendo o link público.
  */
 async function printLabels(orders) {
   const url = new URL(PRINT_PATH, BASE_URL).toString();
   const payload = {
-    mode: 'inline',
+    mode: 'public',
     orders,
   };
 
-  logger.info('[melhor-envio] Solicitando impressão de etiquetas com payload:', JSON.stringify(payload, null, 2));
+  logger.info('[melhor-envio] Solicitando link público de impressão de etiquetas com payload:', JSON.stringify(payload, null, 2));
 
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json, application/pdf',
+        'Accept': 'application/json',
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${TOKEN}`,
         'User-Agent': USER_AGENT,
@@ -178,20 +178,17 @@ async function printLabels(orders) {
 
     const contentType = res.headers.get('content-type');
 
-    if (contentType && contentType.includes('application/pdf')) {
-      return res.arrayBuffer();
-    }
-
-    // Se não for PDF, é uma resposta inesperada (provavelmente um erro).
-    const responseText = await res.text();
     if (contentType && contentType.includes('application/json')) {
-      throw new Error(`[melhor-envio] API returned a JSON error: ${responseText}`);
-    }
-    if (contentType && contentType.includes('text/html')) {
-      throw new Error(`[melhor-envio] API returned an HTML page instead of a PDF. This often indicates an invalid or expired token, or an environment mismatch (e.g., using a sandbox token in production).`);
+      return res.json(); // Esperamos um JSON com a URL
     }
 
-    throw new Error(`[melhor-envio] Unexpected content-type received from API: ${contentType}. Expected a PDF. Response: ${responseText}`);
+    // Se não for JSON, é uma resposta inesperada.
+    const responseText = await res.text();
+    if (contentType && contentType.includes('text/html')) {
+      throw new Error(`[melhor-envio] API returned an HTML page instead of JSON. This often indicates an invalid or expired token, or an environment mismatch (e.g., using a sandbox token in production).`);
+    }
+
+    throw new Error(`[melhor-envio] Unexpected content-type received from API: ${contentType}. Expected JSON. Response: ${responseText}`);
 
   } catch (error) {
     logger.error(`[melhor-envio] Falha ao obter links de impressão: ${error.message}`);
