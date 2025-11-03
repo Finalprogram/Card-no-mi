@@ -128,6 +128,11 @@ const worker = new Worker('post-payment', async (job) => {
       const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
       logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order._id}:`, purchasedShipments);
 
+      // Add a check for the expected structure to prevent crash on unexpected API response
+      if (!purchasedShipments || !purchasedShipments.orders || !Array.isArray(purchasedShipments.orders)) {
+        throw new Error(`[worker] Unexpected response structure from purchaseShipments: ${JSON.stringify(purchasedShipments)}`);
+      }
+
       // BUG FIX: Use the correct shipment IDs from the purchase response, not the cart IDs.
       const shipmentIdsToPrint = purchasedShipments.orders.map(o => o.id);
 
