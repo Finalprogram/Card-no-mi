@@ -148,7 +148,7 @@ const PRINT_PATH = '/api/v2/me/shipment/print';
 /**
  * Obtém as etiquetas do Melhor Envio como um buffer de PDF.
  * @param {Array<string>} orders - IDs dos pedidos para os quais as etiquetas serão impressas.
- * @returns {Promise<Buffer>} - O buffer de PDF contendo as etiquetas.
+ * @returns {Promise<ArrayBuffer>} - O ArrayBuffer do PDF contendo as etiquetas.
  */
 async function printLabels(orders) {
   const url = new URL(PRINT_PATH, BASE_URL).toString();
@@ -163,7 +163,7 @@ async function printLabels(orders) {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'Accept': 'application/pdf',
+        'Accept': 'application/json, application/pdf',
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${TOKEN}`,
         'User-Agent': USER_AGENT,
@@ -173,11 +173,25 @@ async function printLabels(orders) {
 
     if (!res.ok) {
       const text = await res.text();
-      throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
+      throw new Error(`[melhor-envio] HTTP Error: ${res.status} ${res.statusText} ${text}`);
     }
 
-    // A resposta é o PDF bruto, então retornamos como um ArrayBuffer
-    return res.arrayBuffer();
+    const contentType = res.headers.get('content-type');
+
+    if (contentType && contentType.includes('application/pdf')) {
+      return res.arrayBuffer();
+    }
+
+    // Se não for PDF, é uma resposta inesperada (provavelmente um erro).
+    const responseText = await res.text();
+    if (contentType && contentType.includes('application/json')) {
+      throw new Error(`[melhor-envio] API returned a JSON error: ${responseText}`);
+    }
+    if (contentType && contentType.includes('text/html')) {
+      throw new Error(`[melhor-envio] API returned an HTML page instead of a PDF. This often indicates an invalid or expired token, or an environment mismatch (e.g., using a sandbox token in production).`);
+    }
+
+    throw new Error(`[melhor-envio] Unexpected content-type received from API: ${contentType}. Expected a PDF. Response: ${responseText}`);
 
   } catch (error) {
     logger.error(`[melhor-envio] Falha ao obter links de impressão: ${error.message}`);

@@ -132,17 +132,6 @@ const worker = new Worker('post-payment', async (job) => {
 
       const pdfArrayBuffer = await printLabels(orderMelhorEnvioIds);
 
-      // --- DEBUG LOG START ---
-      const bufferContent = Buffer.from(pdfArrayBuffer);
-      const isLikelyPdf = bufferContent.toString('ascii', 0, 4) === '%PDF';
-      if (isLikelyPdf) {
-        logger.info(`[worker-debug] API response for label printing: Received PDF data (size: ${bufferContent.length} bytes).`);
-      } else {
-        const responseAsString = bufferContent.toString('utf-8');
-        logger.info(`[worker-debug] API response for label printing: Not a PDF. Content: ${responseAsString.substring(0, 500)}`);
-      }
-      // --- DEBUG LOG END ---
-
       // Define um caminho para salvar o PDF
       const labelDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'labels');
       await fs.mkdir(labelDir, { recursive: true }); // Garante que o diretório exista
