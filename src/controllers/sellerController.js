@@ -106,20 +106,26 @@ const markAsShipped = async (req, res) => {
     const { trackingCode } = req.body;
     const sellerId = req.session.user.id;
 
+    // Nível 1: Validação do formato do código de rastreio (padrão Correios)
+    const trackingCodeRegex = /^[A-Z]{2}\d{9}BR$/i;
+    if (!trackingCode || !trackingCodeRegex.test(trackingCode)) {
+      return res.status(400).json({ message: 'Formato de código de rastreio inválido. O formato deve ser XX123456789BR.' });
+    }
+
     const order = await Order.findById(orderId);
 
     if (!order) {
-      return res.status(404).send('Pedido não encontrado.');
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
     }
 
-    if (order.status !== 'Processing') {
-      return res.status(400).send('Este pedido não pode ser marcado como enviado.');
+    if (order.status !== 'Processing' && order.status !== 'Paid') {
+      return res.status(400).json({ message: 'Este pedido não pode ser marcado como enviado. O status deve ser \'Processando\' ou \'Pago\'.' });
     }
 
     const isSellerOfItem = order.items.some(item => item.seller.toString() === sellerId);
 
     if (!isSellerOfItem) {
-      return res.status(403).send('Você não tem permissão para atualizar este pedido.');
+      return res.status(403).json({ message: 'Você não tem permissão para atualizar este pedido.' });
     }
 
     order.status = 'Shipped';
