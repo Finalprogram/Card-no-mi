@@ -129,12 +129,12 @@ const worker = new Worker('post-payment', async (job) => {
       logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order._id}:`, purchasedShipments);
 
       // Add a check for the expected structure to prevent crash on unexpected API response
-      if (!purchasedShipments || !purchasedShipments.orders || !Array.isArray(purchasedShipments.orders)) {
+      if (!purchasedShipments || !purchasedShipments.purchase || !purchasedShipments.purchase.orders || !Array.isArray(purchasedShipments.purchase.orders)) {
         throw new Error(`[worker] Unexpected response structure from purchaseShipments: ${JSON.stringify(purchasedShipments)}`);
       }
 
       // BUG FIX: Use the correct shipment IDs from the purchase response, not the cart IDs.
-      const shipmentIdsToPrint = purchasedShipments.orders.map(o => o.id);
+      const shipmentIdsToPrint = purchasedShipments.purchase.orders.map(o => o.id);
 
       const printResponse = await printLabels(shipmentIdsToPrint);
       logger.info(`[worker] Public print links from Melhor Envio for order ${order._id}:`, printResponse);
@@ -142,7 +142,7 @@ const worker = new Worker('post-payment', async (job) => {
       order.melhorEnvioShipmentId = shipmentIdsToPrint.join(',');
       order.melhorEnvioLabelUrl = printResponse.url; // Salva a URL pública
       order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', ');
-      order.melhorEnvioTrackingUrl = purchasedShipments.orders[0]?.tracking;
+      order.melhorEnvioTrackingUrl = purchasedShipments.purchase.orders[0]?.tracking;
 
       logger.info(`[worker] Order #${order._id} updated with Melhor Envio data.`);
 
