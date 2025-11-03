@@ -201,21 +201,21 @@ async function handleMercadoPagoSuccess(req, res) {
 }
 
 async function handleMercadoPagoPending(req, res) {
-  const { collection_id, collection_status, payment_id, status, external_reference, preference_id } = req.query;
-  logger.info("Mercado Pago Pending:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
+  const { status, external_reference } = req.query;
+  logger.info("Mercado Pago Pending Redirect:", req.query);
 
   try {
     let order = null;
     if (external_reference) {
-      order = await Order.findById(external_reference).populate('user');
-      if (order && order.status !== 'PendingPayment') { 
-        order.status = 'PendingPayment';
-        await order.save();
-        logger.info(`Pedido #${order._id} atualizado para status 'PendingPayment' via retorno pendente MP.`);
-      }
+      order = await Order.findById(external_reference);
+      // We DO NOT change the status here. The webhook is the source of truth.
+      // This handler is purely for user feedback on redirect.
     }
-    // Não limpar o carrinho aqui, pois o pagamento ainda está pendente
-    res.render('pages/checkout-success', { message: "Pagamento pendente.", paymentStatus: status, totals: order ? order.totals : null });
+    res.render('pages/checkout-success', {
+      message: "Seu pagamento está pendente. Você receberá a confirmação em breve.",
+      paymentStatus: status, // 'pending'
+      totals: order ? order.totals : null
+    });
   } catch (error) {
     logger.error('Erro ao processar retorno pendente do Mercado Pago:', error);
     res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status, totals: null });
@@ -223,21 +223,20 @@ async function handleMercadoPagoPending(req, res) {
 }
 
 async function handleMercadoPagoFailure(req, res) {
-  const { collection_id, collection_status, payment_id, status, external_reference, preference_id } = req.query;
-  logger.info("Mercado Pago Failure:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
+  const { status, external_reference } = req.query;
+  logger.info("Mercado Pago Failure Redirect:", req.query);
 
   try {
     let order = null;
     if (external_reference) {
-      order = await Order.findById(external_reference).populate('user');
-      if (order && order.status !== 'Cancelled') { // Evita atualizar se já foi cancelado pelo webhook
-        order.status = 'Cancelled';
-        await order.save();
-        logger.info(`Pedido #${order._id} atualizado para status 'Cancelled' via retorno de falha MP.`);
-      }
+      order = await Order.findById(external_reference);
+      // We DO NOT change the status here. The webhook is the source of truth.
     }
-    // Não limpar o carrinho aqui, pois o pagamento falhou e o usuário pode tentar novamente
-    res.render('pages/checkout-success', { message: "Pagamento falhou.", paymentStatus: status, totals: order ? order.totals : null });
+    res.render('pages/checkout-success', {
+      message: "O pagamento falhou. Por favor, tente novamente.",
+      paymentStatus: status, // 'failure' or 'rejected'
+      totals: order ? order.totals : null
+    });
   } catch (error) {
     logger.error('Erro ao processar retorno de falha do Mercado Pago:', error);
     res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status, totals: null });
