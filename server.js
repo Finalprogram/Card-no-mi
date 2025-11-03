@@ -74,6 +74,9 @@ app.locals.formatPrice = function(price) {
 // 3. Conexão com o Banco de Dados
 connectDB();
 
+// Start the post-payment worker
+require('./src/workers/postPaymentWorker.js');
+
 // 4. Configuração dos Middlewares (A ORDEM IMPORTA)
 
 // Habilita o "tradutor" de JSON. Deve vir antes das rotas que o usam.

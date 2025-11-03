@@ -7,6 +7,7 @@ const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const logger = require('../config/logger');
 const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
+const { addPostPaymentJob } = require('../services/postPaymentQueue');
 
 // Helper function to get seller's origin CEP
 async function getSellerOriginCep(sellerId) {
@@ -291,150 +292,27 @@ async function handleMercadoPagoWebhook(req, res) {
 
 async function processWebhookLogic(status, external_reference, res) {
   try {
-    // 2. Encontrar o pedido no seu banco de dados
-    const order = await Order.findById(external_reference).populate('user');
+    const order = await Order.findById(external_reference);
 
     if (!order) {
-      logger.error(`Webhook Mercado Pago: Pedido com ID ${external_reference} não encontrado.`);
-      return res.status(404).send('Pedido não encontrado.');
+      logger.error(`[payment] Webhook: Order with ID ${external_reference} not found.`);
+      return res.status(404).send('Order not found.');
     }
 
-    // 3. Atualizar o status do pedido
+    // Idempotency: Check if the status is already the one being processed
+    if (order.status === 'Paid' && status === 'approved') {
+        logger.info(`[payment] Webhook: Order ${external_reference} is already marked as Paid. Ignoring.`);
+        return res.status(200).send('OK');
+    }
+
     let newOrderStatus = order.status;
+
     if (status === 'approved') {
-      newOrderStatus = 'Paid'; // Ou 'Paid', dependendo do seu fluxo
-
-      // --- Reduzir estoque dos listings ---
-      for (const item of order.items) {
-        const listing = await Listing.findById(item.listing);
-        if (listing) {
-          listing.quantity -= item.quantity;
-          await listing.save();
-          logger.info(`[payment] Estoque do listing ${listing._id} reduzido em ${item.quantity}. Novo estoque: ${listing.quantity}`);
-        } else {
-          logger.warn(`[payment] Listing ${item.listing} não encontrado para reduzir estoque no pedido ${order._id}.`);
-        }
-      }
-      // --- Fim da redução de estoque ---
-
-      // --- Integração Melhor Envio ---
-      try {
-        const itemsBySeller = order.items.reduce((acc, item) => {
-          const sellerId = item.seller.toString(); // Convert ObjectId to string
-          if (!acc[sellerId]) acc[sellerId] = [];
-          acc[sellerId].push(item);
-          return acc;
-        }, {});
-
-        const melhorEnvioCartItems = [];
-        const orderMelhorEnvioIds = [];
-
-        for (const sellerId in itemsBySeller) {
-          const sellerItems = itemsBySeller[sellerId];
-          const chosenShipping = order.shippingSelections.find(sel => sel.sellerId.toString() === sellerId);
-
-          if (!chosenShipping) {
-            logger.warn(`[payment] Nenhuma opção de frete selecionada para o vendedor ${sellerId} no pedido ${order._id}.`);
-            continue;
-          }
-
-          const seller = await User.findById(sellerId);
-          if (!seller) {
-            logger.warn(`[payment] Vendedor ${sellerId} não encontrado para o pedido ${order._id}.`);
-            continue;
-          }
-
-          const cepOrigem = await getSellerOriginCep(sellerId);
-          const { comprimentoCm, larguraCm, alturaCm, pesoKg } = estimatePackageDims(sellerItems);
-          const insuranceValue = sellerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-
-          const shipmentDetails = {
-            service: chosenShipping.service,
-            agency: null, // Pode ser definido se o vendedor usar uma agência específica
-            from: {
-              name: seller.fullName || seller.username,
-              phone: seller.phone,
-              email: seller.email,
-              document: seller.documentNumber,
-              company_document: null,
-              state_register: null,
-              address: seller.address.street,
-              complement: seller.address.complement,
-              number: seller.address.number,
-              district: seller.address.neighborhood,
-              city: seller.address.city,
-              state_abbr: seller.address.state,
-              country_id: 'BR',
-              postal_code: cepOrigem,
-            },
-            to: {
-              name: order.user.fullName || order.user.username,
-              phone: order.user.phone,
-              email: order.user.email,
-              document: order.user.documentNumber,
-              address: order.shippingAddress.street, // Apenas a rua
-              complement: order.shippingAddress.complement,
-              number: order.shippingAddress.number,
-              district: order.shippingAddress.neighborhood,
-              city: order.shippingAddress.city,
-              state_abbr: order.shippingAddress.state,
-              country_id: 'BR',
-              postal_code: order.shippingAddress.cep.replace('-', '') || '00000000',
-            },
-            volumes: [
-              {
-                height: alturaCm,
-                width: larguraCm,
-                length: comprimentoCm,
-                weight: pesoKg,
-                insurance_value: insuranceValue,
-              }
-            ],
-            products: sellerItems.map(item => ({
-              name: item.cardName,
-              quantity: item.quantity,
-              unitary_value: item.price,
-            })),
-          };
-
-          const addedToCart = await addItemToCart(shipmentDetails);
-          if (addedToCart && addedToCart.id) {
-            melhorEnvioCartItems.push(addedToCart.id);
-            orderMelhorEnvioIds.push(addedToCart.id); // Coleta os IDs para a compra
-          } else {
-            logger.error(`[payment] Falha ao adicionar item ao carrinho do Melhor Envio para o pedido ${order._id}, vendedor ${sellerId}.`, addedToCart);
-          }
-        }
-
-        if (melhorEnvioCartItems.length > 0) {
-          const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
-          logger.info(`[payment] Envios comprados no Melhor Envio para o pedido ${order._id}:`, purchasedShipments);
-
-          const printResponse = await printLabels(orderMelhorEnvioIds);
-          logger.info(`[payment] Links de impressão do Melhor Envio para o pedido ${order._id}:`, printResponse);
-
-          order.melhorEnvioShipmentId = orderMelhorEnvioIds.join(',');
-          order.melhorEnvioLabelUrl = printResponse.url;
-          order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', ');
-          order.melhorEnvioTrackingUrl = purchasedShipments[0]?.tracking;
-
-          logger.info(`[payment] Pedido #${order._id} atualizado com dados do Melhor Envio.`);
-        } else {
-          logger.warn(`[payment] Nenhum item adicionado ao carrinho do Melhor Envio para o pedido ${order._id}.`);
-        }
-
-      } catch (melhorEnvioError) {
-        logger.error(`[payment] Erro na integração com Melhor Envio para o pedido ${order._id}:`, melhorEnvioError);
-        if (process.env.ADMIN_EMAIL) {
-          const { sendEmail } = require('../services/emailService');
-          const subject = `Erro na integração com Melhor Envio - Pedido ${order._id}`;
-          const content = `<p>Ocorreu um erro ao processar o envio para o pedido ${order._id}.</p><p>Erro: ${melhorEnvioError.message}</p>`;
-          sendEmail(process.env.ADMIN_EMAIL, subject, content);
-        } else {
-          logger.warn('[payment] ADMIN_EMAIL não definido. Não foi possível enviar email de notificação de erro.');
-        }
-      }
-
+      // The order is approved. Add a job to the queue to handle the rest.
+      await addPostPaymentJob(order._id.toString());
+      // We don't set the status to 'Paid' here anymore. The worker will do it.
+      // We can set it to a new intermediate status like 'Processing' if needed.
+      newOrderStatus = 'Processing'; 
     } else if (status === 'pending') {
       newOrderStatus = 'PendingPayment';
     } else if (status === 'rejected' || status === 'cancelled') {
@@ -444,14 +322,13 @@ async function processWebhookLogic(status, external_reference, res) {
     if (order.status !== newOrderStatus) {
       order.status = newOrderStatus;
       await order.save();
-      logger.info(`Pedido #${order._id} atualizado para o status: ${newOrderStatus} via webhook MP.`);
+      logger.info(`[payment] Webhook: Order ${order._id} status updated to ${newOrderStatus}.`);
     }
 
     res.status(200).send('OK');
   } catch (error) {
-    logger.error(`Erro no processamento do webhook para external_reference ${external_reference}:`, error);
-    // Decide what to do. Maybe send a 500 to make MercadoPago retry?
-    res.status(500).send('Erro interno ao processar webhook.');
+    logger.error(`[payment] Error in webhook processing for external_reference ${external_reference}:`, error);
+    res.status(500).send('Internal server error while processing webhook.');
   }
 }
 
