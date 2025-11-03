@@ -24,6 +24,7 @@ window.money = (n) => {
 document.addEventListener('DOMContentLoaded', () => {
   // Dropdown do usuário
   const userDropdown = qs('.user-dropdown');
+  console.log('main.js: userDropdown element found:', userDropdown);
   if (userDropdown) {
     const toggle = userDropdown.querySelector('.dropdown-toggle');
     toggle?.addEventListener('click', (e) => {

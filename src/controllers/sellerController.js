@@ -118,8 +118,8 @@ const markAsShipped = async (req, res) => {
       return res.status(404).json({ message: 'Pedido não encontrado.' });
     }
 
-    if (order.status !== 'Processing' && order.status !== 'Paid') {
-      return res.status(400).json({ message: 'Este pedido não pode ser marcado como enviado. O status deve ser \'Processando\' ou \'Pago\'.' });
+    if (order.status !== 'Paid') {
+      return res.status(400).json({ message: 'Este pedido não pode ser marcado como enviado. O status deve ser \'Pago\'.' });
     }
 
     const isSellerOfItem = order.items.some(item => item.seller.toString() === sellerId);
