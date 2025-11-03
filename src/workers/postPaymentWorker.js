@@ -130,7 +130,7 @@ const worker = new Worker('post-payment', async (job) => {
       const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
       logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order._id}:`, purchasedShipments);
 
-      const pdfBuffer = await printLabels(orderMelhorEnvioIds);
+      const pdfArrayBuffer = await printLabels(orderMelhorEnvioIds);
 
       // Define um caminho para salvar o PDF
       const labelDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'labels');
@@ -139,7 +139,7 @@ const worker = new Worker('post-payment', async (job) => {
       const labelPath = path.join(labelDir, labelFileName);
 
       // Salva o buffer do PDF em um arquivo
-      await fs.writeFile(labelPath, pdfBuffer);
+      await fs.writeFile(labelPath, Buffer.from(pdfArrayBuffer));
       logger.info(`[worker] Label for order ${order._id} saved to ${labelPath}`);
 
       // A URL a ser salva no banco de dados é agora uma URL local

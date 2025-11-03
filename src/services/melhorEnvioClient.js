@@ -176,8 +176,8 @@ async function printLabels(orders) {
       throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
     }
 
-    // A resposta é o PDF bruto, então retornamos como um buffer
-    return res.buffer();
+    // A resposta é o PDF bruto, então retornamos como um ArrayBuffer
+    return res.arrayBuffer();
 
   } catch (error) {
     logger.error(`[melhor-envio] Falha ao obter links de impressão: ${error.message}`);
