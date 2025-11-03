@@ -11,6 +11,11 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: box-shadow 0.3s ease-in-out;
+  }
+  .order-list-item:hover {
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
   }
   .order-info {
     display: flex;
@@ -35,6 +40,15 @@
   .order-status .value {
     color: var(--accent-primary);
   }
+  .new-order-tag {
+    background-color: var(--accent-primary);
+    color: var(--bg-primary);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
 </style>
 
 <main class="container" style="max-width: 880px; margin-top: 24px;">
@@ -47,9 +61,20 @@
       <% orders.forEach(order => { %>
         <div class="order-list-item">
           <div class="order-info">
+            <% 
+              const orderDate = new Date(order.createdAt);
+              const now = new Date();
+              const twentyFourHours = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+              const isNew = (now - orderDate) < twentyFourHours;
+            %>
             <div class="order-id">
               <span class="label">Pedido</span>
-              <span class="value">#<%= order._id.toString().slice(-6) %></span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="value">#<%= order._id.toString().slice(-6) %></span>
+                <% if (isNew) { %>
+                  <span class="new-order-tag">Novo</span>
+                <% } %>
+              </div>
             </div>
             <div class="order-date">
               <span class="label">Data</span>

@@ -36,6 +36,37 @@
   .order-info .value {
     font-weight: 600;
   }
+  .badge {
+    display: inline-block;
+    padding: 0.3em 0.6em;
+    border-radius: 10px; /* Rounded corners for the badge */
+    font-size: 0.75em;
+    font-weight: 700;
+    line-height: 1;
+    text-align: center;
+    white-space: nowrap;
+    vertical-align: baseline;
+    color: #fff; /* Default text color for badges */
+  }
+  .badge-PendingPayment {
+    background-color: #e0c547; /* Cooler Yellow for pending */
+    color: #fff;
+  }
+  .badge-Paid {
+    background-color: #198754; /* Cooler Green for paid */
+  }
+  .badge-Shipped {
+    background-color: #007bff; /* Blue for shipped */
+  }
+  .badge-Delivered {
+    background-color: #6610f2; /* Indigo for delivered */
+  }
+  .badge-Cancelled {
+    background-color: #dc3545; /* Red for cancelled */
+  }
+  .badge-Processing {
+    background-color: #6c757d; /* Gray for processing */
+  }
   .order-items {
     margin-top: 1rem;
   }
@@ -48,6 +79,16 @@
   }
   .item-row:last-child {
     border-bottom: none;
+  }
+  .item-prices {
+    text-align: right;
+  }
+  .item-price-gross {
+    font-size: 0.8em; /* Smaller font size */
+    color: var(--text-muted);
+  }
+  .item-price-net {
+    font-size: 0.9em; /* Slightly larger than gross, but still smaller than default */
   }
   /* Modal Styles */
   .modal {
@@ -70,6 +111,16 @@
     border-radius: 8px;
     position: relative;
   }
+  .generate-label-btn:hover {
+    background-color: var(--accent-primary) !important; /* Use !important to override btn-success */
+    border-color: var(--accent-primary) !important;
+    color: var(--bg-primary) !important;
+  }
+  .btn-info:hover {
+    background-color: var(--accent-primary) !important;
+    border-color: var(--accent-primary) !important;
+    color: var(--bg-primary) !important;
+  }
   .close-btn {
     color: #aaa;
     float: right;
@@ -82,6 +133,104 @@
     text-decoration: none;
     cursor: pointer;
   }
+  .primary-link {
+    color: var(--accent-primary);
+    text-decoration: none;
+  }
+  .primary-link:hover {
+    text-decoration: underline;
+    background-color: rgba(var(--accent-primary-rgb), 0.1); /* Light background on hover */
+    border-radius: 4px;
+  }
+  .primary-link:hover {
+    text-decoration: underline;
+  }
+
+  .timeline-container {
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: relative;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background-color: var(--border);
+    transform: translateY(-50%);
+    z-index: -1;
+  }
+
+  .timeline-step {
+    text-align: center;
+    position: relative;
+    width: 100%;
+  }
+
+  .timeline-step-inner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .timeline-step-marker {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background-color: var(--border);
+    border: 3px solid var(--bg-surface);
+    z-index: 1;
+  }
+
+  .timeline-step-label {
+    margin-top: 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+
+  /* Completed state */
+  .timeline-step.completed .timeline-step-marker {
+    background-color: var(--accent-primary);
+  }
+
+  .timeline-step.completed .timeline-step-label {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+
+  /* Current state */
+  .timeline-step.current .timeline-step-marker {
+    background-color: var(--accent-primary);
+    transform: scale(1.2);
+    box-shadow: 0 0 0 4px rgba(var(--accent-primary-rgb), 0.2);
+  }
+
+  .timeline-step.current .timeline-step-label {
+    color: var(--accent-primary);
+    font-weight: 700;
+  }
+
+  /* Cancelled state */
+  .timeline-step.cancelled .timeline-step-marker {
+    background-color: #dc3545; /* Red for cancelled */
+  }
+
+  .timeline-step.cancelled .timeline-step-label {
+    color: #dc3545;
+    font-weight: 600;
+  }
 </style>
 
 <main class="container" style="max-width: 880px; margin-top: 24px;">
@@ -92,6 +241,16 @@
   <div class="orders-container">
     <% if (orders && orders.length > 0) { %>
       <% orders.forEach(order => { %>
+        <% 
+          const statusTranslations = {
+            'PendingPayment': 'Pagamento Pendente',
+            'Paid': 'Pago',
+            'Processing': 'Processando',
+            'Shipped': 'Enviado',
+            'Delivered': 'Entregue',
+            'Cancelled': 'Cancelado',
+          };
+        %>
         <div class="order-list-item">
           <div class="order-header">
             <div class="order-info">
@@ -109,16 +268,9 @@
               </div>
               <div class="order-status">
                 <% 
-                  const statusTranslations = {
-                    'PendingPayment': 'Pagamento Pendente',
-                    'Paid': 'Pago',
-                    'Shipped': 'Enviado',
-                    'Delivered': 'Entregue',
-                    'Cancelled': 'Cancelado',
-                    'Processing': 'Processando',
-                  };
                   const translatedStatus = statusTranslations[order.status] || order.status;
                 %>
+                <span class="value badge badge-<%= order.status %>"><%= translatedStatus %></span>
                 <% if (order.status === 'Paid') { %>
                   <% if (!order.melhorEnvioLabelUrl) { %>
                     <button class="btn btn-sm btn-success generate-label-btn" data-order-id="<%= order._id %>">Gerar Etiqueta ME</button>
@@ -126,10 +278,7 @@
                 <% } else if (order.status === 'Processing') { %>
                   <button class="btn btn-sm btn-primary mark-as-shipped-btn" data-order-id="<%= order._id %>">Marcar como Enviado</button>
                 <% } else if (order.status === 'Shipped' && order.melhorEnvioLabelUrl) { %>
-                  <span class="value"><%= translatedStatus %></span>
                   <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="btn btn-sm btn-info" style="margin-left: 10px;">Ver Etiqueta</a>
-                <% } else { %>
-                  <span class="value"><%= translatedStatus %></span>
                 <% } %>
               </div>
             </div>
@@ -139,17 +288,47 @@
             <% order.items.forEach(item => { %>
               <div class="item-row">
                 <span><%= item.cardName %> (Qtd: <%= item.quantity %>)</span>
-                <div style="text-align: right;">
-                  <div style="font-size: 0.9em; color: var(--text-muted);">Preço Bruto: <%= formatPrice(item.price * item.quantity) %></div>
-                  <div>Líquido Vendedor: <strong><%= formatPrice(item.sellerNet) %></strong></div>
+                <div class="item-prices">
+                  <div class="item-price-gross">Preço Bruto: <%= formatPrice(item.price * item.quantity) %></div>
+                  <div class="item-price-net">Líquido Vendedor: <strong><%= formatPrice(item.sellerNet) %></strong></div>
                 </div>
               </div>
             <% }) %>
           </div>
+
+          <div class="timeline-container">
+            <ul class="timeline">
+              <% const statuses = ['PendingPayment', 'Paid', 'Processing', 'Shipped', 'Delivered']; %>
+              <% const currentStatusIndex = statuses.indexOf(order.status); %>
+              <% statuses.forEach((status, index) => { %>
+                <% 
+                  let statusClass = '';
+                  if (index < currentStatusIndex) {
+                    statusClass = 'completed';
+                  } else if (index === currentStatusIndex) {
+                    statusClass = 'current';
+                  }
+
+                  // Handle 'Cancelled' status separately
+                  if (order.status === 'Cancelled') {
+                    if (status === 'PendingPayment') { // Or wherever you want to show the cancelled state
+                      statusClass = 'cancelled';
+                    }
+                  }
+                %>
+                <li class="timeline-step <%= statusClass %>">
+                  <div class="timeline-step-inner">
+                    <div class="timeline-step-marker"></div>
+                    <div class="timeline-step-label"><%= statusTranslations[status] || status %></div>
+                  </div>
+                </li>
+              <% }) %>
+            </ul>
+          </div>
           <% if (order.melhorEnvioLabelUrl) { %>
-            <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border);">
+            <div style="margin-top: 1rem; padding: 1rem; border: 1px solid var(--border); border-radius: 8px; background-color: var(--bg-alt);">
               <span class="label">Etiqueta Melhor Envio:</span>
-              <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="value">Baixar Etiqueta</a>
+              <a href="<%= order.melhorEnvioLabelUrl %>" target="_blank" class="primary-link">Baixar Etiqueta</a>
               <% if (order.melhorEnvioTrackingUrl) { %>
                 <span class="label" style="margin-left: 20px;">Rastreamento:</span>
                 <a href="<%= order.melhorEnvioTrackingUrl %>" target="_blank" class="value"><%= order.trackingCode || 'Ver Rastreamento' %></a>
