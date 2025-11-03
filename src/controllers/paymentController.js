@@ -173,22 +173,27 @@ async function createMercadoPagoPreference(req, res) {
 }
 
 async function handleMercadoPagoSuccess(req, res) {
-  const { collection_id, collection_status, payment_id, status, external_reference, preference_id } = req.query;
-      logger.info("Mercado Pago Success:", { collection_id, collection_status, payment_id, status, external_reference, preference_id });
-  
-      try {
-        let order = null;
-        if (external_reference) {
-          order = await Order.findById(external_reference).populate('user');
-      if (order && order.status !== 'Paid') { 
-        order.status = 'Paid';
-        await order.save();
-        logger.info(`Pedido #${order._id} atualizado para status 'Paid' via retorno de sucesso MP.`);
-      }
+  const { status, external_reference } = req.query;
+  logger.info("Mercado Pago Success Redirect:", req.query);
+
+  try {
+    let order = null;
+    if (external_reference) {
+      order = await Order.findById(external_reference);
+      // We don't change the status here. The webhook is the source of truth.
+      // We just need the order to display totals on the success page.
     }
-    // Limpar o carrinho do usuário, pois o pedido foi criado e pago
+
+    // Clear the user's cart as the order has been created
     req.session.cart = { items: [], totalQty: 0, totalPrice: 0 };
-    res.render('pages/checkout-success', { message: "Pagamento aprovado!", paymentStatus: status, totals: order ? order.totals : null });
+
+    // The message should indicate that the payment is being processed.
+    // The final confirmation will come via the webhook.
+    res.render('pages/checkout-success', {
+      message: "Pagamento recebido! Estamos processando seu pedido.",
+      paymentStatus: status, // 'approved'
+      totals: order ? order.totals : null
+    });
   } catch (error) {
     logger.error('Erro ao processar retorno de sucesso do Mercado Pago:', error);
     res.render('pages/checkout-success', { message: "Erro ao processar seu pagamento.", paymentStatus: status, totals: null });
@@ -299,9 +304,9 @@ async function processWebhookLogic(status, external_reference, res) {
       return res.status(404).send('Order not found.');
     }
 
-    // Idempotency: Check if the status is already the one being processed
-    if (order.status === 'Paid' && status === 'approved') {
-        logger.info(`[payment] Webhook: Order ${external_reference} is already marked as Paid. Ignoring.`);
+    // Idempotency Check: If the order is already being processed or is paid, ignore subsequent 'approved' webhooks.
+    if (status === 'approved' && (order.status === 'Processing' || order.status === 'Paid')) {
+        logger.info(`[payment] Webhook: Order ${external_reference} is already being processed or is paid. Ignoring duplicate 'approved' webhook.`);
         return res.status(200).send('OK');
     }
 
@@ -310,8 +315,6 @@ async function processWebhookLogic(status, external_reference, res) {
     if (status === 'approved') {
       // The order is approved. Add a job to the queue to handle the rest.
       await addPostPaymentJob(order._id.toString());
-      // We don't set the status to 'Paid' here anymore. The worker will do it.
-      // We can set it to a new intermediate status like 'Processing' if needed.
       newOrderStatus = 'Processing'; 
     } else if (status === 'pending') {
       newOrderStatus = 'PendingPayment';
