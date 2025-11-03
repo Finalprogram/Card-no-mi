@@ -4,7 +4,7 @@ const listingController = require('../controllers/listingController');
 const { isAuthApi, isAuthPage } = require('../middleware/auth'); // Importa o middleware centralizado
 
 // Rota para receber o "pacote" de novos anúncios, agora usando isAuthApi
-router.post('/listings/bulk-create', listingController.bulkCreateListings);
+router.post('/listings/bulk-create', isAuthApi, listingController.bulkCreateListings);
 
 // Rotas para editar, atualizar e deletar anúncios
 router.get('/listings/:id/edit', isAuthPage, listingController.showEditListingPage);

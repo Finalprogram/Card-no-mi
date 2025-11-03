@@ -92,23 +92,35 @@ const updateListing = async (req, res) => {
 
 const deleteListing = async (req, res) => {
   try {
+    logger.info(`Attempting to delete listing with ID: ${req.params.id}`);
+    logger.info(`User ID from session: ${req.session.user ? req.session.user.id : 'N/A'}`);
+
     const listing = await Listing.findById(req.params.id);
 
     if (!listing) {
-      return res.status(404).send('Anúncio não encontrado.');
+      logger.warn(`Listing with ID ${req.params.id} not found.`);
+      req.flash('error_msg', 'Anúncio não encontrado.');
+      return res.status(404).redirect('/meus-anuncios');
     }
+
+    logger.info(`Listing found. Seller ID: ${listing.seller.toString()}`);
 
     // Authorization: Check if the logged-in user is the seller
-    if (listing.seller.toString() !== req.session.user.id) {
-      return res.status(403).send('Você não tem permissão para deletar este anúncio.');
+    if (!req.session.user || listing.seller.toString() !== req.session.user.id) {
+      logger.warn(`User ${req.session.user ? req.session.user.id : 'N/A'} attempted to delete listing ${req.params.id} without permission.`);
+      req.flash('error_msg', 'Você não tem permissão para deletar este anúncio.');
+      return res.status(403).redirect('/meus-anuncios');
     }
 
-    await listing.deleteOne();
+    const deleteResult = await listing.deleteOne();
+    logger.info(`Listing ${req.params.id} deleted. Result: ${JSON.stringify(deleteResult)}`);
 
+    req.flash('success_msg', 'Anúncio deletado com sucesso!');
     res.redirect('/meus-anuncios');
   } catch (error) {
     logger.error('Erro ao deletar anúncio:', error);
-    res.status(500).send('Erro no servidor');
+    req.flash('error_msg', 'Erro no servidor ao deletar anúncio.');
+    res.status(500).redirect('/meus-anuncios');
   }
 };
 
