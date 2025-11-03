@@ -297,35 +297,34 @@ async function handleMercadoPagoWebhook(req, res) {
 
 async function processWebhookLogic(status, external_reference, res) {
   try {
-    const order = await Order.findById(external_reference);
-
-    if (!order) {
-      logger.error(`[payment] Webhook: Order with ID ${external_reference} not found.`);
-      return res.status(404).send('Order not found.');
-    }
-
-    // Idempotency Check: If the order is already being processed or is paid, ignore subsequent 'approved' webhooks.
-    if (status === 'approved' && (order.status === 'Processing' || order.status === 'Paid')) {
-        logger.info(`[payment] Webhook: Order ${external_reference} is already being processed or is paid. Ignoring duplicate 'approved' webhook.`);
-        return res.status(200).send('OK');
-    }
-
-    let newOrderStatus = order.status;
-
     if (status === 'approved') {
-      // The order is approved. Add a job to the queue to handle the rest.
-      await addPostPaymentJob(order._id.toString());
-      newOrderStatus = 'Processing'; 
-    } else if (status === 'pending') {
-      newOrderStatus = 'PendingPayment';
-    } else if (status === 'rejected' || status === 'cancelled') {
-      newOrderStatus = 'Cancelled';
-    }
+      // Use an atomic update to prevent race conditions.
+      // Find an order that matches the ID and is NOT already Processing or Paid.
+      const order = await Order.findOneAndUpdate(
+        { _id: external_reference, status: { $nin: ['Processing', 'Paid'] } },
+        { $set: { status: 'Processing' } },
+        { new: true } // Return the updated document
+      );
 
-    if (order.status !== newOrderStatus) {
-      order.status = newOrderStatus;
-      await order.save();
-      logger.info(`[payment] Webhook: Order ${order._id} status updated to ${newOrderStatus}.`);
+      if (order) {
+        // If an order was found and updated, it means this is the first 'approved' webhook to be processed.
+        logger.info(`[payment] Webhook: Order ${order._id} status atomically updated to Processing. Enqueueing job.`);
+        await addPostPaymentJob(order._id.toString());
+      } else {
+        // If no order was found/updated, it means another process already handled it.
+        logger.info(`[payment] Webhook: Order ${external_reference} is already being processed or is paid. Ignoring duplicate 'approved' webhook.`);
+      }
+
+    } else {
+      // For other statuses, a simple update is likely fine, but we can be safe.
+      let newOrderStatus;
+      if (status === 'pending') newOrderStatus = 'PendingPayment';
+      else if (status === 'rejected' || status === 'cancelled') newOrderStatus = 'Cancelled';
+
+      if (newOrderStatus) {
+        await Order.updateOne({ _id: external_reference }, { $set: { status: newOrderStatus } });
+        logger.info(`[payment] Webhook: Order ${external_reference} status updated to ${newOrderStatus}.`);
+      }
     }
 
     res.status(200).send('OK');
