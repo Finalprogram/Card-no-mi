@@ -146,33 +146,38 @@ async function purchaseShipments(orders) {
 const PRINT_PATH = '/api/v2/me/shipment/print';
 
 /**
- * Obtém os links para impressão das etiquetas do Melhor Envio.
+ * Obtém as etiquetas do Melhor Envio como um buffer de PDF.
  * @param {Array<string>} orders - IDs dos pedidos para os quais as etiquetas serão impressas.
- * @returns {Promise<object>} - A resposta da API contendo os links de impressão.
+ * @returns {Promise<Buffer>} - O buffer de PDF contendo as etiquetas.
  */
 async function printLabels(orders) {
   const url = new URL(PRINT_PATH, BASE_URL).toString();
+  const payload = {
+    mode: 'inline',
+    orders,
+  };
 
-  logger.info('[melhor-envio] Solicitando links de impressão para os pedidos:', JSON.stringify({ orders }, null, 2));
+  logger.info('[melhor-envio] Solicitando impressão de etiquetas com payload:', JSON.stringify(payload, null, 2));
 
   try {
     const res = await fetch(url, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        'Accept': 'application/pdf',
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${TOKEN}`,
         'User-Agent': USER_AGENT,
       },
-      body: JSON.stringify({ orders }),
+      body: JSON.stringify(payload),
     });
 
-    const text = await res.text();
     if (!res.ok) {
+      const text = await res.text();
       throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
     }
 
-    return JSON.parse(text);
+    // A resposta é o PDF bruto, então retornamos como um buffer
+    return res.buffer();
 
   } catch (error) {
     logger.error(`[melhor-envio] Falha ao obter links de impressão: ${error.message}`);

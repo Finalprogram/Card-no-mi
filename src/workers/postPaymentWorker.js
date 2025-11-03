@@ -8,6 +8,8 @@ const Listing = require('../models/Listing');
 const { addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
 const { sendEmail } = require('../services/emailService');
+const fs = require('fs').promises;
+const path = require('path');
 
 // Helper function to get seller's origin CEP (copied from paymentController)
 async function getSellerOriginCep(sellerId) {
@@ -128,11 +130,23 @@ const worker = new Worker('post-payment', async (job) => {
       const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
       logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order._id}:`, purchasedShipments);
 
-      const printResponse = await printLabels(orderMelhorEnvioIds);
-      logger.info(`[worker] Print links from Melhor Envio for order ${order._id}:`, printResponse);
+      const pdfBuffer = await printLabels(orderMelhorEnvioIds);
+
+      // Define um caminho para salvar o PDF
+      const labelDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'labels');
+      await fs.mkdir(labelDir, { recursive: true }); // Garante que o diretório exista
+      const labelFileName = `label-${order._id}.pdf`;
+      const labelPath = path.join(labelDir, labelFileName);
+
+      // Salva o buffer do PDF em um arquivo
+      await fs.writeFile(labelPath, pdfBuffer);
+      logger.info(`[worker] Label for order ${order._id} saved to ${labelPath}`);
+
+      // A URL a ser salva no banco de dados é agora uma URL local
+      const labelUrl = `/uploads/labels/${labelFileName}`;
 
       order.melhorEnvioShipmentId = orderMelhorEnvioIds.join(',');
-      order.melhorEnvioLabelUrl = printResponse.url;
+      order.melhorEnvioLabelUrl = labelUrl; // Salva a URL local
       order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', ');
       order.melhorEnvioTrackingUrl = purchasedShipments[0]?.tracking;
 
