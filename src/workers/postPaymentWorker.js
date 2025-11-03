@@ -128,13 +128,16 @@ const worker = new Worker('post-payment', async (job) => {
       const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
       logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order._id}:`, purchasedShipments);
 
-      const printResponse = await printLabels(orderMelhorEnvioIds);
+      // BUG FIX: Use the correct shipment IDs from the purchase response, not the cart IDs.
+      const shipmentIdsToPrint = purchasedShipments.orders.map(o => o.id);
+
+      const printResponse = await printLabels(shipmentIdsToPrint);
       logger.info(`[worker] Public print links from Melhor Envio for order ${order._id}:`, printResponse);
 
-      order.melhorEnvioShipmentId = orderMelhorEnvioIds.join(',');
+      order.melhorEnvioShipmentId = shipmentIdsToPrint.join(',');
       order.melhorEnvioLabelUrl = printResponse.url; // Salva a URL pública
       order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', ');
-      order.melhorEnvioTrackingUrl = purchasedShipments[0]?.tracking;
+      order.melhorEnvioTrackingUrl = purchasedShipments.orders[0]?.tracking;
 
       logger.info(`[worker] Order #${order._id} updated with Melhor Envio data.`);
 
