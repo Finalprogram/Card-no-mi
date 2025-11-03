@@ -25,7 +25,7 @@
     font-size: 0.9rem;
   }
   .order-status {
-    background-color: var(--accent-primary-muted);
+    background-color: rgba(var(--accent-primary-rgb), 0.2);
     color: var(--accent-primary);
     padding: 4px 10px;
     border-radius: 20px;
@@ -77,34 +77,95 @@
   .address-section {
     margin-top: 1rem;
   }
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    list-style: none;
+    padding: 1rem 0;
+    margin: 1rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  .timeline-item {
+    flex: 1;
+    text-align: center;
+    position: relative;
+    color: var(--text-muted);
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -50%;
+    width: 100%;
+    height: 2px;
+    background-color: var(--border);
+    z-index: -1;
+  }
+  .timeline-item:first-child::before {
+    content: none;
+  }
+  .timeline-item.completed::before, .timeline-item.active::before {
+    background-color: var(--accent-primary);
+  }
+  .timeline-item .dot {
+    width: 16px;
+    height: 16px;
+    background-color: var(--border);
+    border-radius: 50%;
+    display: inline-block;
+    margin-bottom: 0.5rem;
+  }
+  .timeline-item.completed .dot, .timeline-item.active .dot {
+    background-color: var(--accent-primary);
+  }
+  .timeline-item.active {
+    color: var(--accent-primary);
+    font-weight: bold;
+  }
+  .back-link {
+    color: var(--text-secondary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+  .back-link:hover {
+    color: var(--accent-primary);
+    transform: translateX(-3px);
+  }
 </style>
 
 <main class="container" style="max-width: 880px; margin-top: 24px;">
   <%- include('../partials/navbar') %>
 
   <div style="margin: 24px 0 16px;">
-    <a href="/meus-pedidos">&larr; Voltar para Meus Pedidos</a>
+    <a href="/meus-pedidos" class="back-link">&larr; Voltar para Meus Pedidos</a>
   </div>
 
   <% if (order) { %>
+    <% 
+      const statusTranslations = {
+        'PendingPayment': 'Pagamento Pendente',
+        'Paid': 'Pago',
+        'Shipped': 'Enviado',
+        'Delivered': 'Entregue',
+        'Cancelled': 'Cancelado',
+        'Processing': 'Processando',
+      };
+      const translatedStatus = statusTranslations[order.status] || order.status;
+    %>
+    <div class="order-status-highlight" style="background-color: var(--accent-primary); color: white; padding: 1rem; border-radius: 8px; margin-bottom: 1rem; text-align: center; font-weight: bold;">
+      Status: <%= translatedStatus %>
+    </div>
     <div class="order-card">
       <div class="order-header">
         <div>
-          <div class="order-id">Detalhes do Pedido #<%= order._id.toString().slice(-6) %></div>
+          <div class="order-id">Detalhes do Pedido #<strong style="color: var(--accent-primary);"><%= order._id.toString().slice(-6) %></strong></div>
           <div class="order-date"><%= new Date(order.createdAt).toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' }) %></div>
         </div>
         <div class="order-status">
-          <% 
-            const statusTranslations = {
-              'PendingPayment': 'Pagamento Pendente',
-              'Paid': 'Pago',
-              'Shipped': 'Enviado',
-              'Delivered': 'Entregue',
-              'Cancelled': 'Cancelado',
-              'Processing': 'Processando',
-            };
-            const translatedStatus = statusTranslations[order.status] || order.status;
-          %>
           <%= translatedStatus %>
         </div>
         <% if (order.trackingCode) { %>
@@ -116,6 +177,27 @@
           </form>
         <% } %>
       </div>
+
+      <% 
+        const stages = ['PendingPayment', 'Paid', 'Shipped', 'Delivered'];
+        const currentStageIndex = stages.indexOf(order.status);
+      %>
+      <ul class="timeline">
+        <% stages.forEach((stage, index) => { %>
+          <% 
+            let statusClass = '';
+            if (index < currentStageIndex) {
+              statusClass = 'completed';
+            } else if (index === currentStageIndex) {
+              statusClass = 'active';
+            }
+          %>
+          <li class="timeline-item <%= statusClass %>">
+            <div class="dot"></div>
+            <div><%= statusTranslations[stage] || stage %></div>
+          </li>
+        <% }) %>
+      </ul>
 
       <div class="order-body">
         <h3 id="items-to-review" style="margin-top: 1rem; margin-bottom: 1rem;">Itens do Pedido</h3>
@@ -141,13 +223,21 @@
       <div class="order-footer">
         <div class="address-section">
           <h4 style="margin-bottom: 0.5rem;">Endereço de Entrega</h4>
-          <p style="margin: 0; color: var(--text-muted);"><%= order.shippingAddress %></p>
+          <div class="address-details" style="color: var(--text-muted);">
+            <p style="margin: 0;"><span style="color: var(--accent-primary);">🏠 Rua:</span> <%= order.shippingAddress.street %>, <span style="color: var(--accent-primary);">Número:</span> <%= order.shippingAddress.number %></p>
+            <% if (order.shippingAddress.complement) { %>
+                <p style="margin: 0;"><span style="color: var(--accent-primary);">🏢 Complemento:</span> <%= order.shippingAddress.complement %></p>
+            <% } %>
+            <p style="margin: 0;"><span style="color: var(--accent-primary);">📍 Bairro:</span> <%= order.shippingAddress.neighborhood %></p>
+            <p style="margin: 0;"><span style="color: var(--accent-primary);">🏙️ Cidade:</span> <%= order.shippingAddress.city %> - <span style="color: var(--accent-primary);">Estado:</span> <%= order.shippingAddress.state %></p>
+            <p style="margin: 0;"><span style="color: var(--accent-primary);">📮 CEP:</span> <%= order.shippingAddress.cep %></p>
+          </div>
         </div>
         <div style="text-align: right; margin-top: 1.5rem;">
           <div>Subtotal: <strong><%= formatPrice(order.totals.subtotal) %></strong></div>
           <div>Frete: <strong><%= formatPrice(order.totals.shipping) %></strong></div>
           <div>Taxa do Marketplace: <strong><%= formatPrice(order.totals.marketplaceFee) %></strong></div>
-          <div style="font-size: 1.2rem; margin-top: 8px;">Total: <strong style="color: var(--accent-primary);"><%= formatPrice(order.totals.grand) %></strong></div>
+          <div style="font-size: 1.2rem; margin-top: 8px;">Total: <strong style="color: var(--accent-primary); font-size: 1.5rem;"><%= formatPrice(order.totals.grand) %></strong></div>
         </div>
       </div>
 

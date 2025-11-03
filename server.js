@@ -119,7 +119,7 @@ app.use('/', cardRoutes);
 // app.use('/api', cartRoutes);
 app.use('/api', listRoutes);
 app.use('/', sellerRoutes);
-app.use('/', listingRoutes);
+app.use('/api', listingRoutes);
 app.use('/api/coupon', couponRoutes);
 app.use('/cart', cartRoutes);
 app.use('/checkout', checkoutRoutes);

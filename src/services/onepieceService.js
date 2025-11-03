@@ -6,7 +6,7 @@ const httpAgent = new http.Agent({ family: 4 });
 
 // 3. Cria a instância do axios com a configuração correta
 const api = axios.create({
-  baseURL: 'https://api.onepiecetopdecks.com/v2',
+  baseURL: 'https://optcgapi.com/api',
   httpAgent: httpAgent, // 4. Garante que o agente está sendo usado aqui
 });
 
@@ -34,9 +34,7 @@ async function searchCards(query) {
 
 async function fetchAllCardsByPage(page = 1) {
     try {
-      const response = await api.get('/cards', {
-        params: { page: page }
-      });
+      const response = await api.get('/api/allPromoCards/');
       return response.data;
     } catch (error) {
       console.error(`Erro ao buscar a página ${page} de cartas de One Piece:`, error.message);

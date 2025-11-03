@@ -21,10 +21,6 @@ const ensureAddress = async (req, res, next) => {
   }
 };
 
-// As rotas de / e /perfil deveriam estar em pagesRoutes, mas mantendo aqui por enquanto.
-router.get('/', pagesController.showHomePage);
-router.get('/perfil/:username', pagesController.showProfilePage);
-
 // Rota de vender protegida por autenticação e verificação de endereço
 router.get('/vender', isAuthPage, ensureAddress, pagesController.showSellPage);
 
