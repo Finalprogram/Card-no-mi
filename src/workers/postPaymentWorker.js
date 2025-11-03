@@ -5,7 +5,7 @@ const logger = require('../config/logger');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Listing = require('../models/Listing');
-const { addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
+const { addItemToCart, purchaseShipments, generateLabels, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
 const { sendEmail } = require('../services/emailService');
 
@@ -135,6 +135,13 @@ const worker = new Worker('post-payment', async (job) => {
 
       // BUG FIX: Use the correct shipment IDs from the purchase response, not the cart IDs.
       const shipmentIdsToPrint = purchasedShipments.purchase.orders.map(o => o.id);
+
+      // NEW STEP: Queue the labels for generation.
+      await generateLabels(shipmentIdsToPrint);
+      logger.info(`[worker] Labels for order ${order._id} queued for generation.`);
+
+      // Add a safety delay to allow Melhor Envio to process the generation queue.
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay
 
       const printResponse = await printLabels(shipmentIdsToPrint);
       logger.info(`[worker] Public print links from Melhor Envio for order ${order._id}:`, printResponse);

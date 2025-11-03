@@ -196,9 +196,47 @@ async function printLabels(orders) {
   }
 }
 
+const GENERATE_PATH = '/api/v2/me/shipment/generate';
+
+/**
+ * Adiciona as etiquetas na fila de geração do Melhor Envio.
+ * @param {Array<string>} orders - IDs dos pedidos a serem gerados.
+ * @returns {Promise<object>} - A resposta da API.
+ */
+async function generateLabels(orders) {
+  const url = new URL(GENERATE_PATH, BASE_URL).toString();
+
+  logger.info('[melhor-envio] Adicionando etiquetas na fila de geração com payload:', JSON.stringify({ orders }, null, 2));
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: JSON.stringify({ orders }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
+    }
+
+    return res.json();
+
+  } catch (error) {
+    logger.error(`[melhor-envio] Falha ao adicionar etiquetas na fila de geração: ${error.message}`);
+    throw error;
+  }
+}
+
 module.exports = {
   cotarFreteMelhorEnvio,
   addItemToCart,
   purchaseShipments,
+  generateLabels,
   printLabels,
 };
