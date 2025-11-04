@@ -17,6 +17,12 @@ const bulkCreateListings = async (req, res) => {
       return res.status(400).json({ message: 'Nenhum anúncio para criar.' });
     }
 
+    for (const listing of listingsData) {
+      if (parseFloat(listing.price) > 100000) {
+        return res.status(400).json({ message: 'O preço de um anúncio não pode exceder R$ 100.000.' });
+      }
+    }
+
     // Prepara os dados: mapeia o cardId para o campo 'card' e adiciona o vendedor
     const listingsToSave = listingsData.map(listing => ({
       card: listing.cardId, // Mapeamento de cardId -> card
@@ -65,6 +71,12 @@ const showEditListingPage = async (req, res) => {
 const updateListing = async (req, res) => {
   try {
     const { price, quantity, condition, language } = req.body;
+
+    if (parseFloat(price) > 100000) {
+      req.flash('error_msg', 'O preço do anúncio não pode exceder R$ 100.000.');
+      return res.redirect(`/listings/${req.params.id}/edit`);
+    }
+
     const listing = await Listing.findById(req.params.id);
 
     if (!listing) {
