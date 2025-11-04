@@ -80,6 +80,9 @@ async function add(req, res) {
     if (!seller) {
       return res.status(404).json({ error: 'Vendedor não encontrado. O anúncio pode ter sido removido.' });
     }
+    if (seller._id.toString() === req.session.user._id.toString()) {
+      return res.status(403).json({ error: 'Você não pode comprar seus próprios itens.' });
+    }
     // --- FIM DA VALIDAÇÃO ---
 
     if (!found) {

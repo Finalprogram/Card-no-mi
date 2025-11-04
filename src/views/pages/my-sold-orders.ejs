@@ -406,7 +406,36 @@ document.addEventListener('DOMContentLoaded', () => {
           });
 
           if (response.ok) {
-            location.reload();
+            // Update the UI dynamically
+            const orderListItem = document.querySelector(`.order-list-item:has([data-order-id='${orderId}'])`);
+            if (orderListItem) {
+              // Update status badge
+              const statusBadge = orderListItem.querySelector('.badge');
+              if (statusBadge) {
+                statusBadge.textContent = 'Enviado';
+                statusBadge.className = 'value badge badge-Shipped';
+              }
+
+              // Hide the 'Mark as Shipped' button
+              const markAsShippedBtn = orderListItem.querySelector('.mark-as-shipped-btn');
+              if (markAsShippedBtn) {
+                markAsShippedBtn.style.display = 'none';
+              }
+
+              // Show tracking info
+              const trackingInfo = orderListItem.querySelector('.timeline-container');
+              if (trackingInfo) {
+                const trackingLink = document.createElement('a');
+                trackingLink.href = '#'; // You might want to build a proper tracking URL here
+                trackingLink.textContent = trackingCode;
+                const trackingDiv = document.createElement('div');
+                trackingDiv.appendChild(document.createTextNode('Rastreamento: '));
+                trackingDiv.appendChild(trackingLink);
+                trackingInfo.parentNode.insertBefore(trackingDiv, trackingInfo.nextSibling);
+              }
+            }
+            modal.style.display = 'none';
+            window.showToast('Pedido marcado como enviado!', 'success');
           } else {
             const errorData = await response.json();
             window.showToast(errorData.message || 'Ocorreu um problema.', 'error');
@@ -434,8 +463,26 @@ document.addEventListener('DOMContentLoaded', () => {
         if (response.ok) {
           const data = await response.json();
           window.showToast(data.message || 'Etiqueta gerada com sucesso!', 'success');
-          // Give toast time to show before reloading
-          setTimeout(() => location.reload(), 1500);
+
+          // Update the UI
+          const orderListItem = button.closest('.order-list-item');
+          if (orderListItem) {
+            // Remove the 'Generate Label' button
+            button.remove();
+
+            // Add 'View Label' button
+            const viewLabelLink = document.createElement('a');
+            viewLabelLink.href = data.labelUrl;
+            viewLabelLink.target = '_blank';
+            viewLabelLink.className = 'btn btn-sm btn-info';
+            viewLabelLink.style.marginLeft = '10px';
+            viewLabelLink.textContent = 'Ver Etiqueta';
+            
+            const orderStatusDiv = orderListItem.querySelector('.order-status');
+            if(orderStatusDiv) {
+              orderStatusDiv.appendChild(viewLabelLink);
+            }
+          }
         } else {
           const errorData = await response.json();
           window.showToast(errorData.message || 'Não foi possível gerar a etiqueta.', 'error');
@@ -456,3 +503,4 @@ document.addEventListener('DOMContentLoaded', () => {
 <div id="toast-notification" class="toast-notification"></div>
 
 </body>
+<script src="/js/main.js"></script>

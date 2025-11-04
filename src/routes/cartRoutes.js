@@ -4,8 +4,8 @@ const router = express.Router();
 const cartController = require('../controllers/cartController');
 
 // Se quiser proteger com login em todas as rotas, adicione seu middleware aqui:
-// const { isAuth } = require('../middleware/auth');
-// router.use(isAuth);
+const { isAuthApi } = require('../middleware/auth');
+router.use(isAuthApi);
 
 router.get('/', cartController.show);
 router.post('/add', cartController.add);

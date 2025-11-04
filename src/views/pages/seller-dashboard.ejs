@@ -1,5 +1,17 @@
 <%- include('../partials/header') %>
 <style>
+  .stat-card-link {
+    text-decoration: none; /* Remove underline from links */
+    color: inherit; /* Inherit color from parent */
+  }
+  .stat-card-link .stat-card {
+    height: 100%; /* Ensure cards take full height in grid */
+    transition: transform 0.2s ease, box-shadow 0.2s ease; /* Add transition for hover effects */
+  }
+  .stat-card-link .stat-card:hover {
+    transform: translateY(-5px); /* Lift effect on hover */
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2); /* Stronger shadow on hover */
+  }
   .dashboard-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -8,10 +20,23 @@
   }
   .stat-card {
     background: var(--bg-surface);
-    border: 1px solid var(--border);
+    border: 2px solid transparent; /* Make border transparent initially */
+    border-image: linear-gradient(45deg, #a078f7, #c0a0fc); /* Purple gradient */
+    border-image-slice: 1; /* Ensure the entire border uses the image */
     border-radius: 12px;
     padding: 1.5rem;
     text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative; /* Needed for pseudo-elements or more complex effects */
+    overflow: hidden; /* Ensures gradient doesn't spill */
+  }
+  .stat-card .icon {
+    font-size: 2rem;
+    color: var(--accent-primary);
+    margin-bottom: 0.5rem;
   }
   .stat-card .value {
     font-size: 2.5rem;
@@ -37,6 +62,9 @@
   .recent-sales-table th {
     background-color: var(--bg-surface-muted);
   }
+  .recent-sales-table tbody tr:nth-child(odd) {
+    background-color: var(--bg-alt); /* A slightly different background for odd rows */
+  }
 </style>
 
 <main class="container" style="max-width: 960px; margin-top: 24px;">
@@ -45,19 +73,29 @@
   <h1 style="margin: 24px 0 16px;">Dashboard do Vendedor</h1>
 
   <div class="dashboard-grid">
+    <a href="/meus-pedidos-vendidos" class="stat-card-link">
+      <div class="stat-card">
+        <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
+        <div class="value"><%= formatPrice(stats.totalRevenue) %></div>
+        <div class="label">Total Vendido</div>
+      </div>
+    </a>
+    <a href="/meus-pedidos-vendidos" class="stat-card-link">
+      <div class="stat-card">
+        <div class="icon"><i class="fas fa-box"></i></div>
+        <div class="value"><%= stats.totalItemsSold %></div>
+        <div class="label">Itens Vendidos</div>
+      </div>
+    </a>
+    <a href="/meus-anuncios" class="stat-card-link">
+      <div class="stat-card">
+        <div class="icon"><i class="fas fa-bullhorn"></i></div>
+        <div class="value"><%= stats.activeListingsCount %></div>
+        <div class="label">Anúncios Ativos</div>
+      </div>
+    </a>
     <div class="stat-card">
-      <div class="value"><%= formatPrice(stats.totalRevenue) %></div>
-      <div class="label">Total Vendido</div>
-    </div>
-    <div class="stat-card">
-      <div class="value"><%= stats.totalItemsSold %></div>
-      <div class="label">Itens Vendidos</div>
-    </div>
-    <div class="stat-card">
-      <div class="value"><%= stats.activeListingsCount %></div>
-      <div class="label">Anúncios Ativos</div>
-    </div>
-    <div class="stat-card">
+      <div class="icon"><i class="fas fa-receipt"></i></div>
       <div class="value"><%= stats.sellerFeePercentage %>%</div>
       <div class="label">Sua Taxa do Marketplace</div>
     </div>
