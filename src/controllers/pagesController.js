@@ -331,7 +331,18 @@ const showTimelinePage = async (req, res) => {
       });
     }
 
-    res.render('pages/timeline', { timeline, title: 'Linha do Tempo de Edições' });
+    const sortedYears = Object.keys(timeline).sort((a, b) => {
+      if (a === 'Unreleased') return 1; // 'Unreleased' always comes last
+      if (b === 'Unreleased') return -1;
+      return parseInt(a) - parseInt(b);
+    });
+
+    const sortedTimeline = {};
+    for (const year of sortedYears) {
+      sortedTimeline[year] = timeline[year].sort((a, b) => a.setName.localeCompare(b.setName));
+    }
+
+    res.render('pages/timeline', { timeline: sortedTimeline, title: 'Linha do Tempo de Edições' });
   } catch (error) {
     console.error("Error creating timeline:", error);
     res.status(500).send("Error creating timeline");
