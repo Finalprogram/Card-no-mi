@@ -172,27 +172,9 @@ const getEncyclopediaPage = async (req, res) => {
     const colors = await Card.distinct('colors', { game: 'onepiece' });
     const types = await Card.distinct('type_line', { game: 'onepiece' });
 
-    // Busca, normaliza e ordena as edições
-    const rawSets = await Card.distinct('set_name', {
-      game: 'onepiece',
-      set_name: /OP-?\d+/
-    });
-
-    const opSetPattern = /(OP-?\d+)/;
-    const normalizedSet = new Set();
-    rawSets.forEach(rawSet => {
-      const match = rawSet.match(opSetPattern);
-      if (match) {
-        const setCode = 'OP' + match[1].replace(/OP-?/, '').padStart(2, '0');
-        normalizedSet.add(setCode);
-      }
-    });
-
-    const sortedSets = Array.from(normalizedSet).sort((a, b) => {
-      const numA = parseInt(a.match(/\d+/)[0]);
-      const numB = parseInt(b.match(/\d+/)[0]);
-      return numA - numB;
-    });
+    // Busca e ordena todas as edições sem normalização complexa
+    const sortedSets = await Card.distinct('set_name', { game: 'onepiece' });
+    sortedSets.sort(); // Ordena alfabeticamente
 
     // Define os filtros que serão enviados para a view
     const filterGroups = [
