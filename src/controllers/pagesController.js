@@ -176,11 +176,11 @@ const getEncyclopediaPage = async (req, res) => {
     const rawSets = await Card.distinct('set_name', { game: 'onepiece' });
 
     function normalizeSetName(setName) {
-      const curlyBraceMatch = setName.match(/\{([^}]+)\}/);
-      if (curlyBraceMatch && curlyBraceMatch[1]) {
-        return curlyBraceMatch[1]; // Return content inside curly braces
+      const squareBracketMatch = setName.match(/\[([^\]]+)\]/); // Changed to square brackets
+      if (squareBracketMatch && squareBracketMatch[1]) {
+        return squareBracketMatch[1]; // Return content inside square brackets
       }
-      // Fallback to previous normalization if no curly braces found
+      // Fallback to previous normalization if no square brackets found
       const opSetMatch = setName.match(/OP-?(\d+)/);
       if (opSetMatch) {
         return 'OP' + opSetMatch[1].padStart(2, '0');
