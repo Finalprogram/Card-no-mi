@@ -172,16 +172,28 @@ const getEncyclopediaPage = async (req, res) => {
     const colors = await Card.distinct('colors', { game: 'onepiece' });
     const types = await Card.distinct('type_line', { game: 'onepiece' });
 
-    // Busca e ordena todas as edições sem normalização complexa
-    const sortedSets = await Card.distinct('set_name', { game: 'onepiece' });
-    sortedSets.sort(); // Ordena alfabeticamente
+    // Busca e ordena todas as edições
+    const rawSets = await Card.distinct('set_name', { game: 'onepiece' });
+
+    function normalizeSetName(setName) {
+      const match = setName.match(/OP-?(\d+)/);
+      if (match) {
+        return 'OP' + match[1].padStart(2, '0');
+      }
+      return setName;
+    }
+
+    const setOptions = rawSets.map(setName => ({
+      value: setName,
+      display: normalizeSetName(setName)
+    })).sort((a, b) => a.display.localeCompare(b.display));
 
     // Define os filtros que serão enviados para a view
     const filterGroups = [
       { name: 'Raridade', key: 'rarity', options: rarities.sort() },
       { name: 'Cor', key: 'color', options: colors.sort() },
       { name: 'Tipo', key: 'type', options: types.sort() },
-      { name: 'Edição', key: 'set', options: sortedSets }
+      { name: 'Edição', key: 'set', options: setOptions }
     ];
 
     res.render('pages/encyclopedia', {

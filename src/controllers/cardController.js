@@ -205,10 +205,7 @@ const getAllCards = async (req, res) => {
     if (req.query.rarity) filterQuery.rarity = req.query.rarity;
     if (req.query.color) filterQuery.colors = new RegExp(req.query.color, 'i');
     if (req.query.type) filterQuery.type_line = req.query.type;
-    if (req.query.set) {
-      const setCode = req.query.set.replace(/OP-?/, '');
-      filterQuery.set_name = new RegExp(`OP-?${setCode}`, 'i');
-    }
+    if (req.query.set) filterQuery.set_name = req.query.set;
     if (req.query.q) filterQuery.name = new RegExp(req.query.q, 'i');
 
     const cards = await Card.find(filterQuery)

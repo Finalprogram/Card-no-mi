@@ -16,7 +16,7 @@
               <div class="filter-options" hidden>
               <% group.options.forEach(option => { 
                    const value = typeof option === 'object' ? option.value : option;
-                   const label = typeof option === 'object' ? option.label : option;
+                   const label = typeof option === 'object' ? option.display : option;
                    const checked = (filters && filters[group.key] === value) ? 'checked' : '';
               %>
                 <label>
