@@ -4,6 +4,43 @@
     <%- include('../partials/header') %>
     <title><%= title %></title>
     <style>
+        #introduction {
+            text-align: center;
+            padding: 4rem 1rem;
+        }
+        #introduction h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        #introduction p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2rem;
+        }
+        #visualize-btn {
+            font-size: 1.2rem;
+            padding: 0.8rem 2rem;
+        }
+
+        #timeline-wrapper {
+            display: none;
+        }
+
+        .fade-in {
+            animation: fadeInAnimation 1s ease-in-out;
+        }
+
+        @keyframes fadeInAnimation {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
         .timeline-container {
             max-width: 1200px;
             margin: 2rem auto;
@@ -68,38 +105,55 @@
     <%- include('../partials/navbar') %>
 
     <main class="container">
-        <h1 class="display-4"><%= title %></h1>
-        <p class="lead">Uma jornada através dos lançamentos de One Piece TCG.</p>
+        <div id="introduction">
+            <h1>Explore a Linha do Tempo de One Piece TCG</h1>
+            <p>Descubra todas as edições, desde o início até os lançamentos mais recentes.</p>
+            <button id="visualize-btn" class="btn-primary">Visualizar</button>
+        </div>
 
-        <div class="timeline-container">
-            <% Object.keys(timeline).sort((a, b) => b - a).forEach(year => { %>
-                <div class="year-section">
-                    <h2 class="year-title"><%= year %></h2>
-                    
-                    <% if(year % 2 === 0) { %>
-                        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaDB6d2w5b3E1d3g2c2w5b3E1d3c2/l3vR1kCg7g3a0/giphy.gif" alt="One Piece GIF" class="one-piece-gif">
-                    <% } else { %>
-                        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaDB6d2w5b3E1d3g2c2w5b3E1d3c2/4uMyA23s2c2mQ/giphy.gif" alt="One Piece GIF" class="one-piece-gif">
-                    <% } %>
+        <div id="timeline-wrapper">
+            <h1 class="display-4"><%= title %></h1>
+            <p class="lead">Uma jornada através dos lançamentos de One Piece TCG.</p>
 
-                    <% timeline[year].forEach(set => { %>
-                        <div class="set-section">
-                            <h3 class="set-title"><%= set.setName %></h3>
-                            <div class="top-cards-grid">
-                                <% set.topCards.forEach(card => { %>
-                                    <div class="card-item">
-                                        <img src="<%= card.image_url %>" alt="<%= card.name %>">
-                                        <h4><%= card.name %></h4>
-                                    </div>
-                                <% }) %>
+            <div class="timeline-container">
+                <% Object.keys(timeline).sort((a, b) => b - a).forEach(year => { %>
+                    <div class="year-section">
+                        <h2 class="year-title"><%= year %></h2>
+                        
+                        <% if(year % 2 === 0) { %>
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaDB6d2w5b3E1d3g2c2w5b3E1d3c2/l3vR1kCg7g3a0/giphy.gif" alt="One Piece GIF" class="one-piece-gif">
+                        <% } else { %>
+                            <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaDB6d2w5b3E1d3g2c2w5b3E1d3c2/4uMyA23s2c2mQ/giphy.gif" alt="One Piece GIF" class="one-piece-gif">
+                        <% } %>
+
+                        <% timeline[year].forEach(set => { %>
+                            <div class="set-section">
+                                <h3 class="set-title"><%= set.setName %></h3>
+                                <div class="top-cards-grid">
+                                    <% set.topCards.forEach(card => { %>
+                                        <div class="card-item">
+                                            <img src="<%= card.image_url %>" alt="<%= card.name %>">
+                                            <h4><%= card.name %></h4>
+                                        </div>
+                                    <% }) %>
+                                </div>
                             </div>
-                        </div>
-                    <% }) %>
-                </div>
-            <% }) %>
+                        <% }) %>
+                    </div>
+                <% }) %>
+            </div>
         </div>
     </main>
 
     <%- include('../partials/footer') %>
+
+    <script>
+        document.getElementById('visualize-btn').addEventListener('click', () => {
+            document.getElementById('introduction').style.display = 'none';
+            const timelineWrapper = document.getElementById('timeline-wrapper');
+            timelineWrapper.style.display = 'block';
+            timelineWrapper.classList.add('fade-in');
+        });
+    </script>
 </body>
 </html>
