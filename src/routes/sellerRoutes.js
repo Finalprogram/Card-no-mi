@@ -38,4 +38,17 @@ router.post('/pedidos-vendidos/:orderId/marcar-enviado', isAuthPage, sellerContr
 // Nova rota para gerar etiqueta do Melhor Envio
 router.post('/seller/orders/:orderId/generate-label', isAuthPage, sellerController.generateMelhorEnvioLabel);
 
+// Rota para buscar dados de vendas para o gráfico
+router.get('/seller/sales-data', isAuthPage, async (req, res) => {
+  try {
+    const sellerId = req.session.user.id;
+    const period = req.query.period || '7days'; // Default to 7 days
+    const salesData = await sellerController.getSalesData(sellerId, period);
+    res.json(salesData);
+  } catch (error) {
+    console.error('Error fetching sales data:', error);
+    res.status(500).json({ message: 'Erro ao buscar dados de vendas.' });
+  }
+});
+
 module.exports = router;

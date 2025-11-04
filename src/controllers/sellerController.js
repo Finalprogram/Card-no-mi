@@ -7,6 +7,62 @@ const Setting = require('../models/Setting');
 const melhorEnvioClient = require('../services/melhorEnvioClient'); // Importar o cliente do Melhor Envio
 const emailService = require('../services/emailService'); // Importar o serviço de e-mail
 
+const getSalesData = async (sellerId, period) => {
+  let startDate;
+  if (period === '7days') {
+    startDate = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  } else if (period === '30days') {
+    startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  }
+
+  const matchQuery = {
+    'items.seller': sellerId,
+    status: { $in: ['Paid', 'Shipped', 'Delivered'] } // Only count successful sales
+  };
+
+  if (startDate) {
+    matchQuery.createdAt = { $gte: startDate };
+  }
+
+  const salesData = await Order.aggregate([
+    { $match: matchQuery },
+    { $unwind: '$items' },
+    { $match: { 'items.seller': sellerId } }, // Ensure only seller's items are counted
+    { $group: {
+        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        dailySales: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+        dailyOrders: { $sum: 1 }
+    }},
+    { $sort: { '_id': 1 } }
+  ]);
+
+  return salesData.map(data => ({
+    date: data._id,
+    totalSales: data.dailySales,
+    totalOrders: data.dailyOrders
+  }));
+};
+
+const getSalesTotalForPeriod = async (sellerId, startDate, endDate) => {
+  const matchQuery = {
+    'items.seller': sellerId,
+    status: { $in: ['Paid', 'Shipped', 'Delivered'] },
+    createdAt: { $gte: startDate, $lt: endDate }
+  };
+
+  const result = await Order.aggregate([
+    { $match: matchQuery },
+    { $unwind: '$items' },
+    { $match: { 'items.seller': sellerId } },
+    { $group: {
+        _id: null,
+        totalSales: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }
+    }}
+  ]);
+
+  return result.length > 0 ? result[0].totalSales : 0;
+};
+
 const showSellerDashboard = async (req, res) => {
   try {
     const sellerObjectId = new mongoose.Types.ObjectId(req.session.user.id);
@@ -18,10 +74,12 @@ const showSellerDashboard = async (req, res) => {
 
     // Calculate seller's fee percentage
     let sellerFeePercentage = seller.fee_override_percentage;
+    const settingKey = `fee_${seller.accountType}_percentage`;
+    const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+    const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 0; // Fallback to 0 if setting not found
+
     if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
-      const settingKey = `fee_${seller.accountType}_percentage`;
-      const defaultFeeSetting = await Setting.findOne({ key: settingKey });
-      sellerFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 0; // Fallback to 0 if setting not found
+      sellerFeePercentage = defaultFeePercentage;
     }
 
     // 1. Contar anúncios ativos
@@ -49,6 +107,26 @@ const showSellerDashboard = async (req, res) => {
     const totalRevenue = salesData.length > 0 ? salesData[0].totalRevenue : 0;
     const totalItemsSold = salesData.length > 0 ? salesData[0].totalItemsSold : 0;
 
+    // Calculate sales comparison for the last 7 days vs previous 7 days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const sevenDaysAgo = new Date(today);
+    sevenDaysAgo.setDate(today.getDate() - 7);
+
+    const fourteenDaysAgo = new Date(today);
+    fourteenDaysAgo.setDate(today.getDate() - 14);
+
+    const salesLast7Days = await getSalesTotalForPeriod(sellerObjectId, sevenDaysAgo, today);
+    const salesPrevious7Days = await getSalesTotalForPeriod(sellerObjectId, fourteenDaysAgo, sevenDaysAgo);
+
+    let salesComparisonPercentage = 0;
+    if (salesPrevious7Days > 0) {
+      salesComparisonPercentage = ((salesLast7Days - salesPrevious7Days) / salesPrevious7Days) * 100;
+    } else if (salesLast7Days > 0) {
+      salesComparisonPercentage = 100; // Infinite growth if previous was 0 and current is > 0
+    }
+
     // 3. Buscar as últimas 5 vendas
     const recentSales = await Order.find({ 'items.seller': sellerObjectId })
       .sort({ createdAt: -1 })
@@ -62,13 +140,44 @@ const showSellerDashboard = async (req, res) => {
         };
     });
 
+    // Fetch sales data for chart (default to 7 days)
+    const salesChartData = await getSalesData(sellerObjectId, '7days');
+
+    // Fetch 'Next Actions' data
+    const pendingLabelGeneration = await Order.countDocuments({
+      'items.seller': sellerObjectId,
+      status: 'Paid',
+      melhorEnvioLabelUrl: { $exists: false } // No label generated yet
+    });
+
+    const awaitingShipment = await Order.countDocuments({
+      'items.seller': sellerObjectId,
+      status: 'Processing',
+      melhorEnvioLabelUrl: { $exists: true }, // Label generated
+      trackingCode: { $exists: false } // But not yet shipped
+    });
+
+    const awaitingConfirmation = await Order.countDocuments({
+      'items.seller': sellerObjectId,
+      status: 'Shipped',
+    });
+
     res.render('pages/seller-dashboard', {
       stats: {
         totalRevenue,
         totalItemsSold,
         activeListingsCount,
+        sellerFeePercentage,
+        defaultFeePercentage,
+        salesComparisonPercentage: salesComparisonPercentage.toFixed(2),
       },
       recentSales: sellerRecentSales,
+      salesChartData: JSON.stringify(salesChartData), // Pass as JSON string
+      nextActions: {
+        pendingLabelGeneration,
+        awaitingShipment,
+        awaitingConfirmation,
+      },
     });
 
   } catch (error) {
@@ -76,6 +185,8 @@ const showSellerDashboard = async (req, res) => {
     res.status(500).send('Erro no servidor');
   }
 };
+
+
 
 const showSoldOrders = async (req, res) => {
   try {

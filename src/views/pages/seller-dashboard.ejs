@@ -1,4 +1,5 @@
 <%- include('../partials/header') %>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <style>
   .stat-card-link {
     text-decoration: none; /* Remove underline from links */
@@ -32,6 +33,7 @@
     justify-content: center;
     position: relative; /* Needed for pseudo-elements or more complex effects */
     overflow: hidden; /* Ensures gradient doesn't spill */
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
   }
   .stat-card .icon {
     font-size: 2rem;
@@ -65,6 +67,78 @@
   .recent-sales-table tbody tr:nth-child(odd) {
     background-color: var(--bg-alt); /* A slightly different background for odd rows */
   }
+  .chart-container {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 2rem;
+  }
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+  .chart-filters button {
+    background: var(--bg-alt);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 5px 10px;
+    cursor: pointer;
+    margin-left: 5px;
+  }
+  .chart-filters button.active {
+    background: var(--accent-primary);
+    color: white;
+    border-color: var(--accent-primary);
+  }
+  .next-actions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+  }
+  .action-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow */
+  }
+  .action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+  }
+  .action-card .count {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-primary);
+  }
+  .action-card .label {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+  }
+  .action-card .badge-alert {
+    background-color: #dc3545; /* Red color for alerts */
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 3px 7px;
+    border-radius: 10px;
+    margin-left: 5px;
+    vertical-align: super;
+  }
 </style>
 
 <main class="container" style="max-width: 960px; margin-top: 24px;">
@@ -96,12 +170,64 @@
     </a>
     <div class="stat-card">
       <div class="icon"><i class="fas fa-receipt"></i></div>
-      <div class="value"><%= stats.sellerFeePercentage %>%</div>
+      <div class="value">
+        <% if (stats.sellerFeePercentage === stats.defaultFeePercentage) { %>
+          Taxa Padrão: <%= stats.defaultFeePercentage %>%
+        <% } else { %>
+          <%= stats.sellerFeePercentage %>%
+        <% } %>
+      </div>
       <div class="label">Sua Taxa do Marketplace</div>
     </div>
   </div>
 
-  <div class="recent-sales-section panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
+  <div class="performance-panel panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom: 2rem; text-align: center;">
+    <% if (stats.salesComparisonPercentage !== '0.00') { %>
+      <p style="font-size: 1.2rem; margin: 0;">
+        <span style="color: <%= stats.salesComparisonPercentage > 0 ? 'green' : 'red' %>; font-weight: bold;">
+          📈 <%= stats.salesComparisonPercentage > 0 ? '+' : '' %><%= stats.salesComparisonPercentage %>%
+        </span>
+        em relação à semana passada
+      </p>
+    <% } else { %>
+      <p style="font-size: 1.2rem; margin: 0; color: var(--text-muted);">Sem dados de comparação de vendas para a semana passada.</p>
+    <% } %>
+  </div>
+
+  <div class="chart-container">
+    <div class="chart-header">
+      <h2>Vendas ao Longo do Tempo</h2>
+      <div class="chart-filters">
+        <button class="chart-filter-btn active" data-period="7days">7 Dias</button>
+        <button class="chart-filter-btn" data-period="30days">30 Dias</button>
+        <button class="chart-filter-btn" data-period="all">Tudo</button>
+      </div>
+    </div>
+    <canvas id="salesChart"></canvas>
+  </div>
+
+  <div class="next-actions-grid">
+    <% if (nextActions.pendingLabelGeneration > 0) { %>
+      <a href="/meus-pedidos-vendidos" class="action-card">
+        <div class="count"><%= nextActions.pendingLabelGeneration %></div>
+        <div class="label">Pedidos aguardando etiqueta <span class="badge-alert"><%= nextActions.pendingLabelGeneration %></span></div>
+      </a>
+    <% } %>
+    <% if (nextActions.awaitingShipment > 0) { %>
+      <a href="/meus-pedidos-vendidos" class="action-card">
+        <div class="count"><%= nextActions.awaitingShipment %></div>
+        <div class="label">Pedidos aguardando envio <span class="badge-alert"><%= nextActions.awaitingShipment %></span></div>
+      </a>
+    <% } %>
+    <% if (nextActions.awaitingConfirmation > 0) { %>
+      <a href="/meus-pedidos-vendidos" class="action-card">
+        <div class="count"><%= nextActions.awaitingConfirmation %></div>
+        <div class="label">Pedidos aguardando confirmação <span class="badge-alert"><%= nextActions.awaitingConfirmation %></span></div>
+      </a>
+    <% } %>
+  </div>
+
+  <div class="recent-sales-section panel" style="background:var(--bg-surface); padding:20px; padding-bottom: 30px; border-radius:12px; border:1px solid var(--border)">
     <h2>Vendas Recentes</h2>
     <a href="/meus-pedidos-vendidos" class="btn btn-primary" style="margin-bottom: 1rem;">Ver todos os pedidos</a>
     <% if (recentSales && recentSales.length > 0) { %>
@@ -134,4 +260,7 @@
 
 </main>
 <%- include('../partials/footer') %>
-<script src="/js/main.js"></script>
+<script>
+  window.initialSalesChartData = <%- salesChartData %>;
+</script>
+<script src="/js/seller-dashboard.js"></script>
