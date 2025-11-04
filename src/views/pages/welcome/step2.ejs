@@ -40,15 +40,15 @@
             <form action="/welcome/step2" method="POST">
                 <div class="form-group">
                     <label>CEP</label>
-                    <input class="form-control" name="cep" placeholder="00000-000" required>
+                    <input class="form-control" name="cep" id="cep" placeholder="00000-000" required>
                 </div>
                 <div class="form-group">
                     <label>Rua / Avenida</label>
-                    <input class="form-control" name="street" placeholder="Sua rua ou avenida" required>
+                    <input class="form-control" name="street" id="street" placeholder="Sua rua ou avenida" required>
                 </div>
                 <div class="form-group">
                     <label>Bairro</label>
-                    <input class="form-control" name="neighborhood" placeholder="Seu bairro" required>
+                    <input class="form-control" name="neighborhood" id="neighborhood" placeholder="Seu bairro" required>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
@@ -63,16 +63,67 @@
                 <div class="form-row">
                     <div class="form-group city-group">
                         <label>Cidade</label>
-                        <input class="form-control" name="city" required>
+                        <input class="form-control" name="city" id="city" required>
                     </div>
                     <div class="form-group state-group">
                         <label>UF</label>
-                        <input class="form-control" name="state" maxlength="2" required>
+                        <input class="form-control" name="state" id="state" maxlength="2" required>
                     </div>
                 </div>
                 <button type="submit" class="btn-primary btn-submit-full">Finalizar</button>
             </form>
         </div>
     </main>
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const cepInput = document.getElementById('cep');
+        const streetInput = document.getElementById('street');
+        const neighborhoodInput = document.getElementById('neighborhood');
+        const cityInput = document.getElementById('city');
+        const stateInput = document.getElementById('state');
+
+        cepInput.addEventListener('blur', async () => {
+            const cep = cepInput.value.replace(/\D/g, '');
+
+            if (cep.length === 8) {
+                try {
+                    const response = await fetch(`https://viacep.com.br/ws/${cep}/json/`);
+                    const data = await response.json();
+
+                    if (!data.erro) {
+                        streetInput.value = data.logradouro;
+                        neighborhoodInput.value = data.bairro;
+                        cityInput.value = data.localidade;
+                        stateInput.value = data.uf;
+
+                        streetInput.readOnly = true;
+                        cityInput.readOnly = true;
+                        stateInput.readOnly = true;
+                    } else {
+                        clearAddressFields();
+                        alert('CEP não encontrado.');
+                    }
+                } catch (error) {
+                    console.error('Erro ao buscar CEP:', error);
+                    clearAddressFields();
+                    alert('Erro ao buscar CEP. Tente novamente.');
+                }
+            } else {
+                clearAddressFields();
+            }
+        });
+
+        function clearAddressFields() {
+            streetInput.value = '';
+            neighborhoodInput.value = '';
+            cityInput.value = '';
+            stateInput.value = '';
+
+            streetInput.readOnly = false;
+            cityInput.readOnly = false;
+            stateInput.readOnly = false;
+        }
+    });
+    </script>
 </body>
 </html>
