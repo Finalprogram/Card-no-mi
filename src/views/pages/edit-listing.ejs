@@ -39,7 +39,10 @@
             </div>
             <div class="form-group">
                 <label for="language">Idioma</label>
-                <input type="text" id="language" name="language" class="form-control" value="<%= listing.language %>" required>
+                <select id="language" name="language" class="form-control" required>
+                    <option value="EN" <%= listing.language === 'EN' ? 'selected' : '' %>>English (EN)</option>
+                    <option value="JP" <%= listing.language === 'JP' ? 'selected' : '' %>>Japanese (JP)</option>
+                </select>
             </div>
             <button type="submit" class="btn btn-primary">Salvar Alterações</button>
             <a href="/meus-anuncios" class="btn btn-secondary">Cancelar</a>
