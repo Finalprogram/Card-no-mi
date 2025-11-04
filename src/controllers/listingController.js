@@ -18,8 +18,8 @@ const bulkCreateListings = async (req, res) => {
     }
 
     for (const listing of listingsData) {
-      if (parseFloat(listing.price) > 100000) {
-        return res.status(400).json({ message: 'O preço de um anúncio não pode exceder R$ 100.000.' });
+      if (parseFloat(listing.price) > 999999) {
+        return res.status(400).json({ message: 'O preço de um anúncio não pode exceder R$ 999.999.' });
       }
     }
 
@@ -72,8 +72,8 @@ const updateListing = async (req, res) => {
   try {
     const { price, quantity, condition, language } = req.body;
 
-    if (parseFloat(price) > 100000) {
-      req.flash('error_msg', 'O preço do anúncio não pode exceder R$ 100.000.');
+    if (parseFloat(price) > 999999) {
+      req.flash('error_msg', 'O preço do anúncio não pode exceder R$ 999.999.');
       return res.redirect(`/listings/${req.params.id}/edit`);
     }
 
