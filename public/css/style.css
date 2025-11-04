@@ -196,7 +196,7 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 .feature-text p { color: var(--text-secondary); line-height: 1.6; }
 
 /* --- 4.2. Página de Busca e Lista (/cards/magic, /lista) --- */
-.search-container { display: flex; gap: 2rem; margin-top: 2rem; }
+.search-container { display: flex; gap: 2rem; margin-top: 2rem; align-items: flex-start; }
 .filters { flex: 0 0 250px; }
 .filters input[type="search"] {
   width: 100%;
