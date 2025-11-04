@@ -217,6 +217,47 @@ const getEncyclopediaPage = async (req, res) => {
   }
 };
 
+const showTimelinePage = async (req, res) => {
+  try {
+    const sets = await Card.distinct('set_name', { game: 'onepiece' });
+
+    const releaseYears = {
+      "ROMANCE DAWN [OP-01]": 2022,
+      "PARAMOUNT WAR [OP-02]": 2022,
+      "PILLARS OF STRENGTH [OP-03]": 2023,
+      "KINGDOMS OF INTRIGUE [OP-04]": 2023,
+      "AWAKENING OF THE NEW ERA [OP-05]": 2023,
+      "WINGS OF THE CAPTAIN [OP-06]": 2024,
+      "500 YEARS IN THE FUTURE [OP-07]": 2024,
+      "TWO LEGENDS [OP-08]": 2024,
+    };
+
+    const timeline = {};
+
+    for (const setName of sets) {
+      const year = releaseYears[setName] || 'Unreleased';
+
+      if (!timeline[year]) {
+        timeline[year] = [];
+      }
+
+      const topCards = await Card.find({ set_name: setName, game: 'onepiece' })
+        .sort({ averagePrice: -1 })
+        .limit(3);
+
+      timeline[year].push({
+        setName,
+        topCards,
+      });
+    }
+
+    res.render('pages/timeline', { timeline, title: 'Linha do Tempo de Edições' });
+  } catch (error) {
+    console.error("Error creating timeline:", error);
+    res.status(500).send("Error creating timeline");
+  }
+};
+
 module.exports = {
   showHomePage,
   showProfilePage,
@@ -226,4 +267,5 @@ module.exports = {
   showMyOrdersPage,
   showOrderDetailPage,
   getEncyclopediaPage,
+  showTimelinePage,
 };

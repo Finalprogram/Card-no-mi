@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <%- include('../partials/header') %>
+    <title><%= title %></title>
+    <style>
+        .timeline-container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+        .year-section {
+            margin-bottom: 4rem;
+            position: relative;
+            padding-left: 40px;
+            border-left: 4px solid var(--accent-primary);
+        }
+        .year-title {
+            position: absolute;
+            left: -25px;
+            top: -10px;
+            background-color: var(--bg-primary);
+            color: var(--accent-primary);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .set-section {
+            margin-bottom: 2rem;
+        }
+        .set-title {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+        .top-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+        }
+        .card-item {
+            background-color: var(--bg-surface);
+            border-radius: 8px;
+            padding: 1rem;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        .card-item img {
+            width: 100%;
+            border-radius: 6px;
+            margin-bottom: 0.5rem;
+        }
+        .card-item h4 {
+            font-size: 1rem;
+            color: var(--text-primary);
+        }
+        .one-piece-gif {
+            width: 100%;
+            max-width: 400px;
+            margin: 2rem auto;
+            display: block;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <main class="container">
+        <h1 class="display-4"><%= title %></h1>
+        <p class="lead">Uma jornada através dos lançamentos de One Piece TCG.</p>
+
+        <div class="timeline-container">
+            <% Object.keys(timeline).sort((a, b) => b - a).forEach(year => { %>
+                <div class="year-section">
+                    <h2 class="year-title"><%= year %></h2>
+                    
+                    <% if(year % 2 === 0) { %>
+                        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaDB6d2w5b3E1d3g2c2w5b3E1d3c2/l3vR1kCg7g3a0/giphy.gif" alt="One Piece GIF" class="one-piece-gif">
+                    <% } else { %>
+                        <img src="https://media.giphy.com/media/v1.Y2lkPTc5MGI3NjExaDB6d2w5b3E1d3g2c2w5b3E1d3c2/4uMyA23s2c2mQ/giphy.gif" alt="One Piece GIF" class="one-piece-gif">
+                    <% } %>
+
+                    <% timeline[year].forEach(set => { %>
+                        <div class="set-section">
+                            <h3 class="set-title"><%= set.setName %></h3>
+                            <div class="top-cards-grid">
+                                <% set.topCards.forEach(card => { %>
+                                    <div class="card-item">
+                                        <img src="<%= card.image_url %>" alt="<%= card.name %>">
+                                        <h4><%= card.name %></h4>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            <% }) %>
+        </div>
+    </main>
+
+    <%- include('../partials/footer') %>
+</body>
+</html>

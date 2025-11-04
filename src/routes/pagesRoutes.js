@@ -12,5 +12,6 @@ router.get('/meus-pedidos/:id', pagesController.showOrderDetailPage);
 router.get('/perfil', pagesController.showProfilePage);
 router.get('/perfil/:id', pagesController.showProfilePage);
 router.get('/encyclopedia', pagesController.getEncyclopediaPage);
+router.get('/timeline', pagesController.showTimelinePage);
 
 module.exports = router;
