@@ -47,6 +47,9 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   width: 100%;
   border-bottom: 1px solid var(--border);
   padding: 1rem 0;
+  position: relative; /* Required for z-index to work */
+  z-index: 1002; /* High z-index to be on top of other elements */
+  background-color: var(--bg-surface); /* Ensure a distinct background for the navbar */
 }
 
 .navbar {

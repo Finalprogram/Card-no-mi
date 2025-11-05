@@ -1,0 +1,77 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+
+<style>
+  .community-container {
+    text-align: center;
+    padding: 40px 20px;
+  }
+  .community-header {
+    margin-bottom: 30px;
+  }
+  .community-links {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .community-link-card {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 30px;
+    width: 300px;
+    text-decoration: none;
+    color: inherit;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .community-link-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  .community-link-card h3 {
+    margin-top: 0;
+    color: #343a40;
+  }
+  .community-link-card p {
+    color: #6c757d;
+  }
+  .btn-community {
+      display: inline-block;
+      padding: 10px 20px;
+      margin-top: 15px;
+      border-radius: 5px;
+      text-decoration: none;
+      color: #fff;
+      font-weight: bold;
+  }
+  .btn-discord {
+      background-color: #7289DA;
+  }
+  .btn-whatsapp {
+      background-color: #25D366;
+  }
+</style>
+
+<main class="container community-container">
+  <div class="community-header">
+    <h1 class="display-4">Junte-se à nossa Comunidade</h1>
+    <p class="lead">Conecte-se com outros jogadores, troque cartas e fique por dentro das novidades!</p>
+  </div>
+
+  <div class="community-links">
+    <a href="https://discord.gg/s4pdaqq8Ur" class="community-link-card" id="discord-link" target="_blank">
+      <h3>Discord</h3>
+      <p>Participe do nosso servidor para conversas em tempo real, organização de partidas e canais de troca.</p>
+      <span class="btn-community btn-discord">Entrar no Discord</span>
+    </a>
+
+    <a href="#" class="community-link-card" id="whatsapp-link" target="_blank">
+      <h3>WhatsApp</h3>
+      <p>Faça parte do nosso grupo no WhatsApp para anúncios importantes e discussões rápidas.</p>
+      <span class="btn-community btn-whatsapp">Entrar no WhatsApp</span>
+    </a>
+  </div>
+</main>
+
+<%- include('../partials/footer') %>

@@ -221,132 +221,43 @@ const showTimelinePage = async (req, res) => {
   try {
     const sets = await Card.distinct('set_name', { game: 'onepiece' });
 
-    const releaseYears = {
-      // 2025
-      "-A FIST OF DIVINE SPEED- [OP-11]": 2025,
-      "-Anime 25th Collection- [EB-02]": 2025,
-      "-BLACK Marshall.D.Teach- [ST-27]": 2025,
-      "-BLUE Buggy- [ST-25]": 2025,
-      "-GEAR5- [ST-21]": 2025,
-      "-GREEN Jewelry Bonney- [ST-24]": 2025,
-      "-GREEN/YELLOW Yamato- [ST-28]": 2025,
-      "-LEGACY OF THE MASTER- [OP-12]": 2025,
-      "-ONE PIECE CARD THE BEST- [PRB-01]": 2025, // Assuming this is "Premium Booster - One Piece Card The Best - Vol. 2"
-      "-PURPLE/BLACK Monkey.D.Luffy- [ST-26]": 2025,
-      "-RED Shanks- [ST-23]": 2025,
-      "-ROYAL BLOOD- [OP-10]": 2025,
-      "2025 NEW YEAR EVENT": 2025,
-      "Carrying On His Will": 2025, // This is from the web search, not in DB output
-      "Learn Together Deck Set": 2025, // This is from the web search, not in DB output
-      "Learn Together Deck Set (Zoro Deck)": 2025, // This is from the web search, not in DB output
-      "Learn Together Deck Set (Luffy Deck)": 2025, // This is from the web search, not in DB output
-      "Learn Together Deck Set (Nami Deck)": 2025, // This is from the web search, not in DB output
-      "Starter Deck 22: Ace & Newgate": 2025, // This is from the web search, not in DB output
-      "Tournament Kit 2025 Vol.2": 2025,
-      "Tournament Pack 2025 Vol. 3": 2025,
-      "Treasure Cup February 2025": 2025,
-      "Winner Pack 2025 Vol. 3": 2025,
-      "Winner Pack 2025 Vol.2": 2025,
-      "Offline Regional Participation Pack 2025 Vol.1": 2025,
-      "Online Regional Champion Card Set 25-26 Season 1": 2025,
-      "Online Regional Finalist Card Set 25-26 Season 1": 2025,
-      "Online Regional Participation Pack 25-26 Season 1": 2025,
-      "Regional 25-26 Season1": 2025,
+    const timelineDataPromises = sets.map(async (setName) => {
+      const topCard = await Card.findOne({ set_name: setName, game: 'onepiece' })
+                                  .sort({ averagePrice: -1 });
 
-      // 2024
-      "-3D2Y- [ST-14]": 2024,
-      "-500 YEARS IN THE FUTURE- [OP-07]": 2024,
-      "-EMPERORS IN THE NEW WORLD- [OP-09]": 2024,
-      "-Green Uta- [ST-16]": 2024,
-      "-Memorial Collection- [EB-01]": 2024,
-      "-Purple Monkey.D.Luffy- [ST-18]": 2024,
-      "-Red Edward.Newgate- [ST-15]": 2024,
-      "-TWO LEGENDS- [OP-08]": 2024,
-      "-Uta-[ST-11]": 2024,
-      "-WINGS OF THE CAPTAIN-[OP06]": 2024,
-      "-Yellow Charlotte Katakuri- [ST-20]": 2024,
-      "-Zoro & Sanji- [ST-12]": 2024,
-      "Dreamhack Dallas 2024": 2024,
-      "Offline Regional Participation Pack 2024 Vol. 1": 2024,
-      "Offline Regional Participation Pack 2024 Vol. 2": 2024,
-      "Offline Regional Participation Pack 2024 Vol. 3": 2024,
-      "ONE PIECE DAY Dallas -Card Game Celebration-": 2024,
-      "Regional 2024 wave1": 2024,
-      "Regional 2024 wave2": 2024,
-      "Store Treasure Cup August – September 2024": 2024,
-      "Tournament Pack 2024 Oct.-Dec.": 2024,
-      "Treasure Cup August – September": 2024,
+      // Extract set code like OP-01 from the set name
+      const setCodeMatch = setName.match(/\[(.*?)\]/);
+      const setCode = setCodeMatch ? setCodeMatch[1] : '';
 
-      // 2023
-      "-Absolute Justice- [ST-06]": 2023,
-      "-Black Smoker- [ST-19]": 2023,
-      "-Blue Donquixote Doflamingo- [ST-17]": 2023,
-      "-KINGDOMS OF INTRIGUE- [OP04]": 2023,
-      "-Monkey D. Luffy-[ST-08]": 2023,
-      "-PARAMOUNT WAR- [OP02]": 2023,
-      "-PILLARS OF STRENGTH- [OP03]": 2023,
-      "-The Seven Warlords of the Sea-[ST-03]": 2023,
-      "-The Three Brothers-[ST13]": 2023,
-      "-The Three Captains-[ST-10]": 2023,
-      "-Worst Generation-[ST-02]": 2023,
-      "-Yamato-[ST-09]": 2023,
-      "Anime Expo 2023": 2023,
-      "Big Mom Pirates [ST-07]": 2023,
-      "GIFT COLLECTION 2023 [GC-01]": 2023,
-      "OP-05": 2023, // Assuming this is "AWAKENING OF THE NEW ERA [OP-05]"
-      "Pre-Release OP03": 2023,
-      "Pre-Release OP04": 2023,
-      "Sealed Battle 2023 Vol.1": 2023,
-      "Sealed Battle Kit Vol.1": 2023,
-      "Special Goods Set -Ace/Sabo/Luffy-": 2023,
-      "Super Pre-Release": 2023,
-      "Winner prize for Sealed Battle 2023 Vol.1": 2023,
-
-      // 2022
-      "-Animal Kingdom Pirates-[ST-04]": 2022,
-      "-ROMANCE DAWN- [OP01]": 2022,
-      "-Straw Hat Crew-[ST-01]": 2022,
-      "Included in Promotion Pack 2022": 2022,
-      "One Piece Promotion Cards": 2022,
-      "One Piece Promotion Cards (Ásia)": 2022,
-      "Pre-Release OP02": 2022,
-    };
-
-    const timeline = {};
-
-    for (const setName of sets) {
-      const year = releaseYears[setName] || 'Unreleased';
-
-      if (!timeline[year]) {
-        timeline[year] = [];
-      }
-
-      const topCards = await Card.find({ set_name: setName, game: 'onepiece' })
-        .sort({ averagePrice: -1 })
-        .limit(3);
-
-      timeline[year].push({
-        setName,
-        topCards,
-      });
-    }
-
-    const sortedYears = Object.keys(timeline).sort((a, b) => {
-      if (a === 'Unreleased') return 1; // 'Unreleased' always comes last
-      if (b === 'Unreleased') return -1;
-      return parseInt(a) - parseInt(b);
+      return {
+        place: topCard ? topCard.rarity : 'Unknown Rarity',
+        title: setName.split('[')[0].trim(),
+        title2: setCode,
+        description: `A coleção ${setName} apresenta uma variedade de cartas, incluindo raras e poderosas.`,
+        image: topCard ? topCard.image_url : '/images/default-avatar.png'
+      };
     });
 
-    const sortedTimeline = {};
-    for (const year of sortedYears) {
-      sortedTimeline[year] = timeline[year].sort((a, b) => a.setName.localeCompare(b.setName));
-    }
+    const timelineData = await Promise.all(timelineDataPromises);
 
-    res.render('pages/timeline', { timeline: sortedTimeline, title: 'Linha do Tempo de Edições' });
+    // Filter out any sets that didn't resolve properly
+    const filteredTimelineData = timelineData.filter(item => item.image);
+
+    res.render('pages/visual-timeline', { 
+      title: 'Linha do Tempo de Edições', 
+      timelineData: JSON.stringify(filteredTimelineData)
+    });
+
   } catch (error) {
-    console.error("Error creating timeline:", error);
-    res.status(500).send("Error creating timeline");
+    console.error("Error creating visual timeline:", error);
+    res.status(500).send("Error creating visual timeline");
   }
+};
+
+const showCommunityPage = (req, res) => {
+  res.render('pages/community', {
+    title: 'Comunidade'
+  });
 };
 
 module.exports = {
@@ -359,4 +270,5 @@ module.exports = {
   showOrderDetailPage,
   getEncyclopediaPage,
   showTimelinePage,
+  showCommunityPage,
 };

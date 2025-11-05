@@ -13,5 +13,6 @@ router.get('/perfil', pagesController.showProfilePage);
 router.get('/perfil/:id', pagesController.showProfilePage);
 router.get('/encyclopedia', pagesController.getEncyclopediaPage);
 router.get('/timeline', pagesController.showTimelinePage);
+router.get('/comunidade', pagesController.showCommunityPage);
 
 module.exports = router;
