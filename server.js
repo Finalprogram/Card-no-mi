@@ -69,6 +69,7 @@ const couponRoutes = require('./src/routes/couponRoutes');
 
 // 2. Inicialização do App
 const app = express();
+app.set('trust proxy', 1); // Confia no primeiro proxy reverso
 const port = process.env.PORT || 3000;
 
 // Helper para formatar preços
