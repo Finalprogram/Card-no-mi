@@ -153,19 +153,27 @@ const loginUser = async (req, res) => {
       return res.redirect('/auth/login');
     }
 
-    // Salvamos as informações do usuário na sessão para "lembrar" que ele está logado.
-    req.session.user = {
-      id: user._id,
-      accountType: user.accountType,
-      avatar: user.avatar
-    };
-    
-    if (user.firstLogin) {
-      return res.redirect('/welcome/step1');
-    }
+    // Regenera a sessão para evitar session fixation
+    req.session.regenerate(err => {
+      if (err) {
+        logger.error("Erro ao regenerar a sessão:", err);
+        return res.status(500).send('Erro no servidor.');
+      }
 
-    // Redireciona para uma página de painel do usuário (que criaremos no futuro)
-    res.redirect(`/perfil/${user.id}`);
+      // Salvamos as informações do usuário na nova sessão
+      req.session.user = {
+        id: user._id,
+        accountType: user.accountType,
+        avatar: user.avatar
+      };
+
+      if (user.firstLogin) {
+        return res.redirect('/welcome/step1');
+      }
+
+      // Redireciona para uma página de painel do usuário
+      res.redirect(`/perfil/${user.id}`);
+    });
 
   } catch (error) {
     logger.error("Erro no login:", error);

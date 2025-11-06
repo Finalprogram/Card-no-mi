@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: services/melhorEnvioClient.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: services/melhorEnvioClient.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>// src/services/melhorEnvioClient.js
+const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+const logger = require('../config/logger');
+
+const BASE_URL = process.env.MELHOR_ENVIO_BASE_URL || 'https://www.melhorenvio.com.br';
+const CALCULATE_PATH = '/api/v2/me/shipment/calculate';
+const TOKEN = process.env.MELHOR_ENVIO_TOKEN;
+const USER_AGENT = process.env.MELHOR_ENVIO_USER_AGENT || 'Aplicação (email para contato técnico)';
+
+if (!TOKEN) {
+  logger.warn('[melhor-envio] MELHOR_ENVIO_TOKEN não definido. Configure seu .env');
+}
+
+/**
+ * Calcula o frete para um pacote usando a API do Melhor Envio.
+ */
+async function cotarFreteMelhorEnvio({
+  fromPostalCode,
+  toPostalCode,
+  // Em vez de produtos, agora aceitamos um único pacote
+  pkg, // { width, height, length, weight, insurance_value }
+  services = '1,2,18', // Exemplo: PAC, SEDEX, Jadlog.Package
+  receipt = false,
+  ownHand = false,
+}) {
+  const url = new URL(CALCULATE_PATH, BASE_URL).toString();
+
+  const payload = {
+    from: { postal_code: fromPostalCode },
+    to: { postal_code: toPostalCode },
+    // A API do Melhor Envio aceita tanto 'products' quanto 'package'
+    package: {
+      width: pkg.width,
+      height: pkg.height,
+      length: pkg.length,
+      weight: pkg.weight,
+      insurance_value: pkg.insurance_value,
+    },
+    options: {
+      receipt,
+      own_hand: ownHand,
+    },
+    services,
+  };
+
+  logger.info('[melhor-envio] Payload enviado:', JSON.stringify(payload, null, 2));
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
+    }
+
+    return JSON.parse(text);
+
+  } catch (error) {
+    logger.error(`[melhor-envio] Falha ao calcular o frete: ${error.message}`);
+    throw error; // Re-lança o erro para ser tratado pelo chamador
+  }
+}
+
+const ADD_TO_CART_PATH = '/api/v2/me/cart';
+
+/**
+ * Adiciona um item ao carrinho de compras do Melhor Envio.
+ * @param {object} shipmentDetails - Detalhes da remessa.
+ * @returns {Promise&lt;object>} - A resposta da API.
+ */
+async function addItemToCart(shipmentDetails) {
+  const url = new URL(ADD_TO_CART_PATH, BASE_URL).toString();
+
+  logger.info('[melhor-envio] Adicionando item ao carrinho com payload:', JSON.stringify(shipmentDetails, null, 2));
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: JSON.stringify(shipmentDetails),
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
+    }
+
+    return JSON.parse(text);
+
+  } catch (error) {
+    logger.error(`[melhor-envio] Falha ao adicionar item ao carrinho: ${error.message}`);
+    throw error;
+  }
+}
+
+const CHECKOUT_PATH = '/api/v2/me/shipment/checkout';
+
+/**
+ * Realiza o checkout dos envios no carrinho do Melhor Envio.
+ * @param {Array&lt;string>} orders - IDs dos pedidos a serem comprados.
+ * @returns {Promise&lt;object>} - A resposta da API.
+ */
+async function purchaseShipments(orders) {
+  const url = new URL(CHECKOUT_PATH, BASE_URL).toString();
+
+  logger.info('[melhor-envio] Realizando checkout com payload:', JSON.stringify({ orders }, null, 2));
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: JSON.stringify({ orders }),
+    });
+
+    const text = await res.text();
+    if (!res.ok) {
+      throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
+    }
+
+    return JSON.parse(text);
+
+  } catch (error) {
+    logger.error(`[melhor-envio] Falha ao realizar checkout: ${error.message}`);
+    throw error;
+  }
+}
+
+const PRINT_PATH = '/api/v2/me/shipment/print';
+
+/**
+ * Obtém um link público para impressão das etiquetas do Melhor Envio.
+ * @param {Array&lt;string>} orders - IDs dos pedidos para os quais os links serão gerados.
+ * @returns {Promise&lt;object>} - A resposta da API contendo o link público.
+ */
+async function printLabels(orders) {
+  const url = new URL(PRINT_PATH, BASE_URL).toString();
+  const payload = {
+    mode: 'public',
+    orders,
+  };
+
+  logger.info('[melhor-envio] Solicitando link público de impressão de etiquetas com payload:', JSON.stringify(payload, null, 2));
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`[melhor-envio] HTTP Error: ${res.status} ${res.statusText} ${text}`);
+    }
+
+    const contentType = res.headers.get('content-type');
+
+    if (contentType &amp;&amp; contentType.includes('application/json')) {
+      return res.json(); // Esperamos um JSON com a URL
+    }
+
+    // Se não for JSON, é uma resposta inesperada.
+    const responseText = await res.text();
+    if (contentType &amp;&amp; contentType.includes('text/html')) {
+      throw new Error(`[melhor-envio] API returned an HTML page instead of JSON. This often indicates an invalid or expired token, or an environment mismatch (e.g., using a sandbox token in production).`);
+    }
+
+    throw new Error(`[melhor-envio] Unexpected content-type received from API: ${contentType}. Expected JSON. Response: ${responseText}`);
+
+  } catch (error) {
+    logger.error(`[melhor-envio] Falha ao obter links de impressão: ${error.message}`);
+    throw error;
+  }
+}
+
+const GENERATE_PATH = '/api/v2/me/shipment/generate';
+
+/**
+ * Adiciona as etiquetas na fila de geração do Melhor Envio.
+ * @param {Array&lt;string>} orders - IDs dos pedidos a serem gerados.
+ * @returns {Promise&lt;object>} - A resposta da API.
+ */
+async function generateLabels(orders) {
+  const url = new URL(GENERATE_PATH, BASE_URL).toString();
+
+  logger.info('[melhor-envio] Adicionando etiquetas na fila de geração com payload:', JSON.stringify({ orders }, null, 2));
+
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${TOKEN}`,
+        'User-Agent': USER_AGENT,
+      },
+      body: JSON.stringify({ orders }),
+    });
+
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`[melhor-envio] ${res.status} ${res.statusText} ${text}`);
+    }
+
+    return res.json();
+
+  } catch (error) {
+    logger.error(`[melhor-envio] Falha ao adicionar etiquetas na fila de geração: ${error.message}`);
+    throw error;
+  }
+}
+
+module.exports = {
+  cotarFreteMelhorEnvio,
+  addItemToCart,
+  purchaseShipments,
+  generateLabels,
+  printLabels,
+};</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#add">add</a></li><li><a href="global.html#addItemToCart">addItemToCart</a></li><li><a href="global.html#addPostPaymentJob">addPostPaymentJob</a></li><li><a href="global.html#clear">clear</a></li><li><a href="global.html#confirm">confirm</a></li><li><a href="global.html#cotarFreteMelhorEnvio">cotarFreteMelhorEnvio</a></li><li><a href="global.html#ensureAddress">ensureAddress</a></li><li><a href="global.html#generateLabels">generateLabels</a></li><li><a href="global.html#getCart">getCart</a></li><li><a href="global.html#json">json</a></li><li><a href="global.html#normalizeMeta">normalizeMeta</a></li><li><a href="global.html#printLabels">printLabels</a></li><li><a href="global.html#purchaseShipments">purchaseShipments</a></li><li><a href="global.html#quoteDetailed">quoteDetailed</a></li><li><a href="global.html#recompute">recompute</a></li><li><a href="global.html#remove">remove</a></li><li><a href="global.html#show">show</a></li><li><a href="global.html#showCheckout">showCheckout</a></li><li><a href="global.html#showPayment">showPayment</a></li><li><a href="global.html#update">update</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.5</a> on Thu Nov 06 2025 15:50:54 GMT-0300 (Horário Padrão de Brasília)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

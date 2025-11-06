@@ -2,15 +2,55 @@ const express = require('express');
 const router = express.Router();
 const cardController = require('../controllers/cardController');
 
-// A ÚNICA rota principal para explorar as cartas
+/**
+ * @fileoverview Rotas para interagir com as cartas (cards).
+ * @requires express
+ * @requires ../controllers/cardController
+ */
+
+/**
+ * Rota para exibir a página de exploração de cartas.
+ * @name GET /cards
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
 router.get('/cards', cardController.showCardsPage);
-// A rota de detalhes continua a mesma
+
+/**
+ * Rota para exibir a página de detalhes de uma carta.
+ * @name GET /card/:id
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
 router.get('/card/:id', cardController.showCardDetailPage);
-// A API para a página de venda também continua
+
+/**
+ * Rota da API para buscar cartas para venda.
+ * @name GET /api/cards/search
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
 router.get('/api/cards/search', cardController.searchCardsForSale);
+
+/**
+ * Rota da API para buscar cartas disponíveis para venda.
+ * @name GET /api/cards/search-available
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
 router.get('/api/cards/search-available', cardController.searchAvailableCards);
 
-// Rota para a enciclopédia de cartas
+/**
+ * Rota da API para obter todas as cartas para a enciclopédia.
+ * @name GET /api/cards/all
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
 router.get('/api/cards/all', cardController.getAllCards);
 
 module.exports = router;

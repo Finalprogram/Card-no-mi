@@ -116,33 +116,64 @@ const showCardsPage = async (req, res) => {
 const showCardDetailPage = async (req, res) => {
   try {
     const cardId = req.params.id;
-    const card = await Card.findById(cardId);
-    if (!card) {
+
+    // Validação do ID para evitar erros do Mongoose
+    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+      return res.status(400).send('ID de carta inválido');
+    }
+
+    const results = await Card.aggregate([
+      // 1. Encontrar a carta principal pelo ID
+      { $match: { _id: new mongoose.Types.ObjectId(cardId) } },
+
+      // 2. Buscar os anúncios (listings) para essa carta
+      {
+        $lookup: {
+          from: 'listings', // A coleção de anúncios
+          localField: '_id',
+          foreignField: 'card',
+          as: 'listings',
+          // Pipeline aninhado para popular os vendedores
+          pipeline: [
+            { $sort: { price: 1 } }, // Ordena os anúncios pelo preço
+            {
+              $lookup: {
+                from: 'users',
+                localField: 'seller',
+                foreignField: '_id',
+                as: 'sellerInfo',
+                pipeline: [
+                  { $project: { username: 1, accountType: 1, avatar: 1 } } // Seleciona apenas campos necessários
+                ]
+              }
+            },
+            { $unwind: { path: '$sellerInfo', preserveNullAndEmptyArrays: true } },
+            { $addFields: { seller: '$sellerInfo' } }, // Substitui o ID do vendedor pelo objeto populado
+            { $project: { sellerInfo: 0 } } // Remove o campo temporário
+          ]
+        }
+      },
+
+      // 3. Adicionar campos calculados (menor/maior preço)
+      {
+        $addFields: {
+          lowestPrice: { $min: '$listings.price' },
+          highestPrice: { $max: '$listings.price' }
+        }
+      }
+    ]);
+
+    if (results.length === 0) {
       return res.status(404).send('Carta não encontrada');
     }
 
-    const listings = await Listing.find({ card: cardId })
-                                  .sort({ price: 1 })
-                                  .populate('seller', 'username accountType');
+    const cardData = results[0];
 
-    let lowestPrice = null;
-    let highestPrice = null;
+    res.render('pages/card-detail', { 
+      card: cardData, 
+      listings: cardData.listings // Passa os listings já ordenados e populados
+    });
 
-    if (listings.length > 0) {
-      lowestPrice = listings[0].price; // Listings are sorted by price ascending
-      highestPrice = listings[listings.length - 1].price;
-    }
-
-    // Use averagePrice e price_trend diretamente do objeto card
-    const cardData = {
-      ...card.toObject(),
-      averagePrice: card.averagePrice, // Usar o averagePrice já calculado e salvo no modelo Card
-      price_trend: card.price_trend,   // Usar o price_trend já calculado e salvo no modelo Card
-      lowestPrice: lowestPrice,  // Adicionar menor preço
-      highestPrice: highestPrice // Adicionar maior preço
-    };
-
-    res.render('pages/card-detail', { card: cardData, listings });
   } catch (error) {
     console.error("Erro ao buscar detalhes da carta:", error);
     res.status(500).send('Erro no servidor');
@@ -156,11 +187,13 @@ const searchCardsForSale = async (req, res) => {
     let searchResults = [];
 
     if (searchQuery && searchQuery.length > 2) {
-      // CORREÇÃO: Removemos a lógica de 'distinctCardIds' para buscar em TODAS as cartas.
+      // Utiliza o índice de texto para uma busca mais eficiente
       searchResults = await Card.find({
-        game: 'onepiece', // Garante que a busca seja apenas de One Piece
-        name: { $regex: new RegExp(searchQuery, 'i') }
-      }).select('name set_name image_url').limit(10);
+        game: 'onepiece',
+        $text: { $search: searchQuery }
+      })
+      .select('name set_name image_url')
+      .limit(10);
     }
     res.json(searchResults);
     
@@ -178,12 +211,14 @@ const searchAvailableCards = async (req, res) => {
       // 1. Descobre quais cartas estão à venda
       const distinctCardIds = await Listing.distinct('card');
       
-      // 2. Busca apenas DENTRO dessas cartas
+      // 2. Busca apenas DENTRO dessas cartas usando o índice de texto
       searchResults = await Card.find({
         _id: { $in: distinctCardIds },
-        game: 'onepiece', // (ou o jogo relevante)
-        name: { $regex: new RegExp(searchQuery, 'i') }
-      }).select('name set_name image_url').limit(10);
+        game: 'onepiece',
+        $text: { $search: searchQuery }
+      })
+      .select('name set_name image_url')
+      .limit(10);
     }
     res.json(searchResults);
     

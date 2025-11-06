@@ -2,6 +2,17 @@
 require('dotenv').config();
 const logger = require('./src/config/logger');
 
+process.on('unhandledRejection', (reason, promise) => {
+  logger.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  // Application specific logging, throwing an error, or other logic here
+});
+
+process.on('uncaughtException', (error) => {
+  logger.error('Uncaught Exception:', error);
+  // Application specific logging, throwing an error, or other logic here
+  process.exit(1);
+});
+
 // Validação de Variáveis de Ambiente Essenciais
 const requiredEnv = [
     'CWS_TOKEN', 
@@ -40,6 +51,7 @@ const session = require('express-session');
 const MongoStore = require('connect-mongo');
 const methodOverride = require('method-override');
 const flash = require('connect-flash');
+const rateLimit = require('express-rate-limit');
 const connectDB = require('./src/database/connection');
 const pagesRoutes = require('./src/routes/pagesRoutes');
 const cardRoutes = require('./src/routes/cardRoutes');
@@ -102,7 +114,11 @@ app.use(session({
     autoRemove: 'interval',
     autoRemoveInterval: 10, // In minutes. Removes expired sessions every 10 minutes
   }),
-  cookie: { secure: process.env.NODE_ENV === 'production' } // Use secure cookies in production
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
+    httpOnly: true, // Prevents client-side JS from accessing the cookie
+    sameSite: 'strict' // Mitigates CSRF attacks
+  }
 }));
 
 app.use(flash());
@@ -116,7 +132,16 @@ app.use((req, res, next) => {
 });
 
 // 5. Configuração das Rotas (VÊM POR ÚLTIMO)
-app.use('/auth', authRoutes);
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutos
+  max: 100, // Limita cada IP a 100 requisições por janela
+  standardHeaders: true, // Retorna informações do limite nos cabeçalhos `RateLimit-*`
+  legacyHeaders: false, // Desabilita os cabeçalhos `X-RateLimit-*`
+  message: 'Muitas requisições originadas deste IP, por favor, tente novamente após 15 minutos.',
+});
+
+app.use('/auth', authLimiter, authRoutes);
 app.use('/', pagesRoutes);
 app.use('/', cardRoutes);
 // app.use('/api', cartRoutes);
@@ -132,6 +157,28 @@ app.use('/admin', adminRoutes);
 app.use('/welcome', welcomeRoutes);
 
 // 6. Inicia o Servidor
+
+// Middleware de tratamento de erros
+app.use((err, req, res, next) => {
+  logger.error({
+    message: err.message,
+    stack: err.stack,
+    request: {
+      method: req.method,
+      url: req.url,
+      ip: req.ip,
+      body: req.body
+    }
+  });
+
+  // Evitar vazar detalhes do erro para o cliente em produção
+  const errorResponse = process.env.NODE_ENV === 'production'
+    ? { message: 'Ocorreu um erro interno no servidor.' }
+    : { message: err.message, stack: err.stack };
+
+  res.status(500).json(errorResponse);
+});
+
 const cron = require('node-cron');
 const { recordPriceHistory } = require('./src/services/priceTracker');
 

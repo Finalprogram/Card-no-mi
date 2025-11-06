@@ -24,7 +24,7 @@ const CardSchema = new mongoose.Schema({
   },
   
   // Campos de dados principais
-  name: { type: String, required: true, index: true },
+  name: { type: String, required: true, index: 'text' },
   set_name: { type: String },
   image_url: { type: String }, 
   rarity: { type: String },
