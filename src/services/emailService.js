@@ -56,4 +56,29 @@ const sendVerificationEmail = async (to, token) => {
   await sendEmail(to, subject, htmlContent);
 };
 
-module.exports = { sendVerificationEmail, sendEmail };
+const sendPasswordResetEmail = async (to, token) => {
+  let baseUrl = process.env.BASE_URL;
+  // Remove 'www.' if present
+  if (baseUrl.startsWith('www.')) {
+    baseUrl = baseUrl.substring(4);
+  }
+  // If no protocol is present, default to 'https://'
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  const resetUrl = new URL(`/auth/reset-password/${token}`, baseUrl);
+  const resetLink = resetUrl.toString();
+
+  const subject = 'Recuperação de Senha - TCG Marketplace';
+  const htmlContent = `
+      <p>Olá,</p>
+      <p>Você solicitou a redefinição da sua senha. Clique no link abaixo para criar uma nova senha:</p>
+      <p><a href="${resetLink}">Redefinir Senha</a></p>
+      <p>Este link expirará em 1 hora.</p>
+      <p>Se você não solicitou a redefinição de senha, por favor, ignore este email.</p>
+    `;
+
+  await sendEmail(to, subject, htmlContent);
+};
+
+module.exports = { sendVerificationEmail, sendEmail, sendPasswordResetEmail };

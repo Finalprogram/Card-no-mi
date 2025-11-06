@@ -84,4 +84,40 @@ router.post('/profile/update', isAuthPage, authController.updateProfile);
  */
 router.post('/profile/avatar', isAuthPage, upload, authController.updateAvatar);
 
+/**
+ * Rota para exibir a página de "esqueci a senha".
+ * @name GET /auth/forgot-password
+ * @function
+ * @memberof module:routes/authRoutes
+ * @inner
+ */
+router.get('/forgot-password', authController.showForgotPasswordPage);
+
+/**
+ * Rota para lidar com o envio do formulário de "esqueci a senha".
+ * @name POST /auth/forgot-password
+ * @function
+ * @memberof module:routes/authRoutes
+ * @inner
+ */
+router.post('/forgot-password', authController.forgotPassword);
+
+/**
+ * Rota para exibir a página de redefinição de senha.
+ * @name GET /auth/reset-password/:token
+ * @function
+ * @memberof module:routes/authRoutes
+ * @inner
+ */
+router.get('/reset-password/:token', authController.showResetPasswordPage);
+
+/**
+ * Rota para lidar com o envio do formulário de redefinição de senha.
+ * @name POST /auth/reset-password/:token
+ * @function
+ * @memberof module:routes/authRoutes
+ * @inner
+ */
+router.post('/reset-password/:token', authController.resetPassword);
+
 module.exports = router;

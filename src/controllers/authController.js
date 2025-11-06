@@ -2,7 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const logger = require('../config/logger');
 const crypto = require('crypto');
-const { sendVerificationEmail } = require('../services/emailService');
+const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 const { validateCPF } = require('../utils/validation');
 
 // Função para MOSTRAR a página de registro
@@ -277,6 +277,97 @@ const updateAvatar = async (req, res) => {
   }
 };
 
+const showForgotPasswordPage = (req, res) => {
+  res.render('auth/forgot-password');
+};
+
+const forgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      req.flash('success_msg', 'Se um usuário com este email existir, um link de recuperação de senha será enviado.');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    const passwordResetExpires = Date.now() + 3600000; // 1 hora
+
+    user.passwordResetToken = passwordResetToken;
+    user.passwordResetExpires = passwordResetExpires;
+    await user.save();
+
+    await sendPasswordResetEmail(user.email, resetToken);
+
+    req.flash('success_msg', 'Se um usuário com este email existir, um link de recuperação de senha será enviado.');
+    res.redirect('/auth/forgot-password');
+  } catch (error) {
+    logger.error('Erro no processo de esqueci a senha:', error);
+    req.flash('error_msg', 'Erro ao processar a sua solicitação. Tente novamente.');
+    res.redirect('/auth/forgot-password');
+  }
+};
+
+const showResetPasswordPage = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      req.flash('error_msg', 'Token de redefinição de senha inválido ou expirado.');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    res.render('pages/reset-password', { token });
+  } catch (error) {
+    logger.error('Erro ao mostrar a página de redefinir senha:', error);
+    res.status(500).send('Erro no servidor.');
+  }
+};
+
+const resetPassword = async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password, confirmPassword } = req.body;
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpires: { $gt: Date.now() },
+    });
+
+    if (!user) {
+      req.flash('error_msg', 'Token de redefinição de senha inválido ou expirado.');
+      return res.redirect('/auth/forgot-password');
+    }
+
+    if (password !== confirmPassword) {
+      req.flash('error_msg', 'As senhas não coincidem.');
+      return res.redirect(`/auth/reset-password/${token}`);
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(password, salt);
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    await user.save();
+
+    req.flash('success_msg', 'Sua senha foi redefinida com sucesso! Você já pode fazer login.');
+    res.redirect('/auth/login');
+  } catch (error) {
+    logger.error('Erro ao redefinir a senha:', error);
+    req.flash('error_msg', 'Erro ao redefinir sua senha. Tente novamente.');
+    res.redirect(`/auth/reset-password/${token}`);
+  }
+};
+
 module.exports = {
   showRegisterPage,
   registerUser,
@@ -285,5 +376,9 @@ module.exports = {
   logoutUser,
   updateProfile, // Nome da função atualizado
   verifyEmail,
-  updateAvatar
+  updateAvatar,
+  showForgotPasswordPage,
+  forgotPassword,
+  showResetPasswordPage,
+  resetPassword,
 };

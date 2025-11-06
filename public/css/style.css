@@ -1712,7 +1712,21 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
 /* Font Awesome for icons */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
-/* --- 4.11. Address Management Modal --- */
+/* --- 4.12. Forgot Password Link --- */
+.btn-forgot-password {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.9rem;
+  transition: color 0.2s;
+}
+
+.btn-forgot-password:hover {
+  color: var(--accent-primary);
+  text-decoration: underline;
+}
+
 .modal-overlay {
   position: fixed;
   top: 0;
