@@ -46,24 +46,41 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 .navbar-wrapper {
   width: 100%;
   border-bottom: 1px solid var(--border);
-  padding: 1rem 0;
+  padding: 0.5rem 0;
   position: relative; /* Required for z-index to work */
   z-index: 1002; /* High z-index to be on top of other elements */
   background-color: var(--bg-primary); /* Ensure a distinct background for the navbar */
 }
 
+/*
+  Define a altura da navbar. 
+  Removemos a altura fixa para que a barra se ajuste ao tamanho do conteúdo,
+  evitando que o logo seja cortado.
+*/
 .navbar {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: center; /* Alinha verticalmente todos os itens (logo, links, botões) ao centro */
   width: 100%;
 }
 
 .navbar-brand {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: var(--text-primary);
+  /* Esta classe é o contêiner do logo. 
+     O display flex garante que o logo se comporte bem dentro do link. */
+  display: flex;
+  align-items: center;
   text-decoration: none;
+}
+
+/* 
+  Estilos para a imagem do logo na navbar.
+  Define uma altura fixa de 50px para o logo, mantendo a proporção (width: auto).
+  'flex-shrink: 0' garante que o logo não encolha em layouts flexíveis.
+*/
+.navbar-main-logo {
+  height: 50px;   /* Altura fixa para o logo */
+  width: auto;    /* Largura automática para manter a proporção */
+  flex-shrink: 0; /* Impede que o logo encolha */
 }
 
 .navbar-links {
@@ -94,6 +111,17 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   margin-top: 8rem;
   border-top: 1px solid var(--border);
   color: var(--text-secondary);
+}
+
+.footer-brand {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.footer-logo {
+  width: 100px;
+  height: auto;
 }
 
 .footer-content {
@@ -213,6 +241,13 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 /* --- 4.1. Página Inicial --- */
 .hero { text-align: center; padding: 6rem 0; }
 .hero h1 { font-size: 3.5rem; margin-bottom: 1rem; }
+.hero-logo-inline {
+  height: 1.5em; /* Adjust size relative to font-size of h1 */
+  width: auto;
+  vertical-align: middle;
+  margin-left: 0.2em; /* Small space after the text */
+}
+.hero p { font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2rem auto; }
 .hero p { font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2rem auto; }
 .hero-search { display: flex; max-width: 700px; margin: 0 auto; }
 .hero-search input { flex-grow: 1; padding: 1.2rem; border-radius: 6px 0 0 6px; font-size: 1.2rem; }
