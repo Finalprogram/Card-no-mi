@@ -49,7 +49,7 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   padding: 1rem 0;
   position: relative; /* Required for z-index to work */
   z-index: 1002; /* High z-index to be on top of other elements */
-  background-color: var(--bg-surface); /* Ensure a distinct background for the navbar */
+  background-color: var(--bg-primary); /* Ensure a distinct background for the navbar */
 }
 
 .navbar {
@@ -94,6 +94,43 @@ h4 { font-size: 1.1rem; font-weight: 700; }
   margin-top: 8rem;
   border-top: 1px solid var(--border);
   color: var(--text-secondary);
+}
+
+.footer-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 20px 0;
+}
+
+.footer-links {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-social-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  color: var(--text-primary);
+  transition: background-color 0.2s;
+}
+
+.footer-social-btn.discord {
+  background-color: #5865F2;
+}
+
+.footer-social-btn.whatsapp {
+  background-color: #25D366;
+}
+
+.footer-social-btn:hover {
+  opacity: 0.9;
 }
 
 
