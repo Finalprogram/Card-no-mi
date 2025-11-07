@@ -86,10 +86,14 @@ const showProfilePage = async (req, res) => {
   }
 };
 
-const showSellPage = (req, res) => {
-  // Por enquanto, apenas renderizamos a página.
-  // No futuro, essa função também vai lidar com os resultados da busca.
-  res.render('pages/sell', { searchResults: [] }); // Passamos um array vazio inicialmente
+const showSellPage = async (req, res) => {
+  try {
+    const allCards = await Card.find({}); // Fetch all cards from the database
+    res.render('pages/sell', { searchResults: allCards }); // Pass all cards to the view
+  } catch (error) {
+    console.error('Erro ao carregar a página de venda:', error);
+    res.status(500).send('Erro no servidor');
+  }
 };
 
 

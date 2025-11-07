@@ -30,6 +30,7 @@ const CardSchema = new mongoose.Schema({
   rarity: { type: String },
   colors: { type: Array },
   type_line: { type: String },
+  ability: { type: String }, // Added ability field
   legalities: { type: Object },
   price_trend: {
     type: String,

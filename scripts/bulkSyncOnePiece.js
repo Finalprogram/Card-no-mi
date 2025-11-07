@@ -1,51 +1,42 @@
-const fs = require('fs'); // Usamos o File System do Node
-const path = require('path');
 const mongoose = require('mongoose');
-const JSONStream = require('JSONStream');
+const onepieceService = require('../src/services/onepieceService');
 const Card = require('../src/models/Card');
 const connectDB = require('../src/database/connection');
 
-// Caminho para o arquivo JSON local que você salvou na raiz
-const bulkDataPath = path.join(__dirname, '../one-piece-cards.json');
+const BATCH_SIZE = 500; // Lotes de 500 para salvar no banco
 
-const BATCH_SIZE = 1000;
-
-async function bulkSyncOnePiece() {
+async function syncAllOnePieceCards() {
   await connectDB();
 
   try {
-    console.log('📊 Contando cartas de One Piece antes da sincronização...');
+    // --- FASE 1: BUSCAR TODAS AS CARTAS DA API ---
+    console.log('📦 Iniciando busca de todas as cartas de One Piece. Isso pode levar alguns minutos...');
+    
+    const allCardsFromAPI = await onepieceService.fetchAllCards();
+    
+    console.log(`✅ Busca finalizada! Total de ${allCardsFromAPI.length} cartas encontradas na API.`);
+    console.log('Total cards from API:', allCardsFromAPI.length);
+
+    // --- FASE 2: SALVAR TUDO NO BANCO DE DADOS EM LOTES ---
+    console.log('🔄 Iniciando sincronização com o banco de dados...');
+    
     const initialCount = await Card.countDocuments({ game: 'onepiece' });
-    console.log(`Total inicial: ${initialCount}`);
-    
-    console.log(`📦 Iniciando leitura do arquivo local: ${bulkDataPath}`);
-
     let operations = [];
-    let processedCount = 0;
 
-    // A GRANDE MUDANÇA ESTÁ AQUI: Trocamos o download (axios) pela leitura de arquivo (fs)
-    const readStream = fs.createReadStream(bulkDataPath, { encoding: 'utf8' });
-    const parser = JSONStream.parse('*');
-    
-    readStream.pipe(parser); // Conectamos a leitura do arquivo ao parser
-
-    // O restante do código continua EXATAMENTE IGUAL
-    parser.on('data', async (cardData) => {
-      parser.pause();
-
-     const optimizedCard = {
-  // CORREÇÃO: Usamos o campo 'id' do JSON, que já é único para cada impressão
-  api_id: cardData.id, 
-  
-  game: 'onepiece',
-  name: cardData.name,
-  set_name: cardData.set?.name,
-  image_url: cardData.images?.large || cardData.images?.small, // Usa imagem grande, se não tiver, usa a pequena
-  rarity: cardData.rarity,
-  colors: cardData.color ? cardData.color.split('/') : [], // Transforma a string de cores em um array
-  type_line: cardData.type,
-  legalities: {},
-};
+    for (const cardData of allCardsFromAPI) {
+      console.log('Processing cardData:', cardData);
+      const optimizedCard = {
+        api_id: cardData.card_set_id,
+        game: 'onepiece', // Define o jogo
+        name: cardData.card_name,
+        set_name: cardData.set_name,
+        image_url: cardData.card_image, // Corrected field
+        // (Adicione outros campos que você padronizou, como raridade, cores, etc.)
+        rarity: cardData.rarity,
+        colors: cardData.card_color, // Corrected field
+        type_line: cardData.card_type, // Corrected field
+        ability: cardData.card_text || '', // Corrected field
+      };
 
       operations.push({
         updateOne: {
@@ -55,44 +46,34 @@ async function bulkSyncOnePiece() {
         }
       });
 
-      processedCount++;
-
       if (operations.length >= BATCH_SIZE) {
         await Card.bulkWrite(operations);
-        console.log(`... ${processedCount} cartas processadas e salvas...`);
-        operations = [];
+        console.log(`... ${operations.length} registros salvos...`);
+        operations = []; // Limpa o lote
       }
-      
-      parser.resume();
-    });
+    }
 
-    parser.on('end', async () => {
-      if (operations.length > 0) {
-        await Card.bulkWrite(operations);
-        console.log(`... Lote final de ${operations.length} cartas salvo...`);
-      }
+    // Salva o lote final restante
+    if (operations.length > 0) {
+      await Card.bulkWrite(operations);
+      console.log(`... ${operations.length} registros salvos...`);
+    }
 
-      console.log('✅ Sincronização em massa de One Piece concluída!');
-      const finalCount = await Card.countDocuments({ game: 'onepiece' });
-      
-      console.log('\n---');
-      console.log('📄 RESUMO DA SINCRONIZAÇÃO DE ONE PIECE 📄');
-      console.log(`Total inicial: ${initialCount}`);
-      console.log(`Total final: ${finalCount}`);
-      console.log(`Novas cartas adicionadas: ${finalCount - initialCount}`);
-      console.log('---\n');
-
-      await mongoose.connection.close();
-      process.exit(0);
-    });
-
-    readStream.on('error', (err) => { throw err; });
+    const finalCount = await Card.countDocuments({ game: 'onepiece' });
+    console.log('\n---');
+    console.log('📄 RESUMO DA SINCRONIZAÇÃO DE ONE PIECE 📄');
+    console.log(`Total inicial: ${initialCount}`);
+    console.log(`Total final: ${finalCount}`);
+    console.log(`Novas cartas adicionadas: ${finalCount - initialCount}`);
+    console.log('---\n');
 
   } catch (error) {
-    console.error('Ocorreu um erro durante a sincronização em massa de One Piece:', error);
+    console.error('Ocorreu um erro durante a sincronização de One Piece:', error);
+  } finally {
     await mongoose.connection.close();
-    process.exit(1);
+    console.log('Conexão com o MongoDB fechada.');
+    process.exit(0);
   }
 }
 
-bulkSyncOnePiece();
+syncAllOnePieceCards();

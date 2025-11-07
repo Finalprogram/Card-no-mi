@@ -10,6 +10,9 @@ const api = axios.create({
   httpAgent: httpAgent, // 4. Garante que o agente está sendo usado aqui
 });
 
+// Função auxiliar para criar um atraso
+const delay = ms => new Promise(res => setTimeout(res, ms));
+
 // O resto do seu arquivo de serviço
 async function searchCards(query) {
   try {
@@ -32,17 +35,21 @@ async function searchCards(query) {
   }
 }
 
-async function fetchAllCardsByPage(page = 1) {
+async function fetchAllCards() {
     try {
-      const response = await api.get('/api/allPromoCards/');
-      return response.data;
+      const setCardsResponse = await api.get('/allSetCards/');
+      await delay(1000); // Add a delay between API calls
+      const promoCardsResponse = await api.get('/allPromos/');
+
+      const allCards = [...setCardsResponse.data, ...promoCardsResponse.data];
+      return allCards;
     } catch (error) {
-      console.error(`Erro ao buscar a página ${page} de cartas de One Piece:`, error.message);
+      console.error(`Erro ao buscar todas as cartas de One Piece:`, error.message);
       return [];
     }
   }
 
 module.exports = {
   searchCards,
-  fetchAllCardsByPage,
+  fetchAllCards,
 };

@@ -1,8 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     const searchInput = document.getElementById('card-search-input');
     const searchResultsContainer = document.getElementById('search-results');
-    const leaderCardContainer = document.getElementById('leader-card');
-    const mainDeckContainer = document.getElementById('main-deck-cards');
     const mainDeckCounter = document.querySelector('.deck-main h3');
     const searchLoader = document.getElementById('search-loader');
     const toastNotification = document.getElementById('toast-notification');
@@ -132,9 +130,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 break;
             case 'raridade':
                 renderRaridadeView(deckViewContainer);
-                break;
-            case 'visual':
-                renderVisualView(deckViewContainer);
                 break;
             case 'grid':
                 renderGridView(deckViewContainer);
@@ -289,97 +284,115 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderGridView(container) {
-        const gridContainer = document.createElement('div');
-        gridContainer.classList.add('deck-grid-container');
+        container.innerHTML = `
+            <h3>Líder</h3>
+            <div id="leader-card-grid"></div>
+            <div class="deck-divider"></div>
+            <div class="deck-main">
+                <h3>Deck Principal (0/50)</h3>
+            </div>
+            <div id="main-deck-cards-grid" class="grid-view"></div>
+        `;
+
+        const leaderCardGridContainer = container.querySelector('#leader-card-grid');
+        const mainDeckCardsGridContainer = container.querySelector('#main-deck-cards-grid');
+        const mainDeckCounter = container.querySelector('.deck-main h3');
+
+        // Render Leader card
+        if (deck.leader) {
+            leaderCardGridContainer.appendChild(createGridDeckCardElement(deck.leader));
+        }
+
+        // Render Main Deck cards
+        const mainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
+        if (mainDeckCounter) mainDeckCounter.textContent = `Deck Principal (${mainDeckCount}/50)`;
         deck.main.forEach(item => {
-            gridContainer.appendChild(createGridDeckCardElement(item));
+            mainDeckCardsGridContainer.appendChild(createGridDeckCardElement(item));
         });
-        container.appendChild(gridContainer);
+        updateFinancialSummary();
     }
 
     function createGridDeckCardElement(item) {
-        const cardContainer = document.createElement('div');
-        cardContainer.classList.add('deck-card-grid-container');
+        const cardElement = document.createElement('div');
+        cardElement.classList.add('deck-card-grid');
         const card = item.card;
 
-        for (let i = 0; i < item.quantity; i++) {
-            const cardElement = document.createElement('div');
-            cardElement.classList.add('deck-card-grid');
-            if (i > 0) {
-                cardElement.classList.add('stacked-card');
-                cardElement.style.transform = `translate(${i * 5}px, ${i * 5}px)`;
-                cardElement.style.zIndex = -i;
+        let cardContent = `
+            <img src="${card.image_url}" alt="${card.name}">
+        `;
+
+        if (card.type_line === 'LEADER') {
+            if (card.ability) {
+                cardContent += `<div class="leader-ability">${card.ability}</div>`;
             }
-            cardElement.innerHTML = `
-                <img src="${card.image_url}" alt="${card.name}">
-            `;
-            cardContainer.appendChild(cardElement);
         }
 
-        const quantitySpan = document.createElement('span');
-        quantitySpan.textContent = `${item.quantity}x`;
-        cardContainer.appendChild(quantitySpan);
-
-        return cardContainer;
-    }
-
-    function renderVisualView(container) {
-        deck.main.forEach(item => {
-            container.appendChild(createVisualDeckCardElement(item));
-        });
-    }
-
-    function createVisualDeckCardElement(item) {
-        const cardElement = document.createElement('div');
-        cardElement.classList.add('deck-card-visual');
-        const card = item.card;
-
-        cardElement.innerHTML = `
-            <img src="${card.image_url}" alt="${card.name}">
-            <div>
-                <p><strong>${card.name}</strong></p>
-                <p>${item.quantity}x</p>
-            </div>
-        `;
+        cardElement.innerHTML = cardContent;
         return cardElement;
     }
 
     function renderRaridadeView(container) {
+        container.innerHTML = ''; // Clear previous content
         const groupedByRarity = {};
 
+        // Add leader card to rarity grouping
+        if (deck.leader) {
+            const rarity = deck.leader.card ? deck.leader.card.rarity : 'Unknown';
+            if (!groupedByRarity[rarity]) {
+                groupedByRarity[rarity] = [];
+            }
+            groupedByRarity[rarity].push(deck.leader);
+        }
+
         deck.main.forEach(item => {
-            const rarity = item.card ? item.card.rarity : 'Fantasma';
+            const rarity = item.card ? item.card.rarity : 'Unknown'; // Fallback for rarity
             if (!groupedByRarity[rarity]) {
                 groupedByRarity[rarity] = [];
             }
             groupedByRarity[rarity].push(item);
         });
 
-        for (const rarity in groupedByRarity) {
+        // Sort rarities alphabetically for consistent display
+        const sortedRarities = Object.keys(groupedByRarity).sort();
+
+        sortedRarities.forEach(rarity => {
             const section = document.createElement('div');
+            section.classList.add('rarity-section');
             section.innerHTML = `<h3>${rarity}</h3>`;
             groupedByRarity[rarity].forEach(item => {
                 section.appendChild(createDeckCardElement(item));
             });
             container.appendChild(section);
-        }
+        });
     }
 
     function renderPadrãoView(container) {
-        leaderCardContainer.innerHTML = ''; // Clear container at the beginning
+        container.innerHTML = `
+            <h3>Líder</h3>
+            <div id="leader-card"></div>
+            <div class="deck-divider"></div>
+            <div class="deck-main">
+                <h3>Deck Principal (0/50)</h3>
+            </div>
+            <div id="main-deck-cards"></div>
+        `;
+
+        const leaderCardContainer = container.querySelector('#leader-card');
+        const mainDeckContainer = container.querySelector('#main-deck-cards');
+        const mainDeckCounter = container.querySelector('.deck-main h3');
+        const leaderPlaceholder = container.querySelector('.leader-placeholder');
 
         // Leader
         if (deck.leader) {
             leaderCardContainer.appendChild(createDeckCardElement(deck.leader));
-            leaderPlaceholder.style.display = 'none';
+            if (leaderPlaceholder) leaderPlaceholder.style.display = 'none';
         } else {
-            leaderPlaceholder.style.display = 'flex'; // Or 'block', depending on desired layout
+            if (leaderPlaceholder) leaderPlaceholder.style.display = 'flex';
         }
 
         // Main Deck
-        mainDeckContainer.innerHTML = '';
         const mainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
-        mainDeckCounter.textContent = `Deck Principal (${mainDeckCount}/50)`;
+        if (mainDeckCounter) mainDeckCounter.textContent = `Deck Principal (${mainDeckCount}/50)`;
         deck.main.sort((a, b) => {
             const nameA = a.card ? a.card.name : '';
             const nameB = b.card ? b.card.name : '';
@@ -388,7 +401,6 @@ document.addEventListener('DOMContentLoaded', () => {
         deck.main.forEach(item => {
             mainDeckContainer.appendChild(createDeckCardElement(item));
         });
-        // container.appendChild(mainDeckSection);
         updateFinancialSummary();
     }
 
