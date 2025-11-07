@@ -320,46 +320,48 @@ body {
 }
 
 #main-deck-cards {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem; /* Smaller gap for list items */
 }
 
 .deck-card {
     position: relative;
+    background-color: var(--card-bg);
     border: 1px solid rgba(255,255,255,0.1);
     border-radius: 0.5rem;
-    overflow: hidden;
-    text-align: center;
-    transition: transform 0.2s ease-in-out;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
+    transition: background-color 0.2s ease-in-out;
+    width: 100%; /* Take full width */
 }
 
-.deck-card img {
-    max-width: 100%;
-    height: auto;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+.deck-card:hover {
+    background-color: rgba(255,255,255,0.05);
 }
 
 .deck-card p {
     font-size: 0.9rem;
-    margin: 0.5rem 0;
+    margin: 0;
+    flex-grow: 1;
+    padding-left: 0.5rem;
 }
 
 .deck-card span {
-    position: absolute;
-    top: 5px;
-    right: 5px;
     background-color: var(--purple-highlight);
     color: var(--text-light);
     padding: 2px 6px;
     border-radius: 3px;
     font-size: 0.75rem;
     font-weight: bold;
+    margin-right: 0.5rem;
 }
 
 .deck-card .remove-card-btn,
 .deck-card .add-copy-btn {
-    position: absolute;
     background-color: rgba(0,0,0,0.6);
     color: white;
     border: none;
@@ -373,16 +375,7 @@ body {
     font-size: 1rem;
     line-height: 1;
     transition: background-color 0.2s ease-in-out;
-}
-
-.deck-card .remove-card-btn {
-    bottom: 5px;
-    left: 5px;
-}
-
-.deck-card .add-copy-btn {
-    bottom: 5px;
-    right: 5px;
+    margin-left: 0.5rem;
 }
 
 .deck-card .remove-card-btn:hover, 

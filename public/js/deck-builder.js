@@ -153,9 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cardElement.dataset.cardId = card._id;
 
         cardElement.innerHTML = `
-            <img src="${card.image_url}" alt="${card.name}">
             <span>${item.quantity}x</span>
-            <p>${card.name}</p>
+            <p>${card.name} (${card.set_name}) - R$ ${card.price ? card.price.toFixed(2) : '0.00'}</p>
             <button class="remove-card-btn">-</button>
             <button class="add-copy-btn">+</button>
         `;
@@ -367,8 +366,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function renderPadrãoView(container) {
+        leaderCardContainer.innerHTML = ''; // Clear container at the beginning
+
         // Leader
-        leaderCardContainer.innerHTML = '';
         if (deck.leader) {
             leaderCardContainer.appendChild(createDeckCardElement(deck.leader));
             leaderPlaceholder.style.display = 'none';
@@ -381,8 +381,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const mainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
         mainDeckCounter.textContent = `Deck Principal (${mainDeckCount}/50)`;
         deck.main.sort((a, b) => {
-            const nameA = a.card.name;
-            const nameB = b.card.name;
+            const nameA = a.card ? a.card.name : '';
+            const nameB = b.card ? b.card.name : '';
             return nameA.localeCompare(nameB);
         });
         deck.main.forEach(item => {
