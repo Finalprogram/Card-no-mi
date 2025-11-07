@@ -182,11 +182,15 @@ app.use((err, req, res, next) => {
 
 const cron = require('node-cron');
 const { recordPriceHistory } = require('./src/services/priceTracker');
+const { performance } = require('perf_hooks');
 
 // Schedule to run once a day at midnight
-cron.schedule('0 0 * * *', () => {
+cron.schedule('0 0 * * *', async () => {
   logger.info('Running daily price history recording...');
-  recordPriceHistory();
+  const startTime = performance.now();
+  await recordPriceHistory();
+  const endTime = performance.now();
+  logger.info(`Price history recording finished in ${(endTime - startTime).toFixed(2)}ms`);
 });
 
 app.listen(port, () => {
