@@ -184,15 +184,16 @@ const showCardDetailPage = async (req, res) => {
 const searchCardsForSale = async (req, res) => {
   try {
     const searchQuery = req.query.q;
+    console.log('DEBUG searchCardsForSale: searchQuery:', searchQuery);
     let searchResults = [];
 
     if (searchQuery && searchQuery.length > 2) {
-      // Utiliza o índice de texto para uma busca mais eficiente
+      // Busca por nome que contenha a string (case-insensitive)
       searchResults = await Card.find({
         game: 'onepiece',
-        $text: { $search: searchQuery }
+        name: { $regex: searchQuery, $options: 'i' } // Busca por sub-string no nome
       })
-      .select('name set_name image_url')
+      .select('name set_name image_url api_id')
       .limit(10);
     }
     res.json(searchResults);
@@ -321,6 +322,24 @@ const getAllCards = async (req, res) => {
   }
 };
 
+const debugCardSearch = async (req, res) => {
+  try {
+    const cardApiId = req.params.name; // Renomeado para refletir a busca por api_id
+    const card = await Card.findOne({ api_id: cardApiId, game: 'onepiece' }); // Busca por api_id
+
+    if (card) {
+      console.log('DEBUG: Card found in DB:', card);
+      res.json({ success: true, message: 'Card found', card: card });
+    } else {
+      console.log('DEBUG: Card not found in DB for api_id:', cardApiId); // Log de api_id
+      res.json({ success: false, message: 'Card not found' });
+    }
+  } catch (error) {
+    console.error('DEBUG: Error during card search:', error);
+    res.status(500).json({ success: false, message: 'Server error during debug search' });
+  }
+};
+
 module.exports = {
   showCardsPage,
   showCardDetailPage,
@@ -328,4 +347,5 @@ module.exports = {
   searchAvailableCards,
   getAllCards,
   searchForDeckBuilder,
+  debugCardSearch, // Add the new debug function to exports
 };

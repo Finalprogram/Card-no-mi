@@ -42,6 +42,7 @@ async function fetchAllCards() {
       const promoCardsResponse = await api.get('/allPromos/');
 
       const allCards = [...setCardsResponse.data, ...promoCardsResponse.data];
+      console.log('Sample raw card data from API (first 5 cards):', allCards.slice(0, 5)); // Log first 5 cards
       return allCards;
     } catch (error) {
       console.error(`Erro ao buscar todas as cartas de One Piece:`, error.message);

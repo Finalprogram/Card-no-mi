@@ -46,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderSearchResults(cards) {
         searchResultsContainer.innerHTML = cards.map(card => `
             <div class="search-result-item" data-card-id="${card._id}" data-card-name="${card.name}" data-card-image="${card.image_url}">
-                <img src="${card.image_url}" alt="${card.name}">
+                <img src="${card.image_url || '/images/placeholder.png'}" alt="${card.name}">
                 <div class="result-info">
                     <h4>${card.name}</h4>
                     <p>${card.set_name}</p>

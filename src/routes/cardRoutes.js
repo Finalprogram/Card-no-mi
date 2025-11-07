@@ -62,4 +62,13 @@ router.get('/api/cards/all', cardController.getAllCards);
  */
 router.get('/api/decks/search-cards', cardController.searchForDeckBuilder);
 
+/**
+ * Rota de debug para buscar uma carta pelo nome e logar seus detalhes.
+ * @name GET /api/debug/card/:name
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
+router.get('/api/debug/card/:name', cardController.debugCardSearch);
+
 module.exports = router;

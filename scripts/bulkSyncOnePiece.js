@@ -30,7 +30,7 @@ async function syncAllOnePieceCards() {
         game: 'onepiece', // Define o jogo
         name: cardData.card_name,
         set_name: cardData.set_name,
-        image_url: cardData.card_image, // Corrected field
+        image_url: cardData.card_image,
         // (Adicione outros campos que você padronizou, como raridade, cores, etc.)
         rarity: cardData.rarity,
         colors: cardData.card_color, // Corrected field

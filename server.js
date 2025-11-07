@@ -66,6 +66,7 @@ const reviewRoutes = require('./src/routes/reviewRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const welcomeRoutes = require('./src/routes/welcomeRoutes');
 const couponRoutes = require('./src/routes/couponRoutes');
+const Card = require('./src/models/Card'); // Import the Card model
 
 // 2. Inicialização do App
 const app = express();
@@ -86,6 +87,12 @@ app.locals.formatPrice = function(price) {
 
 // 3. Conexão com o Banco de Dados
 connectDB();
+// Ensure Mongoose indexes are created/updated
+Card.createIndexes().then(() => {
+  logger.info('Mongoose indexes ensured for Card model.');
+}).catch(err => {
+  logger.error('Error ensuring Mongoose indexes for Card model:', err);
+});
 
 // Start the post-payment worker
 require('./src/workers/postPaymentWorker.js');
