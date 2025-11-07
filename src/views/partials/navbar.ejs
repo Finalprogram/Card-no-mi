@@ -9,11 +9,12 @@
     <a href="/cards">Explorar Cartas</a>
     <a href="/encyclopedia">Enciclopédia</a>
     <a href="/comunidade">Comunidade</a>
+    <a href="/about">Sobre</a>
 </div>
 
       <div class="navbar-actions">
           <% if (user) { %>
-              <a href="/vender" class="btn-secondary">Vender Agora</a>
+              <a href="/vender" class="btn-primary">Vender Agora</a>
               <div class="user-dropdown">
                   <div class="dropdown-toggle">
                       <img src="<%= user.avatar || '/images/default-avatar.png' %>" alt="Avatar do usuário" class="avatar">

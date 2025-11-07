@@ -12,6 +12,7 @@
   --accent-primary: #8A4FFF;
   --accent-hover: #A479FF;
   --accent-primary-rgb: 138, 79, 255;
+  --gold: #D4AF37; /* Add gold color */
 }
 
 * {
@@ -31,6 +32,12 @@ body {
   width: 90%;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+/* Apply to all h tags */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Cinzel Decorative', cursive;
+  color: var(--gold);
 }
 
 h1 { font-size: 2.5rem; font-weight: 900; }
@@ -1838,4 +1845,20 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   justify-content: flex-end;
   gap: 1rem;
   margin-top: 2rem;
+}
+
+@keyframes float {
+    0% { transform: translateY(0); }
+    50% { transform: translateY(-15px); }
+    100% { transform: translateY(0); }
+}
+
+.hero-logo-inline {
+  height: 1.5em; /* Adjust size relative to font-size of h1 */
+  width: auto;
+  vertical-align: middle;
+  margin-left: 0.2em; /* Small space after the text */
+  animation: float 3s ease-in-out infinite;
+  max-width: 200px;
+  margin-bottom: 20px;
 }

@@ -260,6 +260,13 @@ const showCommunityPage = (req, res) => {
   });
 };
 
+const showAboutPage = (req, res) => {
+  res.render('pages/about', {
+    title: 'Sobre Nós',
+    page_css: 'about.css'
+  });
+};
+
 module.exports = {
   showHomePage,
   showProfilePage,
@@ -271,4 +278,5 @@ module.exports = {
   getEncyclopediaPage,
   showTimelinePage,
   showCommunityPage,
+  showAboutPage,
 };
