@@ -4,6 +4,7 @@ const Listing = require('../models/Listing');
 const Card = require('../models/Card');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
+const Deck = require('../models/Deck');
 const showHomePage = async (req, res) => {
   try {
     const recentListings = await Listing.find()
@@ -267,6 +268,46 @@ const showAboutPage = (req, res) => {
   });
 };
 
+const showDeckBuilderPage = async (req, res) => {
+  try {
+    let deck = null;
+    if (req.params.id) {
+      deck = await Deck.findById(req.params.id).populate('leader.card').populate('main.card');
+      if (deck && deck.owner.toString() !== req.session.user.id) {
+        // Security check: user can only edit their own decks
+        return res.status(403).send('Acesso negado.');
+      }
+    }
+
+    res.render('pages/deck-builder', {
+      title: deck ? 'Editar Deck' : 'Criar Deck',
+      page_css: 'deck-builder.css',
+      deck: deck
+    });
+  } catch (error) {
+    console.error('Erro ao carregar o deck builder:', error);
+    res.status(500).send('Erro no servidor');
+  }
+};
+
+const showMyDecksPage = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.redirect('/login');
+    }
+
+    const decks = await Deck.find({ owner: req.session.user.id }).sort({ createdAt: -1 });
+
+    res.render('pages/my-decks', {
+      title: 'Meus Decks',
+      decks,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar decks do usuário:', error);
+    res.status(500).send('Erro no servidor');
+  }
+};
+
 module.exports = {
   showHomePage,
   showProfilePage,
@@ -279,4 +320,6 @@ module.exports = {
   showTimelinePage,
   showCommunityPage,
   showAboutPage,
+  showDeckBuilderPage,
+  showMyDecksPage,
 };

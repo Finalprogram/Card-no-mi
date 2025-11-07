@@ -227,6 +227,65 @@ const searchAvailableCards = async (req, res) => {
     res.status(500).json({ message: 'Erro no servidor' });
   }
 };
+
+const searchForDeckBuilder = async (req, res) => {
+  try {
+    const searchQuery = req.query.q;
+    if (!searchQuery || searchQuery.length < 3) {
+      return res.json([]);
+    }
+
+    const cards = await Card.aggregate([
+      {
+        $match: {
+          game: 'onepiece',
+          name: { $regex: searchQuery, $options: 'i' }
+        }
+      },
+      {
+        $limit: 10
+      },
+      {
+        $lookup: {
+          from: 'listings',
+          localField: '_id',
+          foreignField: 'card',
+          pipeline: [
+            { $match: { quantity: { $gt: 0 } } }
+          ],
+          as: 'availableListings'
+        }
+      },
+      {
+        $addFields: {
+          status: {
+            $cond: { if: { $gt: [{ $size: '$availableListings' }, 0] }, then: 'available', else: 'out_of_stock' }
+          },
+          price: { $min: '$availableListings.price' }
+        }
+      },
+      {
+        $project: {
+          name: 1,
+          set_name: 1,
+          image_url: 1,
+          status: 1,
+          rarity: 1,
+          type_line: 1,
+          opcg_id: '$card_id',
+          price: 1
+        }
+      }
+    ]);
+
+    res.json(cards);
+
+  } catch (error) {
+    console.error("Error in deck builder search:", error);
+    res.status(500).json({ message: 'Erro no servidor' });
+  }
+};
+
 // --- EXPORTAÇÃO CORRIGIDA ---
 
 // --- FUNÇÃO PARA A ENCICLOPÉDIA ---
@@ -268,4 +327,5 @@ module.exports = {
   searchCardsForSale,
   searchAvailableCards,
   getAllCards,
+  searchForDeckBuilder,
 };

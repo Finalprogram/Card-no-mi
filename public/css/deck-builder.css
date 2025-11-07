@@ -1,0 +1,437 @@
+:root {
+    --dark-bg: #0E0E15;
+    --gold-highlight: #D4AF37;
+    --purple-highlight: #7C3AED;
+    --purple-darker: #5B21B6;
+    --card-bg: #1a1a2e;
+    --text-light: #E5E7EB;
+    --text-dark: #1F2937;
+    --grey: #374151;
+}
+
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    font-family: 'Poppins', sans-serif;
+}
+
+.deck-builder-container {
+    display: flex;
+    gap: 2rem;
+    padding: 2rem;
+    align-items: flex-start;
+}
+
+.card-panel {
+    background-color: var(--card-bg);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+.search-column {
+    width: 35%;
+}
+
+.deck-column {
+    width: 65%;
+}
+
+.search-bar {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
+#card-search-input {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--grey);
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    transition: all 0.2s ease-in-out;
+}
+
+#card-search-input:focus {
+    outline: none;
+    border-color: var(--purple-highlight);
+    box-shadow: 0 0 10px var(--purple-highlight);
+}
+
+.search-bar .fa-search {
+    position: absolute;
+    top: 50%;
+    left: 1rem;
+    transform: translateY(-50%);
+    color: var(--grey);
+}
+
+#search-results .card-result {
+    display: flex;
+    align-items: center;
+    padding: 0.5rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+#search-results .card-result:hover {
+    background-color: var(--dark-bg);
+    transform: scale(1.02);
+    border-left: 3px solid var(--purple-highlight);
+}
+
+#search-results .card-result img {
+    width: 50px;
+    margin-right: 1rem;
+    border-radius: 0.25rem;
+}
+
+.deck-view-tabs {
+    display: flex;
+    margin-bottom: 1rem;
+}
+
+.tab-btn {
+    padding: 0.5rem 1rem;
+    background: none;
+    border: none;
+    color: var(--text-light);
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-btn.active {
+    color: var(--purple-highlight);
+    border-bottom-color: var(--purple-highlight);
+}
+
+.deck-actions input, .deck-actions textarea {
+    width: 100%;
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--grey);
+    background-color: var(--dark-bg);
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.action-buttons button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    font-weight: 600;
+}
+
+.btn-save { background-color: var(--purple-highlight); color: var(--text-light); }
+.btn-validate { background-color: var(--gold-highlight); color: var(--text-dark); }
+.btn-import { background-color: var(--grey); color: var(--text-light); }
+.btn-export { background-color: var(--grey); color: var(--text-light); }
+
+.action-buttons button:hover,
+.btn-primary:hover {
+    background-color: var(--purple-darker);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+}
+
+.financial-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--gold-highlight);
+    border-radius: 0.5rem;
+    padding: 1.5rem;
+}
+
+.financial-card h3 .fas {
+    margin-right: 0.5rem;
+}
+
+.financial-card .summary-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+}
+
+.financial-card .summary-item.total {
+    font-weight: bold;
+    font-size: 1.2rem;
+    border-top: 1px solid var(--grey);
+    margin-top: 0.5rem;
+}
+
+.btn-buy {
+    width: 100%;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: linear-gradient(45deg, var(--purple-highlight), var(--gold-highlight));
+    color: var(--text-light);
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    margin-top: 1rem;
+}
+
+.btn-buy:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 15px var(--purple-darker);
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    animation: fadeIn 0.3s;
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 15% auto;
+    padding: 2rem;
+    border: 1px solid var(--gold-highlight);
+    border-radius: 0.5rem;
+    width: 80%;
+    max-width: 500px;
+    position: relative;
+}
+
+.close-btn {
+    color: var(--grey);
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--purple-highlight);
+    color: var(--text-light);
+    padding: 1rem 2rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 1001;
+    display: none;
+    animation: fadeUp 0.3s;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 768px) {
+    .deck-builder-container {
+        flex-direction: column;
+    }
+    .search-column, .deck-column {
+        width: 100%;
+    }
+}
+
+.add-card-btn {
+    background-color: var(--purple-highlight);
+    color: var(--text-light);
+    padding: 0.3rem 0.6rem;
+    border: none;
+    border-radius: 0.3rem;
+    cursor: pointer;
+    font-size: 0.8rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.add-card-btn:hover {
+    background-color: var(--purple-darker);
+    transform: scale(1.05);
+}
+
+.card-type {
+    font-size: 0.75rem;
+    color: var(--gold-highlight);
+    margin-top: 0.2rem;
+}
+
+#deck-view-container h3 {
+    color: var(--text-light);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+#leader-card {
+    min-height: 150px;
+    border: none; /* Removed border */
+    display: flex;
+    align-items: center;
+    justify-content: flex-start; /* Align to left */
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+}
+
+#leader-card .deck-card img {
+    max-width: 120px;
+    max-height: 160px;
+    object-fit: contain;
+}
+
+.leader-placeholder {
+    color: var(--grey);
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed var(--grey);
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+.deck-divider {
+    height: 1px;
+    background-color: var(--grey);
+    margin: 1rem 0;
+}
+
+#main-deck-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.deck-card {
+    position: relative;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 0.5rem;
+    overflow: hidden;
+    text-align: center;
+    transition: transform 0.2s ease-in-out;
+}
+
+.deck-card img {
+    max-width: 100%;
+    height: auto;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+
+.deck-card p {
+    font-size: 0.9rem;
+    margin: 0.5rem 0;
+}
+
+.deck-card span {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: var(--purple-highlight);
+    color: var(--text-light);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+.deck-card .remove-card-btn,
+.deck-card .add-copy-btn {
+    position: absolute;
+    background-color: rgba(0,0,0,0.6);
+    color: white;
+    border: none;
+    width: 25px;
+    height: 25px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    line-height: 1;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.deck-card .remove-card-btn {
+    bottom: 5px;
+    left: 5px;
+}
+
+.deck-card .add-copy-btn {
+    bottom: 5px;
+    right: 5px;
+}
+
+.deck-card .remove-card-btn:hover, 
+.deck-card .add-copy-btn:hover {
+    background-color: var(--purple-darker);
+}
+
+.deck-card-grid-container {
+    position: relative;
+    width: 100px; /* Base size for the container */
+    height: 140px; /* Approximate height for a card */
+    margin: 10px;
+}
+
+.deck-card-grid {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--card-bg);
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+.deck-card-grid img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.deck-card-grid-container span {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    background-color: var(--purple-highlight);
+    color: var(--text-light);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 0.75rem;
+    font-weight: bold;
+    z-index: 10;
+}
+
+.stacked-card {
+    transform: translate(5px, 5px); /* Initial offset for stacked cards */
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    z-index: -1; /* Place behind the top card */
+}

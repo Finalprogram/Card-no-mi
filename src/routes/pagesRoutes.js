@@ -15,5 +15,8 @@ router.get('/encyclopedia', pagesController.getEncyclopediaPage);
 router.get('/timeline', pagesController.showTimelinePage);
 router.get('/comunidade', pagesController.showCommunityPage);
 router.get('/about', pagesController.showAboutPage);
+router.get('/deck-builder', pagesController.showDeckBuilderPage);
+router.get('/deck-builder/:id', pagesController.showDeckBuilderPage);
+router.get('/my-decks', pagesController.showMyDecksPage);
 
 module.exports = router;

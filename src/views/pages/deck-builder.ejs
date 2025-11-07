@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deck Builder - One Piece TCG</title>
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/deck-builder.css">
+</head>
+<body>
+    <%- include('../partials/navbar') %>
+
+    <div class="deck-builder-container">
+        <div class="search-column card-panel">
+            <h2><i class="fas fa-search"></i> Buscar Cartas</h2>
+            <div class="search-bar">
+                <input type="text" id="card-search-input" placeholder="Digite o nome da carta...">
+                <div id="search-loader" class="loader" style="display: none;"></div>
+            </div>
+            <div id="search-results">
+                <!-- Resultados da busca aparecerão aqui -->
+            </div>
+        </div>
+        <div class="deck-column card-panel">
+            <h2>Meu Deck</h2>
+            <div class="deck-main">
+                <h3>Deck Principal (0/50)</h3>
+            </div>
+            <div class="deck-view-tabs">
+                <button class="tab-btn active" data-view="padrão">Padrão</button>
+                <button class="tab-btn" data-view="raridade">Raridade</button>
+                <button class="tab-btn" data-view="visual">Visual</button>
+                <button class="tab-btn" data-view="grid">Grid</button>
+            </div>
+            <div id="deck-view-container">
+                <h3>Líder</h3>
+                <div id="leader-card">
+                    <p class="leader-placeholder">Arraste um card Líder aqui</p>
+                </div>
+                <div class="deck-divider"></div>
+                <div id="main-deck-cards"></div>
+            </div>
+            <div class="deck-actions">
+                <input type="text" id="deck-title" placeholder="Título do Deck" value="<%= deck ? deck.title : '' %>">
+                <textarea id="deck-description" placeholder="Descrição do Deck"><%= deck ? deck.description : '' %></textarea>
+                <div class="action-buttons">
+                    <button id="save-deck-btn" class="btn-save"><%= deck ? 'Salvar Alterações' : 'Salvar Deck' %></button>
+                    <button id="validate-deck-btn" class="btn-validate">Validar Deck</button>
+                    <button id="import-deck-btn" class="btn-import">Importar Deck</button>
+                    <button id="export-deck-btn" class="btn-export">Exportar Deck</button>
+                </div>
+            </div>
+            <div id="validation-summary"></div>
+            <div id="financial-summary" class="financial-card">
+                <h3><i class="fas fa-dollar-sign"></i> Resumo Financeiro</h3>
+                <div class="summary-item">
+                    <span>Disponível hoje:</span>
+                    <span id="available-price">R$ 0,00</span>
+                </div>
+                <div class="summary-item">
+                    <span>Indisponível/estimado:</span>
+                    <span id="unavailable-price">—</span>
+                </div>
+                <div class="summary-item total">
+                    <span>Total:</span>
+                    <span id="total-price">R$ 0,00</span>
+                </div>
+                <button id="buy-deck-btn" class="btn-buy">Comprar Deck</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="import-deck-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Importar Deck</h2>
+            <textarea id="deck-import-textarea" placeholder="Cole a lista do seu deck aqui..."></textarea>
+            <button id="import-deck-confirm-btn">Importar</button>
+        </div>
+    </div>
+
+    <div id="toast-notification" class="toast"></div>
+
+    <%- include('../partials/footer') %>
+
+    <script src="https://kit.fontawesome.com/a076d05399.js"></script>
+    <script src="/js/main.js"></script>
+    <script>
+        const initialDeck = <%- JSON.stringify(deck || null) %>;
+    </script>
+    <script src="/js/deck-builder.js"></script> 
+</body>
+</html>

@@ -150,6 +150,7 @@ app.use('/api', listRoutes);
 app.use('/', sellerRoutes);
 app.use('/api', listingRoutes);
 app.use('/api/coupon', couponRoutes);
+app.use('/api/decks', require('./src/routes/deckRoutes'));
 app.use('/cart', cartRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/payment', paymentRoutes);
