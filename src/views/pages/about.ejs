@@ -183,13 +183,13 @@
             <h2>Perguntas Frequentes</h2>
             <div class="faq-list">
                 <div class="faq-item">
-                    <button class="faq-question">Como funciona a segurança das transações?</button>
+                    <button class="faq-question">Como funciona a segurança das transações?<span>+</span></button>
                     <div class="faq-answer">
                         <p>Utilizamos um sistema de escrow e mediação para garantir que tanto o comprador quanto o vendedor estejam protegidos. O pagamento só é liberado para o vendedor após a confirmação de recebimento do produto pelo comprador.</p>
                     </div>
                 </div>
                 <div class="faq-item">
-                    <button class="faq-question">Quais são as taxas para vender na plataforma?</button>
+                    <button class="faq-question">Quais são as taxas para vender na plataforma?<span>+</span></button>
                     <div class="faq-answer">
                         <p>Cobramos uma pequena taxa sobre as vendas para manter a plataforma funcionando e segura. Você pode encontrar a tabela de taxas completa em nossos Termos de Serviço.</p>
                     </div>
@@ -218,7 +218,13 @@
     document.querySelectorAll('.faq-question').forEach(button => {
         button.addEventListener('click', () => {
             const faqItem = button.parentElement;
-            faqItem.classList.toggle('open');
+            const isOpen = faqItem.classList.toggle('open');
+            const span = button.querySelector('span');
+            if (isOpen) {
+                span.textContent = '-';
+            } else {
+                span.textContent = '+';
+            }
         });
     });
 </script>

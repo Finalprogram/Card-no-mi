@@ -216,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   // expõe compat para recarregar se o modal estiver aberto
   window.refreshCartIfOpen = () => { if (!modal.hasAttribute('hidden')) loadCart(); };
-})(); // <--- Added this closing brace
+})();
 
 /* ========================================================================
    ADDRESS MODAL

@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
+    const isOwner = window.isOwner;
     const searchInput = document.getElementById('card-search-input');
     const searchResultsContainer = document.getElementById('search-results');
     const mainDeckCounter = document.querySelector('.deck-main h3');
@@ -28,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     searchInput.addEventListener('input', () => {
+        if (!isOwner) return;
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             const query = searchInput.value;
@@ -73,13 +75,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     <p>${card.set_name} - ${card.rarity}</p>
                     <p class="card-type">${card.type_line}</p>
                 </div>
-                <button class="add-card-btn">Adicionar</button>
+                ${isOwner ? '<button class="add-card-btn">Adicionar</button>' : ''}
             `;
             searchResultsContainer.appendChild(cardElement);
         });
     }
 
     searchResultsContainer.addEventListener('click', (e) => {
+        if (!isOwner) return;
         if (e.target.classList.contains('add-card-btn')) {
             const cardData = JSON.parse(e.target.closest('.card-result').dataset.card);
             addCardToDeck(cardData);
@@ -150,8 +153,8 @@ document.addEventListener('DOMContentLoaded', () => {
         cardElement.innerHTML = `
             <span>${item.quantity}x</span>
             <p>${card.name} (${card.set_name}) - R$ ${card.price ? card.price.toFixed(2) : '0.00'}</p>
-            <button class="remove-card-btn">-</button>
-            <button class="add-copy-btn">+</button>
+            ${isOwner ? `<button class="remove-card-btn">-</button>
+            <button class="add-copy-btn">+</button>` : ''}
         `;
         return cardElement;
     }
@@ -159,6 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderDeck(); // Initial render
 
     deckViewContainer.addEventListener('click', (e) => {
+        if (!isOwner) return;
         const target = e.target;
         const cardElement = target.closest('.deck-card');
         if (!cardElement) return;
@@ -182,60 +186,63 @@ document.addEventListener('DOMContentLoaded', () => {
         if (target.classList.contains('add-copy-btn')) {
             if (item.quantity < 4) {
                 item.quantity++;
-                        }
-                    }
-                    renderDeck();
-                    showToast('Carta adicionada ao deck!');
-                });
+            }
+        }
+        renderDeck();
+    });
 
     const saveDeckBtn = document.getElementById('save-deck-btn');
-    saveDeckBtn.addEventListener('click', () => {
-        const title = document.getElementById('deck-title').value;
-        const description = document.getElementById('deck-description').value;
+    if (saveDeckBtn) {
+        saveDeckBtn.addEventListener('click', () => {
+            const title = document.getElementById('deck-title').value;
+            const description = document.getElementById('deck-description').value;
 
-        if (!title) {
-            showToast('Por favor, dê um título ao seu deck.');
-            return;
-        }
-
-        const deckData = {
-            title,
-            description,
-            leader: deck.leader,
-            main: deck.main
-        };
-
-        const method = deck._id ? 'PUT' : 'POST';
-        const url = deck._id ? `/api/decks/${deck._id}` : '/api/decks';
-
-        fetch(url, {
-            method: method,
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(deckData),
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.message) {
-                showToast(data.message);
-            } else {
-                showToast('Deck salvo com sucesso!');
-                setTimeout(() => {
-                    window.location.href = '/my-decks'; // Redirect to decks page
-                }, 1000);
+            if (!title) {
+                showToast('Por favor, dê um título ao seu deck.');
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Erro ao salvar o deck:', error);
-            showToast('Erro ao salvar o deck.');
+
+            const deckData = {
+                title,
+                description,
+                leader: deck.leader,
+                main: deck.main
+            };
+
+            const method = deck._id ? 'PUT' : 'POST';
+            const url = deck._id ? `/api/decks/${deck._id}` : '/api/decks';
+
+            fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(deckData),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.message) {
+                    showToast(data.message);
+                } else {
+                    showToast('Deck salvo com sucesso!');
+                    setTimeout(() => {
+                        window.location.href = '/my-decks'; // Redirect to decks page
+                    }, 1000);
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao salvar o deck:', error);
+                showToast('Erro ao salvar o deck.');
+            });
         });
-    });
+    }
 
     const validateDeckBtn = document.getElementById('validate-deck-btn');
-    validateDeckBtn.addEventListener('click', () => {
-        validateDeck();
-    });
+    if (validateDeckBtn) {
+        validateDeckBtn.addEventListener('click', () => {
+            validateDeck();
+        });
+    }
 
     function validateDeck() {
         const validationSummary = document.getElementById('validation-summary');
@@ -433,13 +440,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeModalBtn = document.querySelector('.close-btn');
     const importConfirmBtn = document.getElementById('import-deck-confirm-btn');
 
-    importDeckBtn.addEventListener('click', () => {
-        importModal.style.display = 'block';
-    });
+    if (importDeckBtn) {
+        importDeckBtn.addEventListener('click', () => {
+            importModal.style.display = 'block';
+        });
+    }
 
-    closeModalBtn.addEventListener('click', () => {
-        importModal.style.display = 'none';
-    });
+    if(closeModalBtn) {
+        closeModalBtn.addEventListener('click', () => {
+            importModal.style.display = 'none';
+        });
+    }
 
     window.addEventListener('click', (event) => {
         if (event.target == importModal) {
@@ -447,26 +458,29 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    importConfirmBtn.addEventListener('click', () => {
-        const decklist = document.getElementById('deck-import-textarea').value;
-        fetch('/api/decks/parse', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ decklist }),
-        })
-        .then(response => response.json())
-        .then(parsedDeck => {
-            deck = parsedDeck;
-            renderDeck();
-            importModal.style.display = 'none';
-        })
-        .catch(error => {
-            console.error('Erro ao importar deck:', error);
-            alert('Erro ao importar deck.');
+    if (importConfirmBtn) {
+        importConfirmBtn.addEventListener('click', () => {
+            if (!isOwner) return;
+            const decklist = document.getElementById('deck-import-textarea').value;
+            fetch('/api/decks/parse', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ decklist }),
+            })
+            .then(response => response.json())
+            .then(parsedDeck => {
+                deck = parsedDeck;
+                renderDeck();
+                importModal.style.display = 'none';
+            })
+            .catch(error => {
+                console.error('Erro ao importar deck:', error);
+                alert('Erro ao importar deck.');
+            });
         });
-    });
+    }
 
     exportDeckBtn.addEventListener('click', () => {
         exportDeckAsTxt();

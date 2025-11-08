@@ -14,7 +14,7 @@
         <div class="search-column card-panel">
             <h2><i class="fas fa-search"></i> Buscar Cartas</h2>
             <div class="search-bar">
-                <input type="text" id="card-search-input" placeholder="Digite o nome da carta...">
+                <input type="text" id="card-search-input" placeholder="Digite o nome da carta..." <%= !isOwner ? 'disabled' : '' %>>
                 <div id="search-loader" class="loader" style="display: none;"></div>
             </div>
             <div id="search-results">
@@ -40,12 +40,14 @@
                 <div id="main-deck-cards"></div>
             </div>
             <div class="deck-actions">
-                <input type="text" id="deck-title" placeholder="Título do Deck" value="<%= deck ? deck.title : '' %>">
-                <textarea id="deck-description" placeholder="Descrição do Deck"><%= deck ? deck.description : '' %></textarea>
+                <input type="text" id="deck-title" placeholder="Título do Deck" value="<%= deck ? deck.title : '' %>" <%= !isOwner ? 'disabled' : '' %>>
+                <textarea id="deck-description" placeholder="Descrição do Deck" <%= !isOwner ? 'disabled' : '' %>><%= deck ? deck.description : '' %></textarea>
                 <div class="action-buttons">
-                    <button id="save-deck-btn" class="btn-save"><%= deck ? 'Salvar Alterações' : 'Salvar Deck' %></button>
-                    <button id="validate-deck-btn" class="btn-validate">Validar Deck</button>
-                    <button id="import-deck-btn" class="btn-import">Importar Deck</button>
+                    <% if (isOwner) { %>
+                        <button id="save-deck-btn" class="btn-save"><%= deck ? 'Salvar Alterações' : 'Salvar Deck' %></button>
+                        <button id="validate-deck-btn" class="btn-validate">Validar Deck</button>
+                        <button id="import-deck-btn" class="btn-import">Importar Deck</button>
+                    <% } %>
                     <button id="export-deck-btn" class="btn-export">Exportar Deck</button>
                 </div>
             </div>
@@ -83,9 +85,10 @@
     <%- include('../partials/footer') %>
 
     <script src="https://kit.fontawesome.com/a076d05399.js"></script>
-    <script src="/js/main.js"></script>
+    
     <script>
         const initialDeck = <%- JSON.stringify(deck || null) %>;
+        const isOwner = <%= isOwner %>;
     </script>
     <script src="/js/deck-builder.js"></script> 
 </body>

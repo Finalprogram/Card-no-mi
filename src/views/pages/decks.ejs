@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meus Decks - One Piece TCG</title>
+    <title>Decks da Comunidade - Card-no-mi</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="stylesheet" href="/css/deck-builder.css"> <!-- Reusing styles -->
 </head>
@@ -11,25 +11,26 @@
     <%- include('../partials/navbar') %>
 
     <div class="deck-builder-container">
-        <h1>Meus Decks</h1>
-        <a href="/deck-builder" class="btn-primary">Criar Novo Deck</a>
+        <h1>Decks da Comunidade</h1>
+        <% if (user) { %>
+            <a href="/deck-builder" class="btn-primary">Criar Novo Deck</a>
+        <% } %>
         <div class="decks-list">
             <% if (decks && decks.length > 0) { %>
                 <% decks.forEach(deck => { %>
                     <div class="deck-item">
                         <h2><%= deck.title %></h2>
                         <p><%= deck.description %></p>
-                        <a href="/deck-builder/<%= deck._id %>">Editar</a>
+                        <p>Criado por: <%= deck.owner.username %></p>
+                        <a href="/deck-builder/<%= deck._id %>">Ver Deck</a>
                     </div>
                 <% }); %>
             <% } else { %>
-                <p>Você ainda não tem nenhum deck. <a href="/deck-builder">Crie um agora!</a></p>
+                <p>Ainda não há decks na comunidade. Seja o primeiro a criar um!</p>
             <% } %>
         </div>
     </div>
 
     <%- include('../partials/footer') %>
-
-    
 </body>
 </html>

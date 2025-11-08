@@ -272,21 +272,49 @@ const showAboutPage = (req, res) => {
   });
 };
 
+const showDecksPage = async (req, res) => {
+  try {
+    const decks = await Deck.find({}).populate('owner', 'username').sort({ createdAt: -1 });
+
+    res.render('pages/decks', {
+      title: 'Decks da Comunidade',
+      decks,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar os decks:', error);
+    res.status(500).send('Erro no servidor');
+  }
+};
+
 const showDeckBuilderPage = async (req, res) => {
   try {
     let deck = null;
+    let isOwner = false;
+
     if (req.params.id) {
-      deck = await Deck.findById(req.params.id).populate('leader.card').populate('main.card');
-      if (deck && deck.owner.toString() !== req.session.user.id) {
-        // Security check: user can only edit their own decks
-        return res.status(403).send('Acesso negado.');
+      deck = await Deck.findById(req.params.id)
+        .populate('leader.card')
+        .populate('main.card')
+        .populate('owner', 'username'); // Populate owner's username
+      
+      if (!deck) {
+        return res.status(404).send('Deck não encontrado.');
       }
+
+      if (req.session.user && deck.owner._id.toString() === req.session.user.id) {
+        isOwner = true;
+      }
+    } else {
+      // This is for creating a new deck, so the user is the owner.
+      // The isAuthPage middleware already ensures the user is logged in.
+      isOwner = true;
     }
 
     res.render('pages/deck-builder', {
-      title: deck ? 'Editar Deck' : 'Criar Deck',
+      title: deck ? (isOwner ? 'Editar Deck' : `Ver Deck de ${deck.owner.username}`) : 'Criar Deck',
       page_css: 'deck-builder.css',
-      deck: deck
+      deck: deck,
+      isOwner: isOwner
     });
   } catch (error) {
     console.error('Erro ao carregar o deck builder:', error);
@@ -324,6 +352,7 @@ module.exports = {
   showTimelinePage,
   showCommunityPage,
   showAboutPage,
+  showDecksPage,
   showDeckBuilderPage,
   showMyDecksPage,
 };
