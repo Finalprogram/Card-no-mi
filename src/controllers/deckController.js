@@ -1,18 +1,88 @@
 const Deck = require('../models/Deck');
 const Card = require('../models/Card');
 
-// @desc    Get all decks for a user
-// @route   GET /api/decks
+// @desc    Search for cards
+// @route   GET /api/decks/search-cards
+// @access  Private
+exports.searchCards = async (req, res) => {
+    try {
+        const query = req.query.q;
+        if (!query || query.length < 3) {
+            return res.json([]);
+        }
+
+        // Use a case-insensitive regex to find cards
+        const cards = await Card.find({
+            name: { $regex: query, $options: 'i' }
+        }).limit(20); // Limit results to avoid overwhelming the client
+
+        res.json(cards);
+    } catch (error) {
+        console.error('Error searching cards:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar cartas.' });
+    }
+};
+
+// @desc    Get all decks for a user and render the page
+// @route   GET /decks
 // @access  Private
 exports.getDecks = async (req, res) => {
-    res.status(200).json({ message: 'getDecks placeholder' });
+    try {
+        const userId = req.session.user.id;
+        const decks = await Deck.find({ owner: userId })
+            .populate('owner', 'username') // Populate owner's username
+            .populate('leader.card')   // Populate leader card details
+            .sort({ updatedAt: -1 });
+        
+        res.render('pages/decks', {
+            decks: decks,
+            page_css: 'decks-ui.css' // Pass the new CSS file
+        });
+    } catch (error) {
+        console.error('Error fetching decks:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
+};
+
+// @desc    Get all public decks for the community page
+// @route   GET /decks/community
+// @access  Public
+exports.getCommunityDecks = async (req, res) => {
+    try {
+        const decks = await Deck.find({ isPublic: true })
+            .populate('owner', 'username')
+            .populate('leader.card')
+            .sort({ updatedAt: -1 });
+        
+        res.render('pages/community-decks', {
+            decks: decks,
+            page_css: 'decks-ui.css'
+        });
+    } catch (error) {
+        console.error('Error fetching community decks:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
 };
 
 // @desc    Get a single deck
 // @route   GET /api/decks/:id
 // @access  Private
 exports.getDeck = async (req, res) => {
-    res.status(200).json({ message: 'getDeck placeholder' });
+    try {
+        const deck = await Deck.findById(req.params.id)
+            .populate('leader.card')
+            .populate('main.card')
+            .populate('owner', 'username');
+
+        if (!deck) {
+            return res.status(404).json({ message: 'Deck não encontrado.' });
+        }
+
+        res.status(200).json(deck);
+    } catch (error) {
+        console.error('Erro ao buscar deck:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao buscar deck.' });
+    }
 };
 
 // @desc    Create a deck
@@ -20,15 +90,11 @@ exports.getDeck = async (req, res) => {
 // @access  Private
 exports.createDeck = async (req, res) => {
     try {
-        const { title, description, leader, main } = req.body;
+        const { title, description, leader, main, isPublic } = req.body;
         const owner = req.session.user.id;
 
         if (!title) {
             return res.status(400).json({ message: 'O título do deck é obrigatório.' });
-        }
-
-        if (!leader) {
-            return res.status(400).json({ message: 'O deck deve ter um líder.' });
         }
 
         const newDeck = new Deck({
@@ -36,7 +102,8 @@ exports.createDeck = async (req, res) => {
             description,
             owner,
             leader,
-            main
+            main,
+            isPublic: isPublic // Assign directly, as it's already a boolean
         });
 
         const savedDeck = await newDeck.save();
@@ -54,7 +121,7 @@ exports.createDeck = async (req, res) => {
 // @access  Private
 exports.updateDeck = async (req, res) => {
     try {
-        const { title, description, leader, main } = req.body;
+        const { title, description, leader, main, isPublic } = req.body;
         const deckId = req.params.id;
         const ownerId = req.session.user.id;
 
@@ -72,6 +139,7 @@ exports.updateDeck = async (req, res) => {
         deck.description = description;
         deck.leader = leader;
         deck.main = main;
+        deck.isPublic = isPublic; // Assign directly, as it's already a boolean
 
         const updatedDeck = await deck.save();
 

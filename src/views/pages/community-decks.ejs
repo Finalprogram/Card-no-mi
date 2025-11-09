@@ -1,14 +1,17 @@
-<%# views/pages/decks.ejs %>
+<%# views/pages/community-decks.ejs %>
 <%- include('../partials/header', { page_css: 'decks-ui.css' }) %>
 <%- include('../partials/navbar') %>
 
 <div class="decks-page">
     <main class="container">
         <header class="decks-header">
-            <h1>Meus Decks</h1>
-            <a href="/deck-builder" id="create-deck-btn" class="btn btn-primary">
-                <i class="fas fa-plus"></i> Criar Novo Deck
-            </a>
+            <h1>Decks da Comunidade</h1>
+            <div class="header-actions">
+                <a href="/decks" class="btn btn-secondary">Meus Decks</a>
+                <a href="/deck-builder" id="create-deck-btn" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Criar Novo Deck
+                </a>
+            </div>
         </header>
 
         <section class="decks-toolbar">
@@ -36,25 +39,21 @@
                                 <span><i class="fas fa-layer-group"></i> <%= deck.main.length %> cartas</span>
                             </div>
                             <div class="deck-card-badges">
-                                <% if (deck.isPublic) { %>
-                                    <span class="badge public">Público</span>
-                                <% } else { %>
-                                    <span class="badge private">Privado</span>
-                                <% } %>
+                                <span class="badge public">Público</span>
                             </div>
                         </div>
                         <div class="deck-card-actions">
                             <button class="icon-btn view-btn" title="Visualização Rápida"><i class="fas fa-eye"></i></button>
-                            <button class="icon-btn edit-btn" title="Editar"><i class="fas fa-pen"></i></button>
-                            <button class="icon-btn duplicate-btn" title="Duplicar"><i class="fas fa-copy"></i></button>
-                            <button class="icon-btn delete-btn" title="Excluir"><i class="fas fa-trash"></i></button>
+                            <% if (user && user.id == deck.owner._id) { %>
+                                <button class="icon-btn duplicate-btn" title="Duplicar"><i class="fas fa-copy"></i></button>
+                            <% } %>
                         </div>
                     </article>
                 <% }); %>
             <% } else { %>
                 <div class="no-decks-message">
-                    <p>Você ainda não criou nenhum deck.</p>
-                    <p>Clique em "Criar Novo Deck" para começar!</p>
+                    <p>Ainda não há decks públicos na comunidade.</p>
+                    <p>Seja o primeiro a criar um!</p>
                 </div>
             <% } %>
         </section>
