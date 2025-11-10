@@ -1976,6 +1976,7 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   -webkit-transition: all 0.3s ease-in-out;
   transition: all 0.3s ease-in-out;
   background-color: var(--text-primary);
+  border-radius: 2px;
 }
 
 @media (max-width: 768px) {
@@ -1998,6 +1999,14 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
     padding: 1rem;
     text-align: center;
     border-bottom: 1px solid var(--border);
+    transition: background-color 0.2s, color 0.2s;
+  }
+
+  .navbar-links a:hover {
+    background-color: var(--accent-primary);
+    color: white;
+  }
+
   }
 
   .hamburger {
