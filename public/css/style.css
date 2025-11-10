@@ -1998,18 +1998,14 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   .navbar-links a {
     padding: 1rem;
     text-align: center;
-    border-bottom: 1px solid var(--border);
-    transition: background-color 0.2s, color 0.2s;
-  }
-
-  .navbar-links a:hover {
-    background-color: var(--accent-primary);
-    color: white;
-  }
-
   }
 
   .hamburger {
     display: block;
+  }
+
+  .navbar-actions .btn-primary,
+  .navbar-actions .btn-secondary {
+    display: none;
   }
 }

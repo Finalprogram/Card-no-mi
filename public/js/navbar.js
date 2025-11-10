@@ -1,7 +1,7 @@
 
 document.addEventListener('DOMContentLoaded', function () {
     const hamburger = document.querySelector('.hamburger');
-    const navLinks = document.querySelector('.nav-links');
+        const navLinks = document.querySelector('.navbar-links');
 
     if (hamburger && navLinks) {
         // Ensure the menu is closed by default
