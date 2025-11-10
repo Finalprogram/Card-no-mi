@@ -4,14 +4,18 @@
 
     <nav class="navbar">
       <a href="/" class="navbar-brand"><img src="/images/logo_com_fruta_a_frente.png" alt="Car'D No Mi Logo" class="navbar-main-logo"></a>
-      
-      <div class="navbar-links">
-    <a href="/cards">Explorar Cartas</a>
-    <a href="/encyclopedia">Enciclopédia</a>
-    <a href="/decks/community">Decks</a>
-    <a href="/comunidade">Comunidade</a>
-    <a href="/about">Sobre</a>
-</div>
+      <button class="hamburger">
+        <span class="bar"></span>
+        <span class="bar"></span>
+        <span class="bar"></span>
+      </button>
+      <div class="nav-links">
+        <a href="/cards">Explorar Cartas</a>
+        <a href="/encyclopedia">Enciclopédia</a>
+        <a href="/decks/community">Decks</a>
+        <a href="/comunidade">Comunidade</a>
+        <a href="/about">Sobre</a>
+      </div>
 
       <div class="navbar-actions">
           <% if (user) { %>
