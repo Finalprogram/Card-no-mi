@@ -1,0 +1,59 @@
+<div class="stats-container">
+    <header class="stats-header">
+        <div class="deck-info">
+            <h2><%= stats.name %></h2>
+            <p><%= stats.cardCount %>/<%= stats.maxCards %> Cards</p>
+        </div>
+        <div class="deck-actions">
+            <button class="download-btn" aria-label="Exportar estatísticas">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-download"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+            </button>
+        </div>
+    </header>
+
+    <main class="stats-body">
+        <div class="stats-panel">
+            <h3>Painel de Estatísticas</h3>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">Total de Cartas</span>
+                    <span class="stat-value"><%= stats.cardCount %> / <%= stats.maxCards %></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Custo Médio</span>
+                    <span class="stat-value"><%= stats.averageCost.toFixed(2) %></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Personagens</span>
+                    <span class="stat-value"><%= stats.characterCount %></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Eventos</span>
+                    <span class="stat-value"><%= stats.eventCount %></span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">Cores Distintas</span>
+                    <span class="stat-value"><%= stats.distinctColors %></span>
+                </div>
+                <div class="stat-item stat-item-full">
+                    <span class="stat-label">Contagem de Cores</span>
+                    <span class="stat-value"><%= stats.colorCounts %></span>
+                </div>
+            </div>
+        </div>
+
+        <div class="chart-panel">
+            <h3>Distribuição de Custo</h3>
+            <div class="cost-chart">
+                <% for (let i = 0; i < stats.costDistribution.length; i++) { %>
+                    <div class="chart-bar-container">
+                        <div class="chart-bar" style="--bar-height: 0;" data-height="<%= (stats.costDistribution[i] / stats.maxCountInDistribution) * 100 %>%">
+                            <div class="tooltip"><%= stats.costDistribution[i] %> cartas</div>
+                        </div>
+                        <span class="chart-label"><%= i %></span>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+</div>
