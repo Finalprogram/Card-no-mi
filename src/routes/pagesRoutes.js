@@ -20,6 +20,5 @@ router.get('/decks', pagesController.showDecksPage);
 router.get('/deck-builder', isAuthPage, pagesController.showDeckBuilderPage);
 router.get('/deck-builder/:id', isAuthPage, pagesController.showDeckBuilderPage);
 router.get('/my-decks', isAuthPage, pagesController.showMyDecksPage);
-router.get('/decks/analytics/:id', pagesController.showDeckAnalyticsPage);
 
 module.exports = router;

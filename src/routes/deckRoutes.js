@@ -18,7 +18,7 @@ router.route('/parse')
     .post(isAuthApi, parseDeck);
 
 router.route('/:id')
-    .get(getDeck)
+    .get(isAuthApi, getDeck)
     .put(isAuthApi, updateDeck)
     .delete(isAuthApi, deleteDeck);
 

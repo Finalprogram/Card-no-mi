@@ -1,34 +1,19 @@
 const mongoose = require('mongoose');
 
 const CardSchema = new mongoose.Schema({
+  // // ID do Scryfall (único para Magic)
+  // scryfall_id: { 
+  //   type: String, 
+  //   unique: true, 
+  //   required: false, // Não é obrigatório
+  //   sparse: true     // ESSENCIAL: Garante que a regra 'unique' ignore os valores nulos
+  // },
+  
   // ID da API de origem (ex: One Piece API)
   api_id: { 
     type: String, 
     required: false 
   },
-  code: { type: String },
-  rarity: { type: String },
-  type: { type: String },
-  name: { type: String, required: true, index: 'text' },
-  images: {
-    small: { type: String },
-    large: { type: String }
-  },
-  cost: { type: Number },
-  attribute: {
-    name: { type: String },
-    image: { type: String }
-  },
-  power: { type: Number },
-  counter: { type: String }, // Can be "-"
-  color: { type: String }, // e.g., "Red/Green"
-  family: { type: String },
-  ability: { type: String },
-  trigger: { type: String },
-  set: {
-    name: { type: String }
-  },
-  notes: { type: Array },
 
   // Jogo ao qual a carta pertence
   game: {
@@ -38,11 +23,14 @@ const CardSchema = new mongoose.Schema({
     index: true
   },
   
-  // Campos de dados legados/internos
-  set_name: { type: String }, // Mantido para possível retrocompatibilidade
-  image_url: { type: String }, // Mantido para possível retrocompatibilidade
-  colors: { type: Array }, // Mantido para possível retrocompatibilidade
-  type_line: { type: String }, // Mantido para possível retrocompatibilidade
+  // Campos de dados principais
+  name: { type: String, required: true, index: 'text' },
+  set_name: { type: String },
+  image_url: { type: String }, 
+  rarity: { type: String },
+  colors: { type: Array },
+  type_line: { type: String },
+  ability: { type: String }, // Added ability field
   legalities: { type: Object },
   price_trend: {
     type: String,
