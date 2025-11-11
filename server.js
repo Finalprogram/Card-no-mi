@@ -66,6 +66,8 @@ const reviewRoutes = require('./src/routes/reviewRoutes');
 const adminRoutes = require('./src/routes/adminRoutes');
 const welcomeRoutes = require('./src/routes/welcomeRoutes');
 const couponRoutes = require('./src/routes/couponRoutes');
+const deckRoutes = require('./src/routes/deckRoutes');
+const deckPagesRoutes = require('./src/routes/deckPagesRoutes');
 const Card = require('./src/models/Card'); // Import the Card model
 
 // 2. Inicialização do App
@@ -157,7 +159,8 @@ app.use('/api', listRoutes);
 app.use('/', sellerRoutes);
 app.use('/api', listingRoutes);
 app.use('/api/coupon', couponRoutes);
-app.use('/api/decks', require('./src/routes/deckRoutes'));
+app.use('/api/decks', deckRoutes);
+app.use('/decks', deckPagesRoutes);
 app.use('/cart', cartRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/payment', paymentRoutes);

@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
+    console.log('deck-builder.js loaded'); // Debug log
     const isOwner = window.isOwner;
+    console.log('isOwner:', isOwner); // Debug log
     const searchInput = document.getElementById('card-search-input');
+    console.log('searchInput element:', searchInput); // Debug log
     const searchResultsContainer = document.getElementById('search-results');
     const mainDeckCounter = document.querySelector('.deck-main h3');
     const searchLoader = document.getElementById('search-loader');
@@ -42,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
             fetch(`/api/decks/search-cards?q=${query}`)
                 .then(response => response.json())
                 .then(cards => {
+                    console.log('API returned cards:', cards); // Debug log
                     renderSearchResults(cards);
                 })
                 .catch(error => {
@@ -55,6 +59,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function renderSearchResults(cards) {
+        console.log('renderSearchResults called with cards:', cards); // Debug log
         searchResultsContainer.innerHTML = '';
         if (cards.length === 0) {
             const query = searchInput.value;
@@ -148,12 +153,14 @@ document.addEventListener('DOMContentLoaded', () => {
         cardElement.classList.add('deck-card');
         const card = item.card;
 
+        const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
+
         cardElement.dataset.cardId = card._id;
 
         cardElement.innerHTML = `
             <span>${item.quantity}x</span>
             <p>${card.name} (${card.set_name}) - R$ ${card.price ? card.price.toFixed(2) : '0.00'}</p>
-            ${isOwner ? `<button class="remove-card-btn">-</button>
+            ${window.isOwner ? `<button class="remove-card-btn">-</button>
             <button class="add-copy-btn">+</button>` : ''}
         `;
         return cardElement;
@@ -196,6 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
         saveDeckBtn.addEventListener('click', () => {
             const title = document.getElementById('deck-title').value;
             const description = document.getElementById('deck-description').value;
+            const isPublic = document.getElementById('deck-is-public').checked;
 
             if (!title) {
                 showToast('Por favor, dê um título ao seu deck.');
@@ -205,6 +213,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const deckData = {
                 title,
                 description,
+                isPublic,
                 leader: deck.leader,
                 main: deck.main
             };
@@ -324,8 +333,10 @@ document.addEventListener('DOMContentLoaded', () => {
         cardElement.classList.add('deck-card-grid');
         const card = item.card;
 
+        const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
+
         let cardContent = `
-            <img src="${card.image_url}" alt="${card.name}">
+            <img src="${imageUrl}" alt="${card.name}">
         `;
 
         if (card.type_line === 'LEADER') {
