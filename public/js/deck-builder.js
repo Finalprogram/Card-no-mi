@@ -525,20 +525,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function exportDeckAsTxt() {
-        let content = `Líder:\n`;
+        let namesContent = `Líder:\n`;
         if (deck.leader) {
             const cardName = deck.leader.card ? deck.leader.card.name : (deck.leader.ghostCard ? deck.leader.ghostCard.name : '');
             if (cardName) {
-                content += `1 ${cardName}\n`;
+                namesContent += `1 ${cardName}\n`;
             }
         }
-        content += `\nDeck Principal:\n`;
+        namesContent += `\nDeck Principal:\n`;
         deck.main.forEach(item => {
             const cardName = item.card ? item.card.name : item.ghostCard.name;
-            content += `${item.quantity} ${cardName}\n`;
+            namesContent += `${item.quantity} ${cardName}\n`;
         });
 
-        const blob = new Blob([content], { type: 'text/plain' });
+        let codesContent = `\n\n--- Códigos ---\n`;
+        codesContent += `Líder:\n`;
+        if (deck.leader) {
+            const cardCode = (deck.leader.card?.code) ?? (deck.leader.card?.name) ?? (deck.leader.ghostCard?.name) ?? '';
+            if (cardCode) {
+                codesContent += `1 ${cardCode}\n`;
+            }
+        }
+        codesContent += `\nDeck Principal:\n`;
+        deck.main.forEach(item => {
+            const cardCode = (item.card?.code) ?? (item.card?.name) ?? (item.ghostCard?.name) ?? '';
+            codesContent += `${item.quantity} ${cardCode}\n`;
+        });
+
+        const fullContent = namesContent + codesContent;
+
+        const blob = new Blob([fullContent], { type: 'text/plain' });
         const anchor = document.createElement('a');
         anchor.download = `${deck.title || 'deck'}.txt`;
         anchor.href = window.URL.createObjectURL(blob);
