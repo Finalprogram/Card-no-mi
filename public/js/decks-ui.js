@@ -66,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // --- Deck Actions ---
-    deckList?.addEventListener('click', (e) => {
+    deckList?.addEventListener('click', async (e) => {
         const target = e.target;
         const card = target.closest('.deck-card');
         if (!card) return;
@@ -76,24 +76,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // View (Quick Preview)
         if (target.closest('.view-btn')) {
-            // Placeholder: Fetch deck details from backend
-            // const deckDetails = await fetch(`/decks/${deckId}/details`).then(res => res.json());
-            const deckDetails = {
-                name: deckName,
-                leader: '/images/placeholder-leader.png',
-                cardCount: 60,
-                avgCost: 2.5,
-                format: 'Standard'
-            };
-            drawerContent.innerHTML = `
-                <img src="${deckDetails.leader}" alt="Leader" style="width:100%; border-radius: 8px; margin-bottom: 1rem;">
-                <h3>${deckDetails.name}</h3>
-                <p><strong>Formato:</strong> ${deckDetails.format}</p>
-                <p><strong>Total de Cartas:</strong> ${deckDetails.cardCount}</p>
-                <p><strong>Custo Médio:</strong> ${deckDetails.avgCost}</p>
-                <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Abrir no Editor</button>
-            `;
-            openDrawer();
+            try {
+                const response = await fetch(`/api/decks/${deckId}`);
+                if (!response.ok) {
+                    throw new Error('Erro ao buscar detalhes do deck.');
+                }
+                const deckDetails = await response.json();
+
+                const leaderImage = deckDetails.leader && deckDetails.leader.card ? deckDetails.leader.card.image_url : '/images/default-avatar.png';
+                const cardCount = deckDetails.main.reduce((acc, item) => acc + item.quantity, 0);
+
+                drawerContent.innerHTML = `
+                    <img src="${leaderImage}" alt="Leader" style="width:100%; border-radius: 8px; margin-bottom: 1rem;">
+                    <h3>${deckDetails.title}</h3>
+                    <p><strong>Autor:</strong> ${deckDetails.owner.username}</p>
+                    <p><strong>Total de Cartas:</strong> ${cardCount}</p>
+                    <a href="/decks/analytics/${deckId}" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ver Estatísticas do Deck</a>
+                `;
+                openDrawer();
+            } catch (error) {
+                console.error('Erro ao carregar a visualização rápida do deck:', error);
+                showToast('Não foi possível carregar os detalhes do deck.', 'error');
+            }
         }
 
         // Edit

@@ -340,6 +340,93 @@ const showMyDecksPage = async (req, res) => {
   }
 };
 
+const showDeckAnalyticsPage = async (req, res) => {
+  try {
+    const deck = await Deck.findById(req.params.id)
+      .populate('leader.card')
+      .populate('main.card')
+      .populate('owner', 'username');
+
+    if (!deck) {
+      return res.status(404).send('Deck não encontrado.');
+    }
+
+    // Calculate statistics
+    const allCards = deck.main.map(item => item.card);
+    const cardCount = deck.main.reduce((sum, item) => sum + item.quantity, 0);
+    
+    let totalCost = 0;
+    deck.main.forEach(item => {
+      if (item.card && typeof item.card.cost === 'number') {
+        totalCost += item.card.cost * item.quantity;
+      }
+    });
+    const averageCost = cardCount > 0 ? totalCost / cardCount : 0;
+
+    const characterCount = deck.main.reduce((sum, item) => 
+      item.card && item.card.type === 'CHARACTER' ? sum + item.quantity : sum, 0);
+      
+    const eventCount = deck.main.reduce((sum, item) => 
+      item.card && item.card.type === 'EVENT' ? sum + item.quantity : sum, 0);
+
+    const colors = new Set();
+    const colorCountMap = {};
+    deck.main.forEach(item => {
+      if (item.card && item.card.color) {
+        const cardColors = item.card.color.split('/');
+        cardColors.forEach(color => {
+          colors.add(color);
+          colorCountMap[color] = (colorCountMap[color] || 0) + item.quantity;
+        });
+      }
+    });
+     if (deck.leader.card && deck.leader.card.color) {
+        const leaderColors = deck.leader.card.color.split('/');
+        leaderColors.forEach(color => colors.add(color));
+    }
+
+
+    const colorCounts = Object.entries(colorCountMap).map(([color, count]) => `${color}: ${count}`).join(', ');
+
+    const costDistribution = Array(11).fill(0); // Costs 0-10
+    deck.main.forEach(item => {
+      if (item.card && typeof item.card.cost === 'number') {
+        const cost = item.card.cost;
+        if (cost >= costDistribution.length) {
+          costDistribution[costDistribution.length - 1] += item.quantity;
+        } else {
+          costDistribution[cost] += item.quantity;
+        }
+      }
+    });
+    
+    const maxCountInDistribution = Math.max(...costDistribution, 1);
+
+
+    const stats = {
+      name: deck.title,
+      cardCount: cardCount,
+      maxCards: 50, // Assuming max 50 for now
+      averageCost: averageCost,
+      characterCount: characterCount,
+      eventCount: eventCount,
+      distinctColors: colors.size,
+      colorCounts: colorCounts,
+      costDistribution: costDistribution,
+      maxCountInDistribution: maxCountInDistribution,
+    };
+
+    res.render('pages/deck-analytics', {
+      title: `Análise do Deck: ${deck.title}`,
+      deck,
+      stats,
+    });
+  } catch (error) {
+    console.error('Erro ao carregar a página de análise do deck:', error);
+    res.status(500).send('Erro no servidor');
+  }
+};
+
 module.exports = {
   showHomePage,
   showProfilePage,
@@ -355,4 +442,5 @@ module.exports = {
   showDecksPage,
   showDeckBuilderPage,
   showMyDecksPage,
+  showDeckAnalyticsPage,
 };

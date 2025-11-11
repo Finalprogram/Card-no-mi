@@ -70,9 +70,27 @@ exports.updateDeck = async (req, res) => {
 
         deck.title = title;
         deck.description = description;
-        deck.leader = leader;
-        deck.main = main;
-        deck.isPublic = isPublic; // Assign directly, as it's already a boolean
+        deck.isPublic = isPublic;
+
+        // Sanitize the leader and main deck to store only the necessary info
+        if (leader && leader.card) {
+            deck.leader = {
+                card: leader.card._id,
+                quantity: 1
+            };
+        } else {
+            deck.leader = null;
+        }
+
+        if (main && Array.isArray(main)) {
+            deck.main = main.map(item => ({
+                card: item.card._id,
+                quantity: item.quantity
+            }));
+        } else {
+            deck.main = [];
+        }
+
 
         const updatedDeck = await deck.save();
 
