@@ -190,9 +190,10 @@ exports.parseDeck = async (req, res) => {
         };
 
         let isLeaderSection = true;
+        const notFoundCards = [];
 
         for (const line of lines) {
-            if (line.toLowerCase().includes('leader')) {
+            if (line.toLowerCase().includes('leader') || line.toLowerCase().includes('líder')) {
                 isLeaderSection = true;
                 continue;
             }
@@ -202,16 +203,27 @@ exports.parseDeck = async (req, res) => {
             }
 
             const parts = line.match(/(\d+)?x?\s*(.*)/);
-            if (!parts) continue;
+            if (!parts || !parts[2]) continue;
 
             const quantity = parseInt(parts[1] || '1', 10);
-            const cardName = parts[2].trim();
+            const identifier = parts[2].trim();
+            
+            if (!identifier) continue;
 
-            const card = await Card.findOne({ name: { $regex: new RegExp(`^${cardName}$`, 'i') } });
+            const card = await Card.findOne({
+                $or: [
+                    { code: { $regex: new RegExp(`^${identifier}$`, 'i') } },
+                    { api_id: { $regex: new RegExp(`^${identifier}$`, 'i') } }
+                ]
+            });
+
+            if (!card) {
+                notFoundCards.push(identifier);
+                continue; // Continue to find all missing cards
+            }
 
             const deckItem = {
-                card: card ? card.toObject() : null,
-                ghostCard: card ? null : { name: cardName },
+                card: card.toObject(),
                 quantity: quantity,
             };
 
@@ -221,6 +233,13 @@ exports.parseDeck = async (req, res) => {
             } else {
                 deck.main.push(deckItem);
             }
+        }
+
+        if (notFoundCards.length > 0) {
+            return res.status(400).json({
+                message: `As seguintes cartas não foram encontradas pelo código/ID: ${notFoundCards.join(', ')}. Verifique os códigos e tente novamente.`,
+                notFoundCards: notFoundCards,
+            });
         }
 
         res.status(200).json(deck);

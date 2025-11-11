@@ -152,17 +152,27 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('deck-card');
         const card = item.card;
+        const ghostCard = item.ghostCard;
 
-        const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
-
-        cardElement.dataset.cardId = card._id;
-
-        cardElement.innerHTML = `
-            <span>${item.quantity}x</span>
-            <p>${card.name} (${card.set_name}) - R$ ${card.price ? card.price.toFixed(2) : '0.00'}</p>
-            ${window.isOwner ? `<button class="remove-card-btn">-</button>
-            <button class="add-copy-btn">+</button>` : ''}
-        `;
+        if (card) {
+            const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
+            cardElement.dataset.cardId = card._id;
+            cardElement.innerHTML = `
+                <span>${item.quantity}x</span>
+                <p>${card.name} (${card.set_name}) - R$ ${card.price ? card.price.toFixed(2) : '0.00'}</p>
+                ${window.isOwner ? `<button class="remove-card-btn">-</button>
+                <button class="add-copy-btn">+</button>` : ''}
+            `;
+        } else if (ghostCard) {
+            cardElement.dataset.cardId = ghostCard.name;
+            cardElement.classList.add('ghost-card');
+            cardElement.innerHTML = `
+                <span>${item.quantity}x</span>
+                <p>${ghostCard.name} (Não encontrada)</p>
+                ${window.isOwner ? `<button class="remove-card-btn">-</button>
+                <button class="add-copy-btn">+</button>` : ''}
+            `;
+        }
         return cardElement;
     }
 
@@ -332,20 +342,30 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardElement = document.createElement('div');
         cardElement.classList.add('deck-card-grid');
         const card = item.card;
+        const ghostCard = item.ghostCard;
 
-        const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
+        if (card) {
+            const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
 
-        let cardContent = `
-            <img src="${imageUrl}" alt="${card.name}">
-        `;
+            let cardContent = `
+                <img src="${imageUrl}" alt="${card.name}">
+            `;
 
-        if (card.type_line === 'LEADER') {
-            if (card.ability) {
-                cardContent += `<div class="leader-ability">${card.ability}</div>`;
+            if (card.type_line === 'LEADER') {
+                if (card.ability) {
+                    cardContent += `<div class="leader-ability">${card.ability}</div>`;
+                }
             }
+            cardElement.innerHTML = cardContent;
+        } else if (ghostCard) {
+            cardElement.classList.add('ghost-card');
+            let cardContent = `
+                <img src="/images/default-avatar.png" alt="${ghostCard.name}">
+                <div class="ghost-card-name">${ghostCard.name}</div>
+            `;
+            cardElement.innerHTML = cardContent;
         }
 
-        cardElement.innerHTML = cardContent;
         return cardElement;
     }
 
@@ -412,8 +432,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const mainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
         if (mainDeckCounter) mainDeckCounter.textContent = `Deck Principal (${mainDeckCount}/50)`;
         deck.main.sort((a, b) => {
-            const nameA = a.card ? a.card.name : '';
-            const nameB = b.card ? b.card.name : '';
+            const nameA = a.card ? a.card.name : (a.ghostCard ? a.ghostCard.name : '');
+            const nameB = b.card ? b.card.name : (b.ghostCard ? b.ghostCard.name : '');
             return nameA.localeCompare(nameB);
         });
         deck.main.forEach(item => {
@@ -480,7 +500,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 },
                 body: JSON.stringify({ decklist }),
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    return response.json().then(err => { throw err; });
+                }
+                return response.json();
+            })
             .then(parsedDeck => {
                 deck = parsedDeck;
                 renderDeck();
@@ -488,7 +513,8 @@ document.addEventListener('DOMContentLoaded', () => {
             })
             .catch(error => {
                 console.error('Erro ao importar deck:', error);
-                alert('Erro ao importar deck.');
+                const errorMessage = error.message || 'Erro ao importar deck. Verifique o formato e os nomes das cartas.';
+                alert(errorMessage);
             });
         });
     }
@@ -501,13 +527,15 @@ document.addEventListener('DOMContentLoaded', () => {
     function exportDeckAsTxt() {
         let content = `Líder:\n`;
         if (deck.leader) {
-            const card = deck.leader.card;
-            content += `1 ${card.name}\n`;
+            const cardName = deck.leader.card ? deck.leader.card.name : (deck.leader.ghostCard ? deck.leader.ghostCard.name : '');
+            if (cardName) {
+                content += `1 ${cardName}\n`;
+            }
         }
         content += `\nDeck Principal:\n`;
         deck.main.forEach(item => {
-            const card = item.card;
-            content += `${item.quantity} ${card.name}\n`;
+            const cardName = item.card ? item.card.name : item.ghostCard.name;
+            content += `${item.quantity} ${cardName}\n`;
         });
 
         const blob = new Blob([content], { type: 'text/plain' });
