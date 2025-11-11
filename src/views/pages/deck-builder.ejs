@@ -42,10 +42,6 @@
             <div class="deck-actions">
                 <input type="text" id="deck-title" placeholder="Título do Deck" value="<%= deck ? deck.title : '' %>" <%= !isOwner ? 'disabled' : '' %>>
                 <textarea id="deck-description" placeholder="Descrição do Deck" <%= !isOwner ? 'disabled' : '' %>><%= deck ? deck.description : '' %></textarea>
-                <div class="deck-privacy">
-                    <input type="checkbox" id="deck-is-public" name="isPublic" <%= deck && deck.isPublic ? 'checked' : '' %> <%= !isOwner ? 'disabled' : '' %>>
-                    <label for="deck-is-public">Deck publico</label>
-                </div>
                 <div class="action-buttons">
                     <% if (isOwner) { %>
                         <button id="save-deck-btn" class="btn-save"><%= deck ? 'Salvar Alterações' : 'Salvar Deck' %></button>
@@ -92,7 +88,7 @@
     
     <script>
         const initialDeck = <%- JSON.stringify(deck || null) %>;
-        window.isOwner = <%= isOwner %>;
+        const isOwner = <%= isOwner %>;
     </script>
     <script src="/js/deck-builder.js"></script> 
 </body>

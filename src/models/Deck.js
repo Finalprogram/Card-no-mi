@@ -30,9 +30,10 @@ const deckSchema = new mongoose.Schema({
         type: String,
         trim: true
     },
-    isPublic: {
-        type: Boolean,
-        default: false
+    format: {
+        type: String,
+        enum: ['Standard', 'Unlimited'],
+        default: 'Standard'
     },
     owner: {
         type: mongoose.Schema.Types.ObjectId,
