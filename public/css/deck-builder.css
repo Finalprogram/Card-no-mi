@@ -447,13 +447,14 @@ body {
 
 #main-deck-cards-grid {
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* 5 columns */
-    gap: 0.5rem;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
 }
 
 #main-deck-cards-grid .deck-card-grid {
-    width: 285px; /* Tripled size */
-    height: 399px; /* Tripled size */
+    width: 100%;
+    height: auto;
+    aspect-ratio: 63/88; /* Standard card aspect ratio */
 }
 
 .deck-card-grid .card-quantity {
