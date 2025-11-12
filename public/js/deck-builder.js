@@ -524,37 +524,26 @@ document.addEventListener('DOMContentLoaded', () => {
         exportDeckAsJson();
     });
 
-    function exportDeckAsTxt() {
-        let namesContent = `Líder:\n`;
+function exportDeckAsTxt() {
+        let content = ``;
+
+        // Leader
         if (deck.leader) {
-            const cardName = deck.leader.card ? deck.leader.card.name : (deck.leader.ghostCard ? deck.leader.ghostCard.name : '');
-            if (cardName) {
-                namesContent += `1 ${cardName}\n`;
+            const cardIdentifier = (deck.leader.card?.code) ?? (deck.leader.card?.api_id) ?? (deck.leader.card?.name) ?? (deck.leader.ghostCard?.name) ?? '';
+            if (cardIdentifier) {
+                content += `1x ${cardIdentifier}\n`;
             }
         }
-        namesContent += `\nDeck Principal:\n`;
-        deck.main.forEach(item => {
-            const cardName = item.card ? item.card.name : item.ghostCard.name;
-            namesContent += `${item.quantity} ${cardName}\n`;
-        });
 
-        let codesContent = `\n\n--- Códigos ---\n`;
-        codesContent += `Líder:\n`;
-        if (deck.leader) {
-            const cardCode = (deck.leader.card?.code) ?? (deck.leader.card?.name) ?? (deck.leader.ghostCard?.name) ?? '';
-            if (cardCode) {
-                codesContent += `1 ${cardCode}\n`;
+        // Main Deck
+        deck.main.forEach(item => {
+            const cardIdentifier = (item.card?.code) ?? (item.card?.api_id) ?? (item.card?.name) ?? (item.ghostCard?.name) ?? '';
+            if (cardIdentifier) {
+                content += `${item.quantity}x ${cardIdentifier}\n`;
             }
-        }
-        codesContent += `\nDeck Principal:\n`;
-        deck.main.forEach(item => {
-            const cardCode = (item.card?.code) ?? (item.card?.name) ?? (item.ghostCard?.name) ?? '';
-            codesContent += `${item.quantity} ${cardCode}\n`;
         });
 
-        const fullContent = namesContent + codesContent;
-
-        const blob = new Blob([fullContent], { type: 'text/plain' });
+        const blob = new Blob([content], { type: 'text/plain' });
         const anchor = document.createElement('a');
         anchor.download = `${deck.title || 'deck'}.txt`;
         anchor.href = window.URL.createObjectURL(blob);

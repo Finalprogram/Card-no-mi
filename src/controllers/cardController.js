@@ -188,12 +188,15 @@ const searchCardsForSale = async (req, res) => {
     let searchResults = [];
 
     if (searchQuery && searchQuery.length > 2) {
-      // Busca por nome que contenha a string (case-insensitive)
       searchResults = await Card.find({
         game: 'onepiece',
-        name: { $regex: searchQuery, $options: 'i' } // Busca por sub-string no nome
+        $or: [
+          { name: { $regex: searchQuery, $options: 'i' } },
+          { code: { $regex: searchQuery, $options: 'i' } },
+          { api_id: { $regex: searchQuery, $options: 'i' } }
+        ]
       })
-      .select('name set_name image_url api_id')
+      .select('name set_name image_url api_id code') // Also select 'code'
       .limit(10);
     }
     res.json(searchResults);
