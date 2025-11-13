@@ -355,6 +355,10 @@ h1, h2, h3, h4 {
   position: relative;
 }
 
+#leader-card .deck-card {
+  width: 120px; /* Limita a largura do card do líder */
+}
+
 .leader-placeholder {
   color: var(--text-secondary);
   font-style: italic;
