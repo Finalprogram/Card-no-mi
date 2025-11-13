@@ -13,8 +13,11 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    const { email, username, phone, password, confirmPassword, documentType, documentNumber } = req.body;
+    let { email, username, phone, password, confirmPassword, documentType, documentNumber } = req.body;
     const errors = {};
+
+    // Limpar o número de telefone no backend
+    const cleanedPhone = phone ? phone.replace(/\D/g, '') : '';
 
     // --- VALIDAÇÃO ---
 
@@ -59,7 +62,7 @@ const registerUser = async (req, res) => {
     const newUser = new User({
       username,
       email,
-      phone,
+      phone: cleanedPhone, // Usar o número de telefone limpo
       password: hashedPassword,
       accountType: 'individual', // Definido como 'individual' diretamente
       isVerified: false,

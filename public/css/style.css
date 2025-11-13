@@ -28,27 +28,15 @@ body {
   line-height: 1.6;
 }
 
+/* ==========================================================================
+   3. LAYOUT PRINCIPAL E NAVBAR
+   ========================================================================== */
+
 .container {
   width: 90%;
   max-width: 1200px;
   margin: 0 auto;
 }
-
-/* Apply to all h tags */
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Cinzel Decorative', cursive;
-  color: var(--gold);
-}
-
-h1 { font-size: 2.5rem; font-weight: 900; }
-h2 { font-size: 2rem; font-weight: 900; }
-h3 { font-size: 1.5rem; font-weight: 700; }
-h4 { font-size: 1.1rem; font-weight: 700; }
-
-
-/* ==========================================================================
-   2. LAYOUT PRINCIPAL E NAVBAR
-   ========================================================================== */
 
 .navbar-wrapper {
   width: 100%;
@@ -300,8 +288,66 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 }
 .results { flex: 1; }
 .filter-group { margin-bottom: 1.5rem; }
+.filters .filter-group:first-of-type {
+    margin-top: 15px; /* Adiciona margem entre o título "Filtros" e o primeiro filtro */
+}
 .filter-group h4 { margin-bottom: 0.5rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; }
 .filter-group label { display: block; margin-bottom: 0.25rem; cursor: pointer; }
+
+.filter-option {
+  display: block;
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.25rem;
+  text-decoration: none;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 0.9rem;
+}
+
+.filter-option:hover {
+  background-color: var(--bg-surface-2);
+  color: var(--text-primary);
+}
+
+.filter-option.active {
+  background-color: var(--accent-primary);
+  color: white;
+  font-weight: 600;
+}
+
+.results { flex: 1; position: relative; } /* Adicionado position: relative para o loader */
+
+.loader {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(36, 40, 51, 0.8);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  border-radius: 8px;
+  display: none; /* Escondido por padrão */
+}
+
+.loader::after {
+  content: '';
+  width: 50px;
+  height: 50px;
+  border: 5px solid var(--text-secondary);
+  border-top-color: var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
 
 .filter-toggle {
   cursor: pointer;
@@ -332,7 +378,7 @@ h4 { font-size: 1.1rem; font-weight: 700; }
 .card-link { text-decoration: none; color: inherit; }
 .card-item { width: 100%; max-width: 220px; margin: 0 auto; background-color: var(--bg-surface); border-radius: 8px; padding: 1rem; border: 1px solid var(--border); position: relative; z-index: 1; text-align: center; transition: all 0.2s ease-in-out; min-height: 375px; display: flex; flex-direction: column; justify-content: space-between; }
 .card-item:hover {
-  z-index: 100;
+  z-index: 1003;
   transform: translateY(-5px);
   border-color: var(--accent-primary);
   box-shadow: 0 10px 20px rgba(var(--accent-primary-rgb), 0.2);

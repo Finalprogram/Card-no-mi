@@ -386,9 +386,41 @@ const generateMelhorEnvioLabel = async (req, res) => {
   }
 };
 
+const getSellerPage = async (req, res) => {
+  try {
+    const sellerId = req.params.id;
+
+    // Buscar vendedor e seus anúncios em paralelo
+    const [seller, listings] = await Promise.all([
+      User.findById(sellerId).lean(),
+      Listing.find({ seller: sellerId })
+        .populate({
+          path: 'card',
+          model: 'Card'
+        })
+        .lean()
+    ]);
+
+    if (!seller) {
+      return res.status(404).render('pages/404'); // Renderiza uma página 404 se o vendedor não for encontrado
+    }
+
+    res.render('pages/seller-page', {
+      seller,
+      listings,
+      page_name: 'seller-page' // Para CSS ou JS específico se necessário
+    });
+
+  } catch (error) {
+    console.error('Erro ao carregar a página do vendedor:', error);
+    res.status(500).send('Erro no servidor');
+  }
+};
+
 module.exports = {
   showSellerDashboard,
   showSoldOrders,
   markAsShipped,
   generateMelhorEnvioLabel,
+  getSellerPage,
 };

@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 .finally(() => {
                     searchLoader.style.display = 'none';
                 });
-        }, 300); // 300ms debounce
+        }, 500); // 500ms debounce
     });
 
     function renderSearchResults(cards) {
@@ -100,7 +100,6 @@ document.addEventListener('DOMContentLoaded', () => {
             if (!deck.leader) {
                 deck.leader = { card: card, quantity: 1 };
                 showToast(`Líder ${card.name} adicionado ao deck!`);
-                leaderPlaceholder.style.display = 'none';
                 renderDeck();
             } else {
                 showToast('Só pode haver 1 carta do tipo Líder no deck!');
@@ -184,25 +183,31 @@ document.addEventListener('DOMContentLoaded', () => {
         const cardElement = target.closest('.deck-card');
         if (!cardElement) return;
 
-        const cardId = cardElement.dataset.cardId;
-        const item = deck.main.find(i => {
-            const i_id = i.ghostCard ? i.ghostCard.name : i.card._id;
-            return i_id === cardId;
-        });
+        const isLeaderCard = cardElement.parentElement.id === 'leader-card';
 
         if (target.classList.contains('remove-card-btn')) {
-            item.quantity--;
-            if (item.quantity === 0) {
-                deck.main = deck.main.filter(i => {
-                    const i_id = i.ghostCard ? i.ghostCard.name : i.card._id;
-                    return i_id !== cardId;
-                });
+            if (isLeaderCard) {
+                deck.leader = null;
+                showToast('Líder removido.');
+            } else {
+                const cardId = cardElement.dataset.cardId;
+                const itemIndex = deck.main.findIndex(i => (i.card?._id || i.ghostCard?.name) === cardId);
+                if (itemIndex > -1) {
+                    deck.main[itemIndex].quantity--;
+                    if (deck.main[itemIndex].quantity === 0) {
+                        deck.main.splice(itemIndex, 1);
+                    }
+                }
             }
         }
 
         if (target.classList.contains('add-copy-btn')) {
-            if (item.quantity < 4) {
-                item.quantity++;
+            if (!isLeaderCard) {
+                const cardId = cardElement.dataset.cardId;
+                const item = deck.main.find(i => (i.card?._id || i.ghostCard?.name) === cardId);
+                if (item && item.quantity < 4) {
+                    item.quantity++;
+                }
             }
         }
         renderDeck();
@@ -407,7 +412,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function renderPadrãoView(container) {
         container.innerHTML = `
             <h3>Líder</h3>
-            <div id="leader-card"></div>
+            <div id="leader-card">
+                ${!deck.leader ? '<p class="leader-placeholder">Arraste um card Líder aqui</p>' : ''}
+            </div>
             <div class="deck-divider"></div>
             <div class="deck-main">
                 <h3>Deck Principal (0/50)</h3>
@@ -418,14 +425,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const leaderCardContainer = container.querySelector('#leader-card');
         const mainDeckContainer = container.querySelector('#main-deck-cards');
         const mainDeckCounter = container.querySelector('.deck-main h3');
-        const leaderPlaceholder = container.querySelector('.leader-placeholder');
 
         // Leader
         if (deck.leader) {
+            leaderCardContainer.innerHTML = ''; // Limpa o placeholder se houver
             leaderCardContainer.appendChild(createDeckCardElement(deck.leader));
-            if (leaderPlaceholder) leaderPlaceholder.style.display = 'none';
-        } else {
-            if (leaderPlaceholder) leaderPlaceholder.style.display = 'flex';
         }
 
         // Main Deck

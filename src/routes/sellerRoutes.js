@@ -100,4 +100,13 @@ router.get('/seller/sales-data', isAuthPage, async (req, res) => {
   }
 });
 
+/**
+ * Rota para exibir a página pública de um vendedor com seus anúncios.
+ * @name GET /vendedores/:id
+ * @function
+ * @memberof module:routes/sellerRoutes
+ * @inner
+ */
+router.get('/vendedores/:id', sellerController.getSellerPage);
+
 module.exports = router;

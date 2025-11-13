@@ -8,7 +8,9 @@
   <div class="search-container">
     <aside class="filters">
       <h3>Filtros</h3>
-      <form action="/encyclopedia" method="GET">
+      <div class="filters-container">
+        <input type="search" id="search-input" name="q" placeholder="Buscar por nome..." value="<%= filters && filters.q ? filters.q : '' %>" class="form-control mb-3" />
+        
         <% if (filterGroups && filterGroups.length > 0) { %>
           <% filterGroups.forEach(group => { %>
             <div class="filter-group">
@@ -17,21 +19,18 @@
               <% group.options.forEach(option => { 
                    const value = typeof option === 'object' ? option.value : option;
                    const label = typeof option === 'object' ? option.display : option;
-                   const checked = (filters && filters[group.key] === value) ? 'checked' : '';
+                   const isActive = (filters && filters[group.key] === value);
               %>
-                <label>
-                  <input type="radio" name="<%= group.key %>" value="<%= value %>" <%= checked %> onchange="this.form.submit()" />
+                <a href="#" class="filter-option <%= isActive ? 'active' : '' %>" data-filter-key="<%= group.key %>" data-filter-value="<%= value %>">
                   <%= label %>
-                </label>
+                </a>
               <% }) %>
               </div>
             </div>
           <% }) %>
         <% } %>
-        <input type="search" name="q" placeholder="Buscar por nome..." value="<%= filters && filters.q ? filters.q : '' %>" class="form-control mb-3" />
-        <button type="submit" class="btn btn-primary w-100 mb-2">Buscar</button>
-        <a href="/encyclopedia" class="btn btn-secondary w-100">Limpar Filtros</a>
-      </form>
+        <a href="/encyclopedia" class="btn btn-secondary w-100 mt-3">Limpar Filtros</a>
+      </div>
     </aside>
 
     <section class="results">

@@ -13,12 +13,6 @@
             <h1>Crie sua Conta</h1>
             <p class="subtitle">Comece a negociar suas cartas hoje mesmo!</p>
 
-            <div class="social-login">
-                <a href="/auth/google" class="btn-social">G Google</a>
-            </div>
-
-            <div class="divider">Ou</div>
-
             <form id="register-form" action="/auth/register" method="POST">
 
 
@@ -57,12 +51,31 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const registerForm = document.getElementById('register-form');
+            const phoneInput = document.getElementById('phone');
+
+            phoneInput.addEventListener('input', (e) => {
+                let value = e.target.value.replace(/\D/g, '');
+                value = value.substring(0, 11); // Limita a 11 dígitos (DD + 9 dígitos)
+
+                if (value.length > 7) {
+                    e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+                } else if (value.length > 2) {
+                    e.target.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+                } else if (value.length > 0) {
+                    e.target.value = `(${value.slice(0)}`;
+                } else {
+                    e.target.value = '';
+                }
+            });
 
             registerForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
 
                 const formData = new FormData(registerForm);
                 const data = Object.fromEntries(formData.entries());
+
+                // Remove a máscara antes de enviar para o backend
+                data.phone = data.phone.replace(/\D/g, '');
 
                 const submitButton = registerForm.querySelector('button[type="submit"]');
                 submitButton.disabled = true;

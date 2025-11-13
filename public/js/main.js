@@ -317,7 +317,7 @@ document.addEventListener('DOMContentLoaded', () => {
         position: 'fixed',
         top: '20px',
         right: '20px',
-        zIndex: '1000',
+        zIndex: '9999',
         display: 'flex',
         flexDirection: 'column',
         gap: '10px'
