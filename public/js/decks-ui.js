@@ -88,6 +88,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
                 drawerContent.innerHTML = `
                     <img src="${leaderImage}" alt="Leader" style="width:100%; border-radius: 8px; margin-bottom: 1rem;">
+                    ${deckDetails.leader && deckDetails.leader.card ? `
+                        <div class="leader-card">
+                            <h3>${deckDetails.leader.card.name}</h3>
+                            ${deckDetails.leader.card.color ? `<p><strong>Cor:</strong> ${deckDetails.leader.card.color}</p>` : ''}
+                            ${deckDetails.leader.card.ability ? `<p><strong>Habilidade:</strong> ${deckDetails.leader.card.ability}</p>` : ''}
+                            ${deckDetails.leader.card.cost !== undefined ? `<p><strong>Custo:</strong> ${deckDetails.leader.card.cost}</p>` : ''}
+                            ${deckDetails.leader.card.power !== undefined ? `<p><strong>Poder:</strong> ${deckDetails.leader.card.power}</p>` : ''}
+                        </div>
+                    ` : ''}
                     <h3>${deckDetails.title}</h3>
                     <p><strong>Autor:</strong> ${deckDetails.owner.username}</p>
                     <p><strong>Total de Cartas:</strong> ${cardCount}</p>

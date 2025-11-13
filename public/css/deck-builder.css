@@ -401,8 +401,7 @@ h1, h2, h3, h4 {
 }
 
 #leader-card .deck-card {
-  width: 50px; /* Set width to match card search page */
-  height: 70px; /* Set height to match card search page */
+  /* Removed specific width and height to allow .leader-image-wrapper to control size */
   flex-shrink: 0; /* Prevent shrinking */
 }
 
@@ -773,8 +772,8 @@ h1, h2, h3, h4 {
 
 .leader-image-wrapper {
   position: relative;
-  width: 50px; /* Match the desired image width */
-  height: 70px; /* Match the desired image height */
+  width: 200px; /* Increased width */
+  height: 280px; /* Increased height */
   flex-shrink: 0;
 }
 

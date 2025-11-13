@@ -165,9 +165,9 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="leader-info">
                 <p class="leader-name"><strong>${card.name}</strong></p>
-                <p class="leader-details">Cor: ${card.color || 'N/A'}</p>
-                <p class="leader-details">Custo: ${card.cost || 'N/A'}</p>
-                <p class="leader-details">Poder: ${card.power || 'N/A'}</p>
+                ${card.color ? `<p class="leader-details">Cor: ${card.color}</p>` : ''}
+                ${card.cost ? `<p class="leader-details">Custo: ${card.cost}</p>` : ''}
+                ${card.power ? `<p class="leader-details">Poder: ${card.power}</p>` : ''}
             </div>
         `;
         container.appendChild(leaderCardElement);
