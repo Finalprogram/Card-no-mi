@@ -147,6 +147,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function renderLeaderCard(container, leaderItem) {
+        container.innerHTML = ''; // Clear placeholder
+        const card = leaderItem.card;
+        if (!card) return;
+
+        const imageUrl = card.image_url === 'placeholder-leader.png' ? '/images/default-avatar.png' : card.image_url;
+
+        const leaderCardElement = document.createElement('div');
+        leaderCardElement.classList.add('leader-card-display'); // New class for leader card display
+        leaderCardElement.dataset.cardId = card._id;
+
+        leaderCardElement.innerHTML = `
+            <div class="leader-image-wrapper">
+                <img src="${imageUrl}" alt="${card.name}">
+                ${window.isOwner ? `<button class="remove-card-btn" data-card-id="${card._id}">-</button>` : ''}
+            </div>
+            <div class="leader-info">
+                <p class="leader-name"><strong>${card.name}</strong></p>
+                <p class="leader-details">Cor: ${card.color || 'N/A'}</p>
+                <p class="leader-details">Custo: ${card.cost || 'N/A'}</p>
+                <p class="leader-details">Poder: ${card.power || 'N/A'}</p>
+            </div>
+        `;
+        container.appendChild(leaderCardElement);
+    }
+
     function createDeckCardElement(item) {
         const cardElement = document.createElement('div');
         cardElement.classList.add('deck-card');
@@ -180,16 +206,15 @@ document.addEventListener('DOMContentLoaded', () => {
     deckViewContainer.addEventListener('click', (e) => {
         if (!isOwner) return;
         const target = e.target;
-        const cardElement = target.closest('.deck-card');
-        if (!cardElement) return;
-
-        const isLeaderCard = cardElement.parentElement.id === 'leader-card';
 
         if (target.classList.contains('remove-card-btn')) {
-            if (isLeaderCard) {
+            const leaderCardDisplay = target.closest('.leader-card-display');
+            if (leaderCardDisplay) {
                 deck.leader = null;
                 showToast('Líder removido.');
             } else {
+                const cardElement = target.closest('.deck-card');
+                if (!cardElement) return; // Should not happen if remove-card-btn is clicked
                 const cardId = cardElement.dataset.cardId;
                 const itemIndex = deck.main.findIndex(i => (i.card?._id || i.ghostCard?.name) === cardId);
                 if (itemIndex > -1) {
@@ -202,12 +227,12 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (target.classList.contains('add-copy-btn')) {
-            if (!isLeaderCard) {
-                const cardId = cardElement.dataset.cardId;
-                const item = deck.main.find(i => (i.card?._id || i.ghostCard?.name) === cardId);
-                if (item && item.quantity < 4) {
-                    item.quantity++;
-                }
+            const cardElement = target.closest('.deck-card');
+            if (!cardElement) return; // Should not happen if add-copy-btn is clicked
+            const cardId = cardElement.dataset.cardId;
+            const item = deck.main.find(i => (i.card?._id || i.ghostCard?.name) === cardId);
+            if (item && item.quantity < 4) {
+                item.quantity++;
             }
         }
         renderDeck();
@@ -429,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Leader
         if (deck.leader) {
             leaderCardContainer.innerHTML = ''; // Limpa o placeholder se houver
-            leaderCardContainer.appendChild(createDeckCardElement(deck.leader));
+            renderLeaderCard(leaderCardContainer, deck.leader);
         }
 
         // Main Deck
