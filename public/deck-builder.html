@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     
     <!-- CSS Atualizado -->
-    <link rel="stylesheet" href="css/deck-builder.css">
+    <link rel="stylesheet" href="css/deck-builder.css?v=1.1">
 
     <!-- Biblioteca de Ícones (Ex: Phosphor Icons) -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
@@ -37,18 +37,16 @@
         <!-- Coluna da Direita: Construção do Deck -->
         <main class="main-content panel-slide-in">
             <header class="deck-header">
-                <h1><i class="ph-bold ph-scroll"></i> Meu Deck</h1>
-                <div class="deck-actions">
-                    <button class="btn btn-secondary"><i class="ph-bold ph-upload-simple"></i> Importar</button>
-                    <button class="btn btn-secondary"><i class="ph-bold ph-download-simple"></i> Exportar</button>
+                <div class="header-top-row">
+                    <h1><i class="ph-bold ph-scroll"></i> Meu Deck</h1>
+                    <div class="deck-actions">
+                        <button class="btn btn-secondary"><i class="ph-bold ph-upload-simple"></i> Importar</button>
+                        <button class="btn btn-secondary"><i class="ph-bold ph-download-simple"></i> Exportar</button>
+                    </div>
                 </div>
-            </header>
 
-            <!-- Detalhes do Deck com efeito Glassmorphism -->
-            <section class="deck-details glass-panel">
-                <input type="text" id="deck-title" placeholder="Título do Deck (Ex: Supernovas em Ação)">
-                <textarea id="deck-description" placeholder="Adicione uma breve descrição para seu deck..."></textarea>
-            </section>
+
+            </header>
 
             <!-- Abas de Visualização -->
             <div class="deck-tabs">

@@ -23,6 +23,16 @@
         
         <!-- Coluna da Esquerda: Busca de Cartas -->
         <aside class="sidebar panel-fade-in">
+            <!-- Detalhes do Deck com efeito Glassmorphism -->
+            <section class="deck-details glass-panel">
+                <input type="text" id="deck-title" placeholder="Título do Deck (Ex: Supernovas em Ação)" value="<%= deck ? deck.title : '' %>" <%= !isOwner ? 'disabled' : '' %>/>
+                <textarea id="deck-description" placeholder="Adicione uma breve descrição para seu deck..." <%= !isOwner ? 'disabled' : '' %>><%= deck ? deck.description : '' %></textarea>
+                <div class="deck-privacy">
+                    <input type="checkbox" id="deck-is-public" name="isPublic" <%= deck && deck.isPublic ? 'checked' : '' %> <%= !isOwner ? 'disabled' : '' %>/>
+                    <label for="deck-is-public">Deck público (visível para a comunidade)</label>
+                </div>
+            </section>
+
             <header class="sidebar-header">
                 <h2><i class="ph-bold ph-magnifying-glass"></i> Buscar Cartas</h2>
             </header>
@@ -46,16 +56,6 @@
                     <button id="export-deck-btn" class="btn btn-secondary"><i class="ph-bold ph-download-simple"></i> Exportar</button>
                 </div>
             </header>
-
-            <!-- Detalhes do Deck com efeito Glassmorphism -->
-            <section class="deck-details glass-panel">
-                <input type="text" id="deck-title" placeholder="Título do Deck (Ex: Supernovas em Ação)" value="<%= deck ? deck.title : '' %>" <%= !isOwner ? 'disabled' : '' %>/>
-                <textarea id="deck-description" placeholder="Adicione uma breve descrição para seu deck..." <%= !isOwner ? 'disabled' : '' %>><%= deck ? deck.description : '' %></textarea>
-                <div class="deck-privacy">
-                    <input type="checkbox" id="deck-is-public" name="isPublic" <%= deck && deck.isPublic ? 'checked' : '' %> <%= !isOwner ? 'disabled' : '' %>/>
-                    <label for="deck-is-public">Deck público (visível para a comunidade)</label>
-                </div>
-            </section>
 
             <!-- Abas de Visualização -->
             <div class="deck-view-tabs">
