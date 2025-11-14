@@ -7,14 +7,22 @@ const Card = require('../models/Card');
 exports.searchCards = async (req, res) => {
     try {
         const query = req.query.q;
+        console.log(`Search query received: "${query}"`);
+
         if (!query || query.length < 3) {
             return res.json([]);
         }
 
         // Use a case-insensitive regex to find cards
         const cards = await Card.find({
-            name: { $regex: query, $options: 'i' }
-        }); // Limit results to avoid overwhelming the client
+            $or: [
+                { name: { $regex: query, $options: 'i' } },
+                { family: { $regex: query, $options: 'i' } },
+                { ability: { $regex: query, $options: 'i' } }
+            ]
+        });
+
+        console.log(`Found ${cards.length} cards for query "${query}"`);
 
         res.json(cards);
     } catch (error) {

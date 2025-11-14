@@ -155,8 +155,15 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.message || 'Falha ao salvar os anúncios.');
+                let errorMessage = 'Falha ao salvar os anúncios.';
+                try {
+                    const errorData = await response.json();
+                    errorMessage = errorData.message || errorMessage;
+                } catch (e) {
+                    // Se a resposta não for JSON, use o statusText
+                    errorMessage = response.statusText;
+                }
+                throw new Error(errorMessage);
             }
 
             const data = await response.json();

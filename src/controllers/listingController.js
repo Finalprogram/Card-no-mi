@@ -11,7 +11,12 @@ const bulkCreateListings = async (req, res) => {
 
     
     // Pega o ID do usuário logado a partir da sessão
-    const sellerId = req.session.user.id;
+    const sellerId = req.session.user ? req.session.user.id : null;
+
+    // Adiciona verificação para garantir que o usuário está logado
+    if (!sellerId) {
+      return res.status(401).json({ message: 'Sessão de usuário não encontrada ou expirada. Por favor, faça login novamente.' });
+    }
 
     if (!listingsData || listingsData.length === 0) {
       return res.status(400).json({ message: 'Nenhum anúncio para criar.' });

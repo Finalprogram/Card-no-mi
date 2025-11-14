@@ -243,12 +243,13 @@ const searchForDeckBuilder = async (req, res) => {
       {
         $match: {
           game: 'onepiece',
-          name: { $regex: searchQuery, $options: 'i' }
+          $or: [ // Add $or to search by name or code
+            { name: { $regex: searchQuery, $options: 'i' } },
+            { code: { $regex: searchQuery, $options: 'i' } }
+          ]
         }
       },
-      {
-        $limit: 10
-      },
+      // Removed $limit: 10 to return all matching cards
       {
         $lookup: {
           from: 'listings',
@@ -330,19 +331,37 @@ const getAllCards = async (req, res) => {
     if (req.query.color) filterQuery.colors = new RegExp(req.query.color, 'i');
     if (req.query.type) filterQuery.type_line = req.query.type;
     if (req.query.set) filterQuery.set_name = req.query.set;
-    if (req.query.q) filterQuery.name = new RegExp(req.query.q, 'i');
+    
+    if (req.query.q) {
+      const searchQuery = new RegExp(req.query.q, 'i');
+      filterQuery.$or = [
+        { name: searchQuery },
+        { code: searchQuery }
+      ];
+    }
 
-    const cards = await Card.find(filterQuery)
-      .sort({ name: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    let cards;
+    let totalCards;
+    let hasMore = false;
 
-    const totalCards = await Card.countDocuments(filterQuery);
+    if (req.query.q) {
+      // Se houver uma busca específica (q), retorna todos os resultados sem paginação
+      cards = await Card.find(filterQuery).sort({ name: 1 });
+      totalCards = cards.length;
+    } else {
+      // Se não houver busca, aplica a paginação
+      cards = await Card.find(filterQuery)
+        .sort({ name: 1 })
+        .skip((page - 1) * limit)
+        .limit(limit);
+      totalCards = await Card.countDocuments(filterQuery);
+      hasMore = (page * limit) < totalCards;
+    }
 
     res.json({
       cards,
-      hasMore: (page * limit) < totalCards,
-      currentPage: page,
+      hasMore,
+      currentPage: req.query.q ? 1 : page,
     });
 
   } catch (error) {
