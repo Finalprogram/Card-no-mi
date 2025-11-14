@@ -1,4 +1,5 @@
 const Order = require('../models/Order');
+const logger = require('../config/logger');
 
 const confirmReceipt = async (req, res) => {
   try {
@@ -22,10 +23,12 @@ const confirmReceipt = async (req, res) => {
     order.status = 'Delivered';
     await order.save();
 
+    logger.info(`[Order Update] Order #${orderId} status changed to Delivered by User ID: ${userId}.`);
+
     res.redirect(`/meus-pedidos/${orderId}`);
 
   } catch (error) {
-    console.error('Erro ao confirmar o recebimento do pedido:', error);
+    logger.error(`Error confirming receipt for order ID ${req.params.orderId}:`, error);
     res.status(500).send('Erro no servidor');
   }
 };

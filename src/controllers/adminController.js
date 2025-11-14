@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Setting = require('../models/Setting');
 const Coupon = require('../models/Coupon');
+const logger = require('../config/logger');
 
 async function showDashboard(req, res) {
   try {
@@ -35,7 +36,7 @@ async function showDashboard(req, res) {
       pageTitle: 'Admin Dashboard'
     });
   } catch (error) {
-    console.error('Error showing admin dashboard:', error);
+    logger.error('Error showing admin dashboard:', error);
     res.status(500).send('Internal Server Error');
   }
 }
@@ -57,27 +58,30 @@ async function listUsers(req, res) {
       pageTitle: 'Manage Users'
     });
   } catch (error) {
-    console.error('Error listing users:', error);
+    logger.error('Error listing users:', error);
     res.status(500).send('Internal Server Error');
   }
 }
 
 async function setFee(req, res) {
-  try {
-    const { id } = req.params;
-    const { fee_override_percentage } = req.body;
+  const adminId = req.session.user.id;
+  const { id } = req.params;
+  const { fee_override_percentage } = req.body;
 
+  try {
     const user = await User.findById(id);
     if (!user) {
       return res.status(404).json({ message: 'User not found.' });
     }
 
-    user.fee_override_percentage = fee_override_percentage === 'null' ? null : Number(fee_override_percentage);
+    const newFee = fee_override_percentage === 'null' ? null : Number(fee_override_percentage);
+    user.fee_override_percentage = newFee;
     await user.save();
 
+    logger.info(`[Admin Action] Admin ID: ${adminId} set custom fee for User ID: ${id} to ${newFee}%.`);
     res.json({ success: true, message: 'Fee updated successfully.' });
   } catch (error) {
-    console.error('Error setting user fee:', error);
+    logger.error(`[Admin Action] Error setting fee for User ID: ${id} by Admin ID: ${adminId}. Error:`, error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 }
@@ -92,9 +96,10 @@ async function showCreateCouponPage(req, res) {
 }
 
 async function createCoupon(req, res) {
-  try {
-    const { code, discountType, discountValue, expirationDate, usageLimit, minimumOrderAmount } = req.body;
+  const adminId = req.session.user.id;
+  const { code, discountType, discountValue, expirationDate, usageLimit, minimumOrderAmount } = req.body;
 
+  try {
     // Basic validation
     if (!code || !discountType || !discountValue || !expirationDate) {
       req.session.message = { type: 'error', text: 'Por favor, preencha todos os campos obrigatórios.' };
@@ -112,11 +117,12 @@ async function createCoupon(req, res) {
 
     await newCoupon.save();
 
+    logger.info(`[Admin Action] Admin ID: ${adminId} created new coupon. Code: ${code}, Type: ${discountType}, Value: ${discountValue}.`);
     req.session.message = { type: 'success', text: 'Cupom criado com sucesso!' };
     res.redirect('/admin/coupons/create');
 
   } catch (error) {
-    console.error('Error creating coupon:', error);
+    logger.error(`[Admin Action] Error creating coupon by Admin ID: ${adminId}. Error:`, error);
     if (error.code === 11000) { // Duplicate key error
       req.session.message = { type: 'error', text: 'Código de cupom já existe. Por favor, escolha outro.' };
     } else {
@@ -127,9 +133,10 @@ async function createCoupon(req, res) {
 }
 
 async function setDefaultFee(req, res) {
-  try {
-    const { newDefaultFee } = req.body;
+  const adminId = req.session.user.id;
+  const { newDefaultFee } = req.body;
 
+  try {
     if (newDefaultFee === undefined || newDefaultFee === null || isNaN(Number(newDefaultFee))) {
       return res.status(400).json({ message: 'Invalid fee value provided.' });
     }
@@ -150,9 +157,10 @@ async function setDefaultFee(req, res) {
       { upsert: true, new: true }
     );
 
+    logger.info(`[Admin Action] Admin ID: ${adminId} set default fee for all seller types to ${feeValue}%.`);
     res.json({ success: true, message: `Default fee updated to ${feeValue}%.` });
   } catch (error) {
-    console.error('Error setting default fee:', error);
+    logger.error(`[Admin Action] Error setting default fee by Admin ID: ${adminId}. Error:`, error);
     res.status(500).json({ message: 'Internal Server Error' });
   }
 }

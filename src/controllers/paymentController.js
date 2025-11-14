@@ -90,7 +90,7 @@ async function createMercadoPagoPreference(req, res) {
     });
 
     await newOrder.save();
-    logger.info(`[payment] Pedido #${newOrder._id} criado para Mercado Pago.`);
+    logger.info(`[Order Creation] Order #${newOrder._id} created for user ${userId} with total ${totals.grand}. Status: PendingPayment.`);
 
     const items = cart.items.map(item => ({
       title: item.meta.cardName,

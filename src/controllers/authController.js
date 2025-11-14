@@ -129,9 +129,11 @@ const showLoginPage = (req, res) => {
 const loginUser = async (req, res) => {
   try {
     const { email, password } = req.body;
+    const clientIp = req.ip; // Captura o IP do cliente
 
     // Validação básica
     if (!email || !password) {
+      logger.warn(`[Login Attempt] Failed: Missing email or password. IP: ${clientIp}`);
       req.flash('error', 'Por favor, preencha todos os campos.');
       return res.redirect('/auth/login');
     }
@@ -139,7 +141,7 @@ const loginUser = async (req, res) => {
     // Encontra o usuário no banco de dados pelo email
     const user = await User.findOne({ email });
     if (!user) {
-      // Usamos uma mensagem genérica por segurança
+      logger.warn(`[Login Attempt] Failed: User not found for email: ${email}. IP: ${clientIp}`);
       req.flash('error', 'Email ou senha inválidos.');
       return res.redirect('/auth/login');
     }
@@ -147,6 +149,7 @@ const loginUser = async (req, res) => {
     // Compara a senha digitada com a senha criptografada (hash) no banco
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      logger.warn(`[Login Attempt] Failed: Invalid password for user: ${user.username} (ID: ${user._id}). IP: ${clientIp}`);
       req.flash('error', 'Email ou senha inválidos.');
       return res.redirect('/auth/login');
     }
@@ -154,6 +157,7 @@ const loginUser = async (req, res) => {
     // SUCESSO! A senha corresponde.
     // Verifica se o email do usuário foi verificado
     if (!user.isVerified) {
+      logger.warn(`[Login Attempt] Failed: Account not verified for user: ${user.username} (ID: ${user._id}). IP: ${clientIp}`);
       req.flash('error', 'Por favor, verifique seu email para ativar sua conta.');
       return res.redirect('/auth/login');
     }
@@ -171,6 +175,8 @@ const loginUser = async (req, res) => {
         accountType: user.accountType,
         avatar: user.avatar
       };
+      
+      logger.info(`[Login] Success: User ${user.username} (ID: ${user._id}) logged in. IP: ${clientIp}`);
 
       if (user.firstLogin) {
         return res.redirect('/welcome/step1');
@@ -187,8 +193,14 @@ const loginUser = async (req, res) => {
 };
 
 const logoutUser = (req, res) => {
+  const user = req.session.user;
+  if (user) {
+    logger.info(`[Logout] User ${user.username} (ID: ${user.id}) logged out.`);
+  }
+
   req.session.destroy(err => {
     if (err) {
+      logger.error(`[Logout] Error destroying session for user ID: ${user?.id}:`, err);
       return res.redirect('/dashboard'); // Se der erro, manda para o dashboard
     }
     res.clearCookie('connect.sid'); // Limpa o cookie da sessão
@@ -240,7 +252,7 @@ const updateProfile = async (req, res) => {
     }, { new: true });
 
     if (updatedUser) {
-        logger.info('[updateProfile] Usuário após a atualização:', updatedUser.toObject());
+        logger.info(`[updateProfile] Profile updated successfully for user ID: ${userId}.`);
         req.session.user.address = updatedUser.address;
         req.session.user.fullName = updatedUser.fullName;
         req.session.user.phone = updatedUser.phone;
