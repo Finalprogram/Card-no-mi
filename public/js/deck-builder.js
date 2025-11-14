@@ -112,9 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function handleLeaderActionClick(e) {
         if (e.target.closest('#change-leader-btn')) {
-            deck.leader = null;
-            showToast('Líder removido. Selecione um novo líder.');
-            renderLeaderSection();
+            window.location.href = '/decks/community';
         }
         if (e.target.closest('#confirm-leader-btn')) {
             document.getElementById('deck-view-container').scrollIntoView({ behavior: 'smooth' });
