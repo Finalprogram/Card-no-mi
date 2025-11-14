@@ -133,6 +133,10 @@ app.use(session({
 
 app.use(flash());
 
+// Import and use the visitorTracker middleware
+const visitorTracker = require('./src/middleware/visitorTracker');
+app.use(visitorTracker);
+
 app.use((req, res, next) => {
   res.locals.user = req.session.user || null;
   res.locals.success_msg = req.flash('success_msg');

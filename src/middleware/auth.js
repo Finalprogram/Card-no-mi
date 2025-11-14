@@ -1,8 +1,28 @@
 // src/middleware/auth.js
 
+const mongoose = require('mongoose');
+const User = mongoose.model('User'); // Import the User model
+
+// In-memory object to store last activity update times for debouncing
+const lastActivityUpdate = {};
+const DEBOUNCE_TIME_MS = 60 * 1000; // 1 minute
+
 // Middleware para PÁGINAS: se não estiver logado, redireciona para /login
-const isAuthPage = (req, res, next) => {
+const isAuthPage = async (req, res, next) => {
   if (req.session.user) {
+    // Activity tracking with debouncing
+    const userId = req.session.user._id;
+    const now = Date.now();
+
+    if (!lastActivityUpdate[userId] || (now - lastActivityUpdate[userId] > DEBOUNCE_TIME_MS)) {
+      try {
+        await User.findByIdAndUpdate(userId, { lastActivityAt: now });
+        lastActivityUpdate[userId] = now; // Update debounce timestamp
+      } catch (error) {
+        console.error('Error updating lastActivityAt for user:', userId, error);
+        // Continue without blocking the request even if update fails
+      }
+    }
     return next();
   }
   res.redirect('/auth/login');

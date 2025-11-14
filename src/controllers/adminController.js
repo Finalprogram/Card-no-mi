@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Order = require('../models/Order');
 const Setting = require('../models/Setting');
 const Coupon = require('../models/Coupon');
+const DailyVisitorCount = require('../models/DailyVisitorCount'); // Import DailyVisitorCount model
 const logger = require('../config/logger');
 
 async function showDashboard(req, res) {
@@ -9,6 +10,16 @@ async function showDashboard(req, res) {
     // Placeholder for dashboard data
     const totalUsers = await User.countDocuments();
     const totalOrders = await Order.countDocuments();
+
+    // Calculate active users (last 5 minutes)
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+    const activeUsers = await User.countDocuments({ lastActivityAt: { $gte: fiveMinutesAgo } });
+
+    // Fetch historical unique visitor data for the last 30 days
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const historicalVisitors = await DailyVisitorCount.find({
+      date: { $gte: thirtyDaysAgo }
+    }).sort({ date: 1 }); // Sort by date ascending
 
     // Calculate total marketplace fees (example - needs refinement based on Order model structure)
     // This assumes your Order model stores marketplaceFee per order or per item within an order
@@ -32,6 +43,8 @@ async function showDashboard(req, res) {
       layout: 'layouts/admin', // Assuming an admin layout
       totalUsers,
       totalOrders,
+      activeUsers, // Pass active users count to the view
+      historicalVisitors, // Pass historical unique visitor data to the view
       totalMarketplaceRevenue: totalMarketplaceRevenue.toFixed(2),
       pageTitle: 'Admin Dashboard'
     });

@@ -267,6 +267,44 @@ color: #F0F2F5;
                 </div>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-warning mb-3">
+                <div class="card-header">Active Users</div>
+                <div class="card-body">
+                    <h5 class="card-title"><%= activeUsers %></h5>
+                    <p class="card-text">Users active in the last 5 minutes.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-8">
+            <div class="card text-white bg-secondary mb-3">
+                <div class="card-header">Historical Unique Visitors</div>
+                <div class="card-body">
+                    <table class="table table-dark table-striped">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Visitors</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (historicalVisitors && historicalVisitors.length > 0) { %>
+                                <% historicalVisitors.forEach(visitor => { %>
+                                    <tr>
+                                        <td><%= new Date(visitor.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' }) %></td>
+                                        <td><%= visitor.count %></td>
+                                    </tr>
+                                <% }); %>
+                            <% } else { %>
+                                <tr>
+                                    <td colspan="2">No historical visitor data available.</td>
+                                </tr>
+                            <% } %>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="row mt-4">
@@ -282,3 +320,21 @@ color: #F0F2F5;
         </div>
     </div>
 </div>
+
+<script>
+    // This script is for client-side formatting if needed, but EJS handles it server-side.
+    // Keeping it here as a placeholder for potential future client-side chart integration.
+    document.addEventListener('DOMContentLoaded', () => {
+        // Example of how you might fetch real-time active users if you had a dedicated API endpoint
+        // function fetchActiveUsers() {
+        //     fetch('/api/admin/active-users')
+        //         .then(response => response.json())
+        //         .then(data => {
+        //             document.getElementById('activeUsersCount').innerText = data.count;
+        //         })
+        //         .catch(error => console.error('Error fetching active users:', error));
+        // }
+        // setInterval(fetchActiveUsers, 10000); // Update every 10 seconds
+        // fetchActiveUsers(); // Initial fetch
+    });
+</script>

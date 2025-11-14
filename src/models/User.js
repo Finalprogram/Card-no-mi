@@ -42,6 +42,8 @@ const UserSchema = new mongoose.Schema({
     default: null 
   },
 
+  lastActivityAt: { type: Date },
+
   createdAt: { type: Date, default: Date.now },
   firstLogin: { type: Boolean, default: true },
 });
