@@ -9,6 +9,7 @@ router.use(isAdminPage);
 router.get('/dashboard', adminController.showDashboard);
 router.get('/users', adminController.listUsers);
 router.post('/users/:id/set-fee', isAdminApi, adminController.setFee);
+router.post('/settings/default-fee', isAdminApi, adminController.setDefaultFee);
 
 router.get('/coupons/create', adminController.showCreateCouponPage);
 router.post('/coupons', adminController.createCoupon);

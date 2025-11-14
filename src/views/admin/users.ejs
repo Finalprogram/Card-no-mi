@@ -243,6 +243,18 @@
 <div class="container mt-4">
     <h2>Manage Users</h2>
 
+    <div class="card mb-4">
+        <div class="card-header">Set Default Marketplace Fee</div>
+        <div class="card-body">
+            <form id="setDefaultFeeForm">
+                <div class="input-group">
+                    <input type="number" step="0.01" class="form-control" id="defaultFeeInput" placeholder="New Default Fee %" value="<%= defaultFees['individual'] || 0 %>">
+                    <button type="submit" class="btn btn-primary">Set Global Default</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <table class="table table-striped">
         <thead>
             <tr>
@@ -284,6 +296,31 @@
 </div>
 
 <script>
+    document.getElementById('setDefaultFeeForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const newDefaultFee = document.getElementById('defaultFeeInput').value.trim();
+
+        try {
+            const res = await fetch('/admin/settings/default-fee', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ newDefaultFee: newDefaultFee }),
+            });
+            const data = await res.json();
+            if (data.success) {
+                alert('Default fee updated successfully!');
+                location.reload();
+            } else {
+                alert('Error: ' + (data.message || 'Could not update default fee.'));
+            }
+        } catch (error) {
+            console.error('Error setting default fee:', error);
+            alert('An error occurred while updating the default fee.');
+        }
+    });
+
     document.querySelectorAll('.set-fee-form').forEach(form => {
         form.addEventListener('submit', async (e) => {
             e.preventDefault();

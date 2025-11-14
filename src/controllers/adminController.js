@@ -126,10 +126,42 @@ async function createCoupon(req, res) {
   }
 }
 
+async function setDefaultFee(req, res) {
+  try {
+    const { newDefaultFee } = req.body;
+
+    if (newDefaultFee === undefined || newDefaultFee === null || isNaN(Number(newDefaultFee))) {
+      return res.status(400).json({ message: 'Invalid fee value provided.' });
+    }
+
+    const feeValue = Number(newDefaultFee);
+
+    // Update fee for 'individual' account type
+    await Setting.findOneAndUpdate(
+      { key: 'fee_individual_percentage' },
+      { value: feeValue, description: `Taxa padrão para vendedores do tipo "individual", em porcentagem.` },
+      { upsert: true, new: true }
+    );
+
+    // Update fee for 'shop' account type
+    await Setting.findOneAndUpdate(
+      { key: 'fee_shop_percentage' },
+      { value: feeValue, description: `Taxa padrão para vendedores do tipo "loja" (shop), em porcentagem.` },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true, message: `Default fee updated to ${feeValue}%.` });
+  } catch (error) {
+    console.error('Error setting default fee:', error);
+    res.status(500).json({ message: 'Internal Server Error' });
+  }
+}
+
 module.exports = {
   showDashboard,
   listUsers,
   setFee,
   showCreateCouponPage,
   createCoupon,
+  setDefaultFee,
 };
