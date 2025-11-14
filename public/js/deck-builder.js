@@ -23,6 +23,59 @@ document.addEventListener('DOMContentLoaded', () => {
     let activeView = 'padrão';
     let debounceTimer;
 
+    // --- Zoom Modal Elements ---
+    const zoomModal = document.createElement('div');
+    zoomModal.id = 'card-zoom-modal';
+    zoomModal.style.cssText = `
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0,0,0,0.9);
+        justify-content: center;
+        align-items: center;
+    `;
+    zoomModal.innerHTML = `
+        <span id="zoom-close-btn" style="
+            position: absolute;
+            top: 15px;
+            right: 35px;
+            color: #f1f1f1;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+        ">&times;</span>
+        <img class="modal-content" id="zoomed-card-img" style="
+            margin: auto;
+            display: block;
+            width: 80%;
+            max-width: 700px;
+        ">
+    `;
+    document.body.appendChild(zoomModal);
+
+    const zoomedCardImg = document.getElementById('zoomed-card-img');
+    const zoomCloseBtn = document.getElementById('zoom-close-btn');
+
+    zoomCloseBtn.addEventListener('click', () => {
+        zoomModal.style.display = 'none';
+    });
+
+    zoomModal.addEventListener('click', (e) => {
+        if (e.target === zoomModal) {
+            zoomModal.style.display = 'none';
+        }
+    });
+
+    function openZoomModal(imageUrl) {
+        zoomModal.style.display = 'flex';
+        zoomedCardImg.src = imageUrl;
+    }
+
     function showToast(message) {
         toastNotification.textContent = message;
         toastNotification.style.display = 'block';
@@ -160,17 +213,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
         leaderCardElement.innerHTML = `
             <div class="leader-image-wrapper">
-                <img src="${imageUrl}" alt="${card.name}">
+                <img src="${imageUrl}" alt="${card.name}" class="zoomable-card-image">
                 ${window.isOwner ? `<button class="remove-card-btn" data-card-id="${card._id}">-</button>` : ''}
             </div>
             <div class="leader-info">
                 <p class="leader-name"><strong>${card.name}</strong></p>
-                ${card.color ? `<p class="leader-details">Cor: ${card.color}</p>` : ''}
-                ${card.cost ? `<p class="leader-details">Custo: ${card.cost}</p>` : ''}
-                ${card.power ? `<p class="leader-details">Poder: ${card.power}</p>` : ''}
             </div>
         `;
         container.appendChild(leaderCardElement);
+
+        // Add click listener for zoom
+        leaderCardElement.querySelector('.zoomable-card-image').addEventListener('click', () => {
+            openZoomModal(imageUrl);
+        });
     }
 
     function createDeckCardElement(item) {
