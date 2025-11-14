@@ -63,6 +63,15 @@ router.get('/api/cards/all', cardController.getAllCards);
 router.get('/api/decks/search-cards', cardController.searchForDeckBuilder);
 
 /**
+ * Rota da API para buscar cartas Líder.
+ * @name GET /api/cards/leaders
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
+router.get('/api/cards/leaders', cardController.getLeaders);
+
+/**
  * Rota de debug para buscar uma carta pelo nome e logar seus detalhes.
  * @name GET /api/debug/card/:name
  * @function

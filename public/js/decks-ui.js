@@ -19,6 +19,116 @@ document.addEventListener('DOMContentLoaded', () => {
     let deckToDeleteId = null;
     let draggedItem = null;
 
+    // --- New elements for Leader Selection Modal ---
+    const createDeckBtn = qs('#create-deck-btn');
+    const leaderSelectionModal = qs('#leader-selection-modal');
+    const leaderModalCloseBtn = qs('#leader-selection-modal .close-btn');
+    const leaderSearchInput = qs('#leader-search-input');
+    const leaderColorFilter = qs('#leader-color-filter');
+    const leaderEditionFilter = qs('#leader-edition-filter');
+    const leaderGallery = qs('#leader-gallery');
+
+    let allLeaders = []; // To store all fetched leaders
+    let filteredLeaders = []; // To store currently filtered leaders
+
+    // --- Leader Selection Modal Functions ---
+    async function fetchLeaders() {
+        try {
+            leaderGallery.innerHTML = '<p class="placeholder-text">Carregando líderes...</p>';
+            const response = await fetch('/api/cards/leaders');
+            if (!response.ok) {
+                throw new Error('Failed to fetch leaders');
+            }
+            const leaders = await response.json();
+            allLeaders = leaders;
+            populateEditionFilter(leaders);
+            filterLeaders(); // Initial render with no filters
+        } catch (error) {
+            console.error('Error fetching leaders:', error);
+            leaderGallery.innerHTML = '<p class="placeholder-text">Erro ao carregar líderes.</p>';
+        }
+    }
+
+    function populateEditionFilter(leaders) {
+        const editions = new Set();
+        leaders.forEach(leader => {
+            if (leader.set_name) {
+                editions.add(leader.set_name);
+            }
+        });
+        leaderEditionFilter.innerHTML = '<option value="">Todas as Edições</option>';
+        Array.from(editions).sort().forEach(edition => {
+            const option = document.createElement('option');
+            option.value = edition;
+            option.textContent = edition;
+            leaderEditionFilter.appendChild(option);
+        });
+    }
+
+    function renderLeaderGallery(leadersToRender) {
+        leaderGallery.innerHTML = '';
+        if (leadersToRender.length === 0) {
+            leaderGallery.innerHTML = '<p class="placeholder-text">Nenhum líder encontrado com os filtros aplicados.</p>';
+            return;
+        }
+        leadersToRender.forEach(leader => {
+            const leaderCardElement = document.createElement('div');
+            leaderCardElement.classList.add('leader-card-item');
+            leaderCardElement.dataset.leader = JSON.stringify(leader);
+            
+            const imageUrl = leader.image_url || '/images/default-avatar.png'; // Fallback image
+            
+            let colorDots = '';
+            if (leader.colors && leader.colors.length > 0) {
+                colorDots = `<div class="leader-colors">${leader.colors.map(color => `<span class="color-dot ${color.toLowerCase()}"></span>`).join('')}</div>`;
+            }
+
+            leaderCardElement.innerHTML = `
+                <img src="${imageUrl}" alt="${leader.name}">
+                <p>${leader.name}</p>
+                ${colorDots}
+            `;
+            leaderGallery.appendChild(leaderCardElement);
+        });
+    }
+
+    function filterLeaders() {
+        const searchTerm = leaderSearchInput.value.toLowerCase();
+        const selectedColor = leaderColorFilter.value.toLowerCase();
+        const selectedEdition = leaderEditionFilter.value.toLowerCase();
+
+        filteredLeaders = allLeaders.filter(leader => {
+            const matchesSearch = leader.name.toLowerCase().includes(searchTerm);
+            const matchesColor = selectedColor === '' || (leader.colors && leader.colors.some(c => c.toLowerCase() === selectedColor));
+            const matchesEdition = selectedEdition === '' || (leader.set_name && leader.set_name.toLowerCase() === selectedEdition);
+            return matchesSearch && matchesColor && matchesEdition;
+        });
+        renderLeaderGallery(filteredLeaders);
+    }
+
+    // --- Event Listeners for Leader Selection Modal ---
+    createDeckBtn?.addEventListener('click', () => {
+        leaderSelectionModal.style.display = 'block';
+        fetchLeaders(); // Fetch leaders when modal opens
+    });
+
+    leaderModalCloseBtn?.addEventListener('click', () => {
+        leaderSelectionModal.style.display = 'none';
+    });
+
+    leaderSearchInput?.addEventListener('input', filterLeaders);
+    leaderColorFilter?.addEventListener('change', filterLeaders);
+    leaderEditionFilter?.addEventListener('change', filterLeaders);
+
+    leaderGallery?.addEventListener('click', (e) => {
+        const leaderCardItem = e.target.closest('.leader-card-item');
+        if (leaderCardItem) {
+            const selectedLeader = JSON.parse(leaderCardItem.dataset.leader);
+            sessionStorage.setItem('selectedLeader', JSON.stringify(selectedLeader));
+            window.location.href = '/deck-builder'; // Redirect to deck builder
+        }
+    });
+
     // --- Toasts ---
     const toastContainer = qs('#toast-container');
     const showToast = (message, type = 'info') => {

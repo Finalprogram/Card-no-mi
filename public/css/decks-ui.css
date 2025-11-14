@@ -366,3 +366,175 @@
         right: -100%;
     }
 }
+
+/* Styles for Leader Selection Modal (moved from deck-builder.css) */
+#leader-selection-modal.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1000; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgba(0,0,0,0.6); /* Black w/ opacity */
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+    animation: fadeIn 0.3s ease-out;
+}
+
+#leader-selection-modal .modal-content {
+    max-width: 900px; /* Wider modal for gallery */
+    width: 90%;
+    background: var(--modal-bg); /* Use existing modal background */
+    margin: 10% auto; /* 10% from the top and centered */
+    padding: 2rem;
+    border: 1px solid var(--deck-border); /* Use existing border */
+    border-radius: 16px;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    animation: slideIn 0.4s ease-out;
+}
+
+#leader-selection-modal .close-btn {
+  color: var(--text-secondary);
+  position: absolute;
+  top: 1rem;
+  right: 1.5rem;
+  font-size: 2rem;
+  font-weight: bold;
+  transition: all 0.2s ease;
+}
+
+#leader-selection-modal .close-btn:hover,
+#leader-selection-modal .close-btn:focus {
+  color: var(--accent-color); /* Use existing accent color */
+  text-decoration: none;
+  cursor: pointer;
+  transform: scale(1.1);
+}
+
+#leader-selection-modal .modal-content h2 {
+    font-size: 2rem;
+    color: var(--accent-color); /* Use existing accent color */
+    margin-bottom: 1.5rem;
+}
+
+.leader-filters {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.leader-filters input[type="text"],
+.leader-filters select {
+    flex: 1;
+    min-width: 150px;
+    padding: 0.75rem 1rem;
+    font-family: var(--font-body);
+    font-size: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--deck-border); /* Use existing border */
+    background: var(--deck-bg); /* Use existing background */
+    color: var(--text-primary);
+    backdrop-filter: blur(5px);
+    transition: all 0.3s ease;
+}
+
+.leader-filters input[type="text"]:focus,
+.leader-filters select:focus {
+    outline: none;
+    border-color: var(--accent-color); /* Use existing accent color */
+    box-shadow: 0 0 15px rgba(162, 89, 255, 0.3); /* Adjust shadow color if needed */
+}
+
+.leader-gallery {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Responsive grid */
+    gap: 1rem;
+    max-height: 60vh; /* Limit height and enable scrolling */
+    overflow-y: auto;
+    padding-right: 0.5rem; /* Space for scrollbar */
+}
+
+.leader-gallery .leader-card-item {
+    background-color: var(--deck-bg); /* Use existing background */
+    border: 1px solid var(--deck-border); /* Use existing border */
+    border-radius: 8px;
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.leader-gallery .leader-card-item:hover {
+    transform: translateY(-5px) scale(1.02);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.4), 0 0 30px rgba(162, 89, 255, 0.5); /* Adjust shadow color if needed */
+    border-color: var(--accent-color); /* Use existing accent color */
+}
+
+.leader-gallery .leader-card-item img {
+    width: 100%;
+    height: auto;
+    border-radius: 4px;
+    margin-bottom: 0.5rem;
+}
+
+.leader-gallery .leader-card-item p {
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin: 0;
+}
+
+.leader-gallery .leader-card-item .leader-colors {
+    display: flex;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
+}
+
+.leader-gallery .leader-card-item .color-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.3);
+}
+
+/* Specific color dots */
+.color-dot.red { background-color: #e63946; }
+.color-dot.blue { background-color: #457b9d; }
+.color-dot.green { background-color: #80ed99; }
+.color-dot.black { background-color: #343a40; }
+.color-dot.white { background-color: #f8f9fa; }
+.color-dot.yellow { background-color: #ffc300; }
+
+/* Placeholder text for gallery */
+.leader-gallery .placeholder-text {
+    grid-column: 1 / -1; /* Span across all columns */
+    text-align: center;
+    color: var(--text-secondary);
+    padding: 2rem;
+}
+
+/* Scrollbar for leader-gallery */
+.leader-gallery::-webkit-scrollbar {
+  width: 8px;
+}
+.leader-gallery::-webkit-scrollbar-track {
+  background: transparent;
+}
+.leader-gallery::-webkit-scrollbar-thumb {
+  background: var(--deck-border); /* Using a relevant variable */
+  border-radius: 10px;
+  border: 1px solid var(--deck-border);
+}
+.leader-gallery::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-color); /* Using a relevant variable */
+}

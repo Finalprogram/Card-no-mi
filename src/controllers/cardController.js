@@ -292,6 +292,32 @@ const searchForDeckBuilder = async (req, res) => {
 
 // --- EXPORTAÇÃO CORRIGIDA ---
 
+const getLeaders = async (req, res) => {
+  try {
+    const { q, color, set } = req.query;
+    const filter = {
+      game: 'onepiece',
+      type_line: 'LEADER'
+    };
+
+    if (q) {
+      filter.name = { $regex: q, $options: 'i' };
+    }
+    if (color) {
+      filter.colors = { $regex: color, $options: 'i' };
+    }
+    if (set) {
+      filter.set_name = { $regex: set, $options: 'i' };
+    }
+
+    const leaders = await Card.find(filter).select('_id name image_url colors set_name rarity').sort({ name: 1 });
+    res.json(leaders);
+  } catch (error) {
+    console.error("Erro ao buscar líderes:", error);
+    res.status(500).json({ message: 'Erro ao buscar líderes.' });
+  }
+};
+
 // --- FUNÇÃO PARA A ENCICLOPÉDIA ---
 const getAllCards = async (req, res) => {
   try {
@@ -350,5 +376,6 @@ module.exports = {
   searchAvailableCards,
   getAllCards,
   searchForDeckBuilder,
-  debugCardSearch, // Add the new debug function to exports
+  debugCardSearch,
+  getLeaders, // Export the new getLeaders function
 };

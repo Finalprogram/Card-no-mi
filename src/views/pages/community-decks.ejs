@@ -8,9 +8,9 @@
             <h1>Decks da Comunidade</h1>
             <div class="header-actions">
                 <a href="/decks" class="btn btn-secondary">Meus Decks</a>
-                <a href="/deck-builder" id="create-deck-btn" class="btn btn-primary">
+                <button id="create-deck-btn" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Criar Novo Deck
-                </a>
+                </button>
             </div>
         </header>
 
@@ -82,6 +82,34 @@
             <div class="form-actions">
                 <button type="button" id="delete-deck-cancel-btn" class="btn btn-secondary">Cancelar</button>
                 <button type="button" id="delete-deck-confirm-btn" class="btn btn-danger">Excluir</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Seleção de Líder -->
+    <div id="leader-selection-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn leader-modal-close">&times;</span>
+            <h2>Selecionar Líder</h2>
+            <div class="leader-filters">
+                <input type="text" id="leader-search-input" placeholder="Buscar líder...">
+                <select id="leader-color-filter">
+                    <option value="">Todas as Cores</option>
+                    <option value="red">Vermelho</option>
+                    <option value="blue">Azul</option>
+                    <option value="green">Verde</option>
+                    <option value="black">Preto</option>
+                    <option value="white">Branco</option>
+                    <option value="yellow">Amarelo</option>
+                </select>
+                <select id="leader-edition-filter">
+                    <option value="">Todas as Edições</option>
+                    <!-- Opções de edição serão preenchidas via JS -->
+                </select>
+            </div>
+            <div id="leader-gallery" class="leader-gallery">
+                <!-- Líderes serão carregados aqui via JS -->
+                <p class="placeholder-text">Carregando líderes...</p>
             </div>
         </div>
     </div>
