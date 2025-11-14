@@ -322,3 +322,62 @@ h1, h2, h3, h4 {
 .modal-content .btn-primary { width: 100%; }
 .toast { visibility: hidden; min-width: 250px; margin-left: -125px; background-color: var(--surface); color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 1001; left: 50%; bottom: 30px; font-size: 17px; border: 1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.3); transition: visibility 0s, opacity 0.5s, transform 0.5s; opacity: 0; transform: translateY(20px); }
 .toast.show { visibility: visible; opacity: 1; transform: translateY(0); }
+
+/* ==========================================================================
+   9. ESTILOS PARA AS NOVAS VIEWS DO DECK
+   ========================================================================== */
+
+/* --- Rarity View --- */
+.rarity-group {
+    margin-bottom: 1.5rem;
+    border-left: 3px solid var(--accent-purple);
+    padding-left: 1rem;
+}
+
+.rarity-group h4 {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    text-transform: capitalize;
+}
+
+.rarity-group-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* --- Grid View --- */
+.deck-grid-view {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    gap: 1rem;
+}
+
+.deck-grid-item {
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.deck-grid-item img {
+    width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+}
+
+.deck-grid-item:hover {
+    transform: scale(1.05);
+    z-index: 10;
+}
+.card-quantity-indicator {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background-color: var(--accent-purple);
+    color: white;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.8em;
+    font-weight: bold;
+    z-index: 5;
+}

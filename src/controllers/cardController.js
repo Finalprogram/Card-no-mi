@@ -310,7 +310,7 @@ const getLeaders = async (req, res) => {
       filter.set_name = { $regex: set, $options: 'i' };
     }
 
-    const leaders = await Card.find(filter).select('_id name image_url colors set_name rarity').sort({ name: 1 });
+    const leaders = await Card.find(filter).select('_id name image_url colors set_name rarity power ability').sort({ name: 1 });
     res.json(leaders);
   } catch (error) {
     console.error("Erro ao buscar líderes:", error);

@@ -108,7 +108,7 @@ exports.createDeck = async (req, res) => {
 
         const savedDeck = await newDeck.save();
 
-        res.redirect('/decks');
+        res.status(201).json(savedDeck);
 
     } catch (error) {
         console.error('Erro ao criar deck:', error);

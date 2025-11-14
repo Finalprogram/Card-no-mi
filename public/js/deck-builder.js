@@ -78,6 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function renderLeaderDetails(leaderItem) {
         const card = leaderItem.card;
+        console.log('Leader Card Data:', card); // Adicionado para depuração
         const colors = card.colors || [];
         const glowColor = getGlowColor(colors[0]);
 
@@ -174,6 +175,87 @@ document.addEventListener('DOMContentLoaded', () => {
                 mainDeckContainer.appendChild(createDeckCardElement(item));
             });
     }
+
+    function renderRaridadeView(container) {
+        container.innerHTML = ''; // Limpa o container
+
+        const mainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
+        const header = document.createElement('h3');
+        header.innerHTML = `Deck Principal (<span id="main-deck-count">${mainDeckCount}</span>/50)`;
+        container.appendChild(header);
+
+        if (deck.main.length === 0) {
+            container.innerHTML += '<p class="placeholder-text">O deck principal está vazio.</p>';
+            return;
+        }
+
+        // Agrupa as cartas por raridade
+        const cardsByRarity = deck.main.reduce((acc, item) => {
+            const rarity = item.card.rarity || 'Sem Raridade';
+            if (!acc[rarity]) {
+                acc[rarity] = [];
+            }
+            acc[rarity].push(item);
+            return acc;
+        }, {});
+
+        // Ordena as raridades (opcional, mas bom para consistência)
+        const sortedRarities = Object.keys(cardsByRarity).sort();
+
+        // Renderiza cada grupo de raridade
+        sortedRarities.forEach(rarity => {
+            const raritySection = document.createElement('div');
+            raritySection.classList.add('rarity-group');
+
+            const rarityHeader = document.createElement('h4');
+            rarityHeader.textContent = rarity;
+            raritySection.appendChild(rarityHeader);
+
+            const cardsContainer = document.createElement('div');
+            cardsContainer.classList.add('rarity-group-cards');
+            
+            cardsByRarity[rarity]
+                .sort((a, b) => a.card.name.localeCompare(b.card.name))
+                .forEach(item => {
+                    cardsContainer.appendChild(createDeckCardElement(item));
+                });
+            
+            raritySection.appendChild(cardsContainer);
+            container.appendChild(raritySection);
+        });
+    }
+
+    function renderGridView(container) {
+        container.innerHTML = ''; // Limpa o container
+
+        const mainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
+        const header = document.createElement('h3');
+        header.innerHTML = `Deck Principal (<span id="main-deck-count">${mainDeckCount}</span>/50)`;
+        container.appendChild(header);
+
+        if (deck.main.length === 0) {
+            container.innerHTML += '<p class="placeholder-text">O deck principal está vazio.</p>';
+            return;
+        }
+
+        const gridContainer = document.createElement('div');
+        gridContainer.classList.add('deck-grid-view');
+
+        deck.main
+            .sort((a, b) => a.card.name.localeCompare(b.card.name))
+            .forEach(item => {
+                const card = item.card;
+                const gridItem = document.createElement('div');
+                gridItem.classList.add('deck-grid-item');
+                gridItem.innerHTML = `
+                    <img src="${card.image_url}" alt="${card.name}" title="${card.name}">
+                    <span class="card-quantity-indicator">${item.quantity}x</span>
+                `;
+                gridContainer.appendChild(gridItem);
+            });
+        
+        container.appendChild(gridContainer);
+    }
     
     function createDeckCardElement(item) {
         const card = item.card;
@@ -269,10 +351,21 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const currentMainDeckCount = deck.main.reduce((acc, item) => acc + item.quantity, 0);
+
+        // Check if adding a new card would exceed the 50-card limit
+        if (currentMainDeckCount >= 50) {
+            showToast('O deck principal já atingiu o limite de 50 cartas.');
+            return;
+        }
+
         const existingCard = deck.main.find(i => i.card._id === card._id);
         if (existingCard) {
             if (existingCard.quantity < 4) {
                 existingCard.quantity++;
+            } else {
+                showToast(`Você já tem 4 cópias de ${card.name} no deck.`);
+                return;
             }
         } else {
             deck.main.push({ card: card, quantity: 1 });
@@ -303,8 +396,68 @@ document.addEventListener('DOMContentLoaded', () => {
         // Lógica mantida...
     }
 
-    function saveDeck() {
-        // Lógica mantida...
+    async function saveDeck() {
+        const title = document.getElementById('deck-title').value;
+        const description = document.getElementById('deck-description').value;
+        const isPublic = document.getElementById('deck-is-public').checked;
+
+        if (!title) {
+            showToast('O título do deck é obrigatório.');
+            return;
+        }
+
+        if (!deck.leader) {
+            showToast('É obrigatório selecionar um líder para o deck.');
+            return;
+        }
+
+        // Prepare the payload
+        const payload = {
+            title,
+            description,
+            isPublic,
+            leader: {
+                card: deck.leader.card._id,
+                quantity: 1
+            },
+            main: deck.main.map(item => ({
+                card: item.card._id,
+                quantity: item.quantity
+            }))
+        };
+
+        const deckId = initialDeck?._id;
+        const url = deckId ? `/api/decks/${deckId}` : '/api/decks';
+        const method = deckId ? 'PUT' : 'POST';
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                const savedDeck = await response.json();
+                showToast('Deck salvo com sucesso!');
+
+                if (method === 'POST') {
+                    // After creating a new deck, redirect to the "My Decks" page
+                    window.location.href = '/my-decks';
+                } else {
+                    // For updates, just update the initialDeck object
+                    Object.assign(initialDeck, savedDeck);
+                }
+            } else {
+                const errorData = await response.json();
+                showToast(`Erro ao salvar o deck: ${errorData.message}`);
+            }
+        } catch (error) {
+            console.error('Erro ao salvar o deck:', error);
+            showToast('Ocorreu um erro de rede ao tentar salvar o deck.');
+        }
     }
 
     // --- Inicializa a aplicação ---
