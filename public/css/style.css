@@ -1272,6 +1272,7 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
 
 /* Hide scrollbar for IE, Edge and Firefox */
 .cards-carousel {
+  padding-top: 5px;
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
 }
