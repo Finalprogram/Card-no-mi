@@ -9,10 +9,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const isOwner = window.isOwner;
 
     // --- Estado da Aplicação ---
-    let deck = {
+    let deck = initialDeck || {
         leader: null,
         main: [],
-        ...initialDeck
     };
     let activeView = 'padrão';
     let debounceTimer;

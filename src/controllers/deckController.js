@@ -173,7 +173,27 @@ exports.updateDeck = async (req, res) => {
 // @route   DELETE /api/decks/:id
 // @access  Private
 exports.deleteDeck = async (req, res) => {
-    res.status(200).json({ message: 'deleteDeck placeholder' });
+    try {
+        const deckId = req.params.id;
+        const ownerId = req.session.user.id;
+
+        const deck = await Deck.findById(deckId);
+
+        if (!deck) {
+            return res.status(404).json({ message: 'Deck não encontrado.' });
+        }
+
+        if (deck.owner.toString() !== ownerId) {
+            return res.status(403).json({ message: 'Você não tem permissão para excluir este deck.' });
+        }
+
+        await deck.deleteOne();
+
+        res.status(200).json({ message: 'Deck excluído com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao excluir deck:', error);
+        res.status(500).json({ message: 'Erro interno do servidor ao excluir deck.' });
+    }
 };
 
 // @desc    Parse a decklist from text

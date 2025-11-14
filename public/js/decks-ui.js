@@ -265,21 +265,46 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Delete
-        if (target.closest('.delete-btn')) {
+        if (target.classList.contains('delete-btn') || target.parentElement.classList.contains('delete-btn')) {
+            e.preventDefault();
+            const card = target.closest('.deck-card');
+            const deckId = card.dataset.deckId;
+            const deckName = card.querySelector('.deck-card-title').textContent;
+
+            console.log('Delete button clicked. Opening modal...');
             deckToDeleteId = deckId;
             deckNameToDelete.textContent = deckName;
             openModal(deleteDeckModal);
         }
     });
 
-    deleteDeckConfirmBtn?.addEventListener('click', () => {
-        // Placeholder: Send delete request to backend
-        console.log(`Deleting deck ${deckToDeleteId}`);
-        const cardToDelete = deckList.querySelector(`[data-deck-id="${deckToDeleteId}"]`);
-        cardToDelete?.remove();
-        closeModal(deleteDeckModal);
-        showToast(`Deck removido com sucesso.`, 'success');
-        deckToDeleteId = null;
+    deleteDeckConfirmBtn?.addEventListener('click', async () => {
+        console.log('Confirm delete button clicked.');
+        if (!deckToDeleteId) {
+            console.log('deckToDeleteId is null. Aborting.');
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/decks/${deckToDeleteId}`, {
+                method: 'DELETE',
+            });
+
+            if (response.ok) {
+                const cardToDelete = deckList.querySelector(`[data-deck-id="${deckToDeleteId}"]`);
+                cardToDelete?.remove();
+                showToast('Deck excluído com sucesso.', 'success');
+            } else {
+                const errorData = await response.json();
+                showToast(`Erro ao excluir deck: ${errorData.message}`, 'error');
+            }
+        } catch (error) {
+            console.error('Erro ao excluir deck:', error);
+            showToast('Ocorreu um erro de rede ao tentar excluir o deck.', 'error');
+        } finally {
+            closeModal(deleteDeckModal);
+            deckToDeleteId = null;
+        }
     });
 
     // --- Search (Client-side) ---
