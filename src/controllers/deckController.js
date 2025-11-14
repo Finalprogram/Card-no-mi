@@ -14,7 +14,7 @@ exports.searchCards = async (req, res) => {
         // Use a case-insensitive regex to find cards
         const cards = await Card.find({
             name: { $regex: query, $options: 'i' }
-        }).limit(20); // Limit results to avoid overwhelming the client
+        }); // Limit results to avoid overwhelming the client
 
         res.json(cards);
     } catch (error) {

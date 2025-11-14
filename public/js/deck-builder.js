@@ -48,6 +48,8 @@ document.addEventListener('DOMContentLoaded', () => {
         const saveDeckBtn = document.getElementById('save-deck-btn');
         if (saveDeckBtn) saveDeckBtn.addEventListener('click', saveDeck);
 
+        deckViewContainer.addEventListener('click', handleDeckActions);
+
         // Listeners de import/export e modais... (mantidos do original)
     }
 
@@ -371,6 +373,45 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         showToast(`${card.name} adicionado ao deck.`);
         renderDeck();
+    }
+
+    function decreaseCardQuantity(cardId) {
+        const existingCard = deck.main.find(i => i.card._id === cardId);
+        if (existingCard) {
+            existingCard.quantity--;
+            if (existingCard.quantity === 0) {
+                deck.main = deck.main.filter(i => i.card._id !== cardId);
+            }
+        }
+    }
+    
+    function increaseCardQuantity(cardId) {
+        const existingCard = deck.main.find(i => i.card._id === cardId);
+        if (existingCard) {
+            if (existingCard.quantity < 4) {
+                existingCard.quantity++;
+            } else {
+                showToast(`Você já tem 4 cópias de ${existingCard.card.name} no deck.`);
+            }
+        }
+    }
+
+    function handleDeckActions(e) {
+        const target = e.target;
+        const cardElement = target.closest('.deck-card');
+        if (!cardElement) return;
+    
+        const cardId = cardElement.dataset.cardId;
+    
+        if (target.classList.contains('add-copy-btn')) {
+            increaseCardQuantity(cardId);
+            renderDeck();
+        }
+    
+        if (target.classList.contains('remove-card-btn')) {
+            decreaseCardQuantity(cardId);
+            renderDeck();
+        }
     }
 
     // --- Funções utilitárias e de UI ---
