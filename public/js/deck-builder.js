@@ -7,6 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deckViewContainer = document.getElementById('deck-view-container');
     const leaderSectionContainer = document.getElementById('leader-section-container');
     const isOwner = window.isOwner;
+    const sidebarElement = document.querySelector('.sidebar'); // Adicionado para referenciar a sidebar
 
     // --- Estado da Aplicação ---
     let deck = initialDeck || {
@@ -329,6 +330,10 @@ document.addEventListener('DOMContentLoaded', () => {
             `;
             searchResultsContainer.appendChild(cardElement);
         });
+        // Scroll to the bottom after rendering new results
+        if (sidebarElement) {
+            sidebarElement.scrollTop = sidebarElement.scrollHeight;
+        }
     }
 
     function handleAddCardClick(e) {
