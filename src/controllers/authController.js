@@ -74,6 +74,8 @@ const registerUser = async (req, res) => {
 
     await newUser.save();
 
+    logger.info(`New user created: ${newUser.username} (ID: ${newUser._id}, Email: ${newUser.email})`);
+
     // Enviar email de verificação
     await sendVerificationEmail(newUser.email, verificationToken);
 
