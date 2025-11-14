@@ -4,7 +4,7 @@
 
 :root {
     /* Paleta de Cores Unificada (do design spec do deck builder) */
-    --bg-main: #0B0D10;
+    --bg-main: #1c1c1d;
     --surface: #111214;
     --muted: rgba(255, 255, 255, 0.06);
     --text-primary: #FFFFFF;
@@ -133,6 +133,31 @@ body {
   align-items: center;
 }
 
+/* Specific styles for the "Vender Agora" button in the navbar */
+.btn-sell-now-navbar {
+  /* Override btn-primary background to be transparent initially */
+  background-color: transparent;
+  /* Set initial border to be subtle/transparent */
+  border: 1px solid var(--border);
+  /* Set font color to dark gray/almost black */
+  color: var(--bg-main);
+  /* Add transition for border properties, background-color, color, filter, and transform */
+  transition: all 0.3s ease, border-color 0.2s ease-in-out, border-width 0.2s ease-in-out, background-color 0.2s ease-in-out, color 0.2s ease-in-out, filter 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.btn-sell-now-navbar:hover {
+  /* Explicitly set background-color for hover */
+  background-color: var(--accent-hover);
+  /* Override border to grow and be purple */
+  border-color: var(--accent-primary);
+  border-width: 2px;
+  /* Apply brightness filter and lift effect */
+  filter: brightness(1.15);
+  transform: translateY(-2px);
+  /* Ensure font color remains dark on hover if background changes */
+  color: var(--bg-main);
+}
+
 .footer {
   text-align: center;
   padding: 2rem 0;
@@ -223,8 +248,19 @@ body {
 }
 
 .btn-secondary:hover {
-  border-color: var(--text-secondary);
-  color: var(--text-secondary);
+  background-color: var(--muted);
+  color: var(--text-primary);
+  border-color: var(--accent-purple);
+  transform: translateY(-2px);
+}
+
+.btn-danger {
+  background-color: var(--accent-red);
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #B71C1C; /* A slightly darker red for hover */
 }
 
 .btn-submit-full {
@@ -409,11 +445,12 @@ body {
 /* --- Grade de Cartas --- */
 .cards-carousel { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
 .card-link { text-decoration: none; color: inherit; }
-.card-item { width: 100%; max-width: 220px; margin: 0 auto; background-color: var(--bg-surface); border-radius: 8px; padding: 1rem; border: 1px solid var(--border); position: relative; z-index: 1; text-align: center; transition: all 0.2s ease-in-out; min-height: 375px; display: flex; flex-direction: column; justify-content: space-between; }
+.card-item { width: 100%; max-width: 220px; margin: 0 auto; background-color: var(--bg-surface); border-radius: 8px; padding: 1rem; border: 1px solid var(--border); position: relative; z-index: 1; text-align: center; transition: all 0.2s ease-in-out, border-width 0.2s ease-in-out, border-color 0.2s ease-in-out; min-height: 375px; display: flex; flex-direction: column; justify-content: space-between; }
 .card-item:hover {
   z-index: 1003;
   transform: translateY(-5px);
   border-color: var(--accent-primary);
+  border-width: 2px; /* Make the border grow */
   box-shadow: 0 10px 20px rgba(var(--accent-primary-rgb), 0.2);
 }
 .card-item .card-image-container { transition: transform 0.2s ease-in-out; }
