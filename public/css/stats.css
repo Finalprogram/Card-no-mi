@@ -52,7 +52,7 @@
 }
 
 .stats-body {
-    padding: 2rem;
+    padding: 3rem;
     display: grid;
     grid-template-columns: 1fr 1fr; /* Two columns for charts */
     gap: 2rem;
