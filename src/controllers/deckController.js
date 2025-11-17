@@ -204,13 +204,20 @@ exports.deleteDeck = async (req, res) => {
         const deckId = req.params.id;
         const ownerId = req.session.user.id;
 
+        console.log(`Attempting to delete deck with ID: ${deckId}`);
+        console.log(`User attempting deletion (ownerId): ${ownerId}`);
+
         const deck = await Deck.findById(deckId);
 
         if (!deck) {
+            console.log(`Deck with ID ${deckId} not found.`);
             return res.status(404).json({ message: 'Deck não encontrado.' });
         }
 
+        console.log(`Found deck. Deck owner: ${deck.owner.toString()}`);
+
         if (deck.owner.toString() !== ownerId) {
+            console.log(`Authorization failed: deck owner (${deck.owner.toString()}) does not match user (${ownerId}).`);
             return res.status(403).json({ message: 'Você não tem permissão para excluir este deck.' });
         }
 

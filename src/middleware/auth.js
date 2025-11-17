@@ -30,9 +30,13 @@ const isAuthPage = async (req, res, next) => {
 
 // Middleware para APIs: se não estiver logado, retorna um erro 401 em JSON
 const isAuthApi = (req, res, next) => {
+  console.log('isAuthApi middleware hit.');
+  console.log('req.session.user:', req.session.user);
   if (req.session.user) {
+    console.log('User is authenticated for API.');
     return next();
   }
+  console.log('User is NOT authenticated for API. Sending 401.');
   res.status(401).json({ message: 'Não autorizado. Por favor, faça o login.' });
 };
 

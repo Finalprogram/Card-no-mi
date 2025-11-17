@@ -1,5 +1,6 @@
 // 1. Imports
 require('dotenv').config();
+console.log('Server received a request.'); // Added for debugging
 const logger = require('./src/config/logger');
 
 process.on('unhandledRejection', (reason, promise) => {

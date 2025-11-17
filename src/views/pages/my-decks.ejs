@@ -31,9 +31,8 @@
                     <article class="deck-card" data-deck-id="<%= deck._id %>" draggable="true">
                         <div class="deck-card-content">
                             <h3 class="deck-card-title"><%= deck.title %></h3>
-                            <p class="deck-card-author">por <%= deck.owner.username %></p>
                             <div class="deck-card-meta">
-                                <span><i class="fas fa-layer-group"></i> <%= deck.main.length %> cartas</span>
+                                <span><i class="fas fa-layer-group"></i> <%= deck.main.reduce((sum, item) => sum + item.quantity, 0) %> cartas</span>
                             </div>
                             <div class="deck-card-badges">
                                 <% if (deck.isPublic) { %>
