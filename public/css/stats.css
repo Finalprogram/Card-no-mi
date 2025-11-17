@@ -115,7 +115,6 @@
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1.5rem;
-    height: 500px; /* Give a fixed height to the chart container */
 }
 
 /* Responsive adjustments */
