@@ -17,8 +17,7 @@ exports.searchCards = async (req, res) => {
         const cards = await Card.find({
             $or: [
                 { name: { $regex: query, $options: 'i' } },
-                { family: { $regex: query, $options: 'i' } },
-                { ability: { $regex: query, $options: 'i' } }
+                { code: { $regex: query, $options: 'i' } }
             ]
         });
 
