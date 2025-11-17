@@ -28,8 +28,8 @@
 </div>
 
 <%- include('../partials/footer') %>
-<link rel="stylesheet" href="/css/stats.css">
+<link rel="stylesheet" href="/css/stats.css?v=<%= Date.now() %>">
 <script>
     const deckStats = <%- JSON.stringify(stats) %>;
 </script>
-<script src="/js/stats.js"></script>
+<script src="/js/stats.js?v=<%= Date.now() %>"></script>

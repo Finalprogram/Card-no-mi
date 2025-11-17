@@ -13,7 +13,7 @@
     <!-- Importa a nossa folha de estilos principal -->
     <link rel="stylesheet" href="/css/style.css">
     <% if (typeof page_css !== 'undefined' && page_css) { %>
-        <link rel="stylesheet" href="/css/<%= page_css %>">
+        <link rel="stylesheet" href="/css/<%= page_css %>?v=<%= Date.now() %>">
     <% } %>
     <link rel="icon" href="/images/logo.svg" type="image/svg+xml">
     
