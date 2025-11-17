@@ -35,13 +35,33 @@ exports.searchCards = async (req, res) => {
 // @access  Private
 exports.getDecks = async (req, res) => {
     try {
+        const decks = await Deck.find()
+            .populate('owner', 'username') // Populate owner's username
+            .populate('leader.card')   // Populate leader card details
+            .sort({ updatedAt: -1 });
+        
+        res.render('pages/decks', {
+            decks: decks,
+            page_css: 'decks-ui.css' // Pass the new CSS file
+        });
+    } catch (error) {
+        console.error('Error fetching decks:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
+};
+
+// @desc    Get all decks for a user and render the page
+// @route   GET /my-decks
+// @access  Private
+exports.getMyDecks = async (req, res) => {
+    try {
         const userId = req.session.user.id;
         const decks = await Deck.find({ owner: userId })
             .populate('owner', 'username') // Populate owner's username
             .populate('leader.card')   // Populate leader card details
             .sort({ updatedAt: -1 });
         
-        res.render('pages/decks', {
+        res.render('pages/my-decks', {
             decks: decks,
             page_css: 'decks-ui.css' // Pass the new CSS file
         });

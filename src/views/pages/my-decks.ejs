@@ -1,4 +1,4 @@
-<%# views/pages/my-decks.ejs %>
+<%# views/pages/decks.ejs %>
 <%- include('../partials/header', { page_css: 'decks-ui.css' }) %>
 <%- include('../partials/navbar') %>
 
@@ -6,9 +6,9 @@
     <main class="container">
         <header class="decks-header">
             <h1>Meus Decks</h1>
-            <button type="button" id="create-deck-btn" class="btn btn-primary">
+            <a href="/deck-builder" id="create-deck-btn" class="btn btn-primary">
                 <i class="fas fa-plus"></i> Criar Novo Deck
-            </button>
+            </a>
         </header>
 
         <section class="decks-toolbar">
