@@ -118,6 +118,9 @@ body {
 
 .navbar-menu {
   display: flex;
+  list-style: none; /* Remove list item bullets */
+  margin: 0;
+  padding: 0;
   gap: 1.5rem;
 }
 
