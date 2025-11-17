@@ -1,3 +1,4 @@
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <div class="stats-container">
     <header class="stats-header">
         <div class="deck-info">
@@ -35,25 +36,16 @@
                     <span class="stat-label">Cores Distintas</span>
                     <span class="stat-value"><%= stats.distinctColors %></span>
                 </div>
-                <div class="stat-item stat-item-full">
-                    <span class="stat-label">Contagem de Cores</span>
-                    <span class="stat-value"><%= stats.colorCounts %></span>
-                </div>
             </div>
         </div>
 
         <div class="chart-panel">
             <h3>Distribuição de Custo</h3>
-            <div class="cost-chart">
-                <% for (let i = 0; i < stats.costDistribution.length; i++) { %>
-                    <div class="chart-bar-container">
-                        <div class="chart-bar" style="--bar-height: 0;" data-height="<%= (stats.costDistribution[i] / stats.maxCountInDistribution) * 100 %>%">
-                            <div class="tooltip"><%= stats.costDistribution[i] %> cartas</div>
-                        </div>
-                        <span class="chart-label"><%= i %></span>
-                    </div>
-                <% } %>
-            </div>
+            <canvas id="costChart"></canvas>
+        </div>
+        <div class="chart-panel">
+            <h3>Distribuição de Cores</h3>
+            <canvas id="colorChart"></canvas>
         </div>
     </main>
 </div>

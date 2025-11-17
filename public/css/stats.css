@@ -1,6 +1,6 @@
 .stats-container {
     width: 100%;
-    max-width: 800px;
+    max-width: 1200px; /* Wider container */
     background-color: var(--bg-surface);
     border-radius: 12px;
     border: 1px solid var(--border);
@@ -13,148 +13,116 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1.5rem;
+    padding: 1.5rem 2rem;
     border-bottom: 1px solid var(--border);
 }
 
 .deck-info h2 {
     margin: 0;
-    font-family: 'Cinzel Decorative', cursive;
-    font-size: 1.75rem;
+    font-family: 'Bebas Neue', cursive;
+    font-size: 2.5rem;
     font-weight: 600;
-    color: var(--gold);
+    color: var(--accent-gold);
 }
 
 .deck-info p {
-    margin: 0;
+    margin: 4px 0 0;
     font-size: 1rem;
     color: var(--text-secondary);
 }
 
 .deck-actions .download-btn {
-    background: none;
+    background: transparent;
     border: 1px solid var(--border);
     border-radius: 8px;
-    padding: 0.5rem;
+    padding: 0.75rem;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
     color: var(--text-secondary);
-    transition: background-color 0.2s, color 0.2s;
+    transition: all 0.2s ease-in-out;
 }
 
 .deck-actions .download-btn:hover {
-    background-color: var(--bg-surface-2);
-    color: var(--accent-primary);
+    background-color: var(--accent-primary);
+    color: var(--text-primary);
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
 }
 
 .stats-body {
-    padding: 1.5rem;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Two columns for charts */
+    gap: 2rem;
 }
 
-.stats-panel, .chart-panel {
+.stats-panel {
+    grid-column: 1 / -1; /* Span full width */
     background-color: var(--bg-primary);
     border: 1px solid var(--border);
     border-radius: 10px;
     padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0; /* Removed margin-bottom */
 }
 
 .stats-panel h3, .chart-panel h3 {
     margin-top: 0;
     margin-bottom: 1.5rem;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 600;
     border-bottom: 1px solid var(--border);
     padding-bottom: 0.75rem;
-    color: var(--gold);
-    font-family: 'Cinzel Decorative', cursive;
+    color: var(--accent-gold);
+    font-family: 'Bebas Neue', cursive;
 }
 
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 1.25rem;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1.5rem;
 }
 
 .stat-item {
-    display: flex;
-    flex-direction: column;
+    background-color: var(--bg-surface-2);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid transparent;
+    transition: all 0.2s ease-in-out;
+}
+
+.stat-item:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-primary);
 }
 
 .stat-label {
-    font-size: 0.875rem;
+    font-size: 0.9rem;
     color: var(--text-secondary);
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    display: block;
 }
 
 .stat-value {
-    font-size: 1.125rem;
-    font-weight: 600;
+    font-size: 1.75rem;
+    font-weight: 700;
     color: var(--text-primary);
 }
 
-.stat-item-full {
-    grid-column: 1 / -1;
-}
-
 .chart-panel {
-    margin-bottom: 0;
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.5rem;
+    height: 400px; /* Give a fixed height to the chart container */
 }
 
-.cost-chart {
-    display: flex;
-    justify-content: space-around;
-    align-items: flex-end;
-    height: 200px;
-    padding-top: 1rem;
-}
-
-.chart-bar-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    flex-grow: 1;
-    position: relative;
-}
-
-.chart-bar {
-    width: 70%;
-    max-width: 50px;
-    background-color: var(--accent-primary);
-    border-radius: 5px 5px 0 0;
-    position: relative;
-    height: var(--bar-height);
-    transition: height 1s ease-out;
-}
-
-.chart-bar .tooltip {
-    visibility: hidden;
-    opacity: 0;
-    position: absolute;
-    top: -2.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: var(--text-primary);
-    color: var(--bg-primary);
-    padding: 0.3rem 0.6rem;
-    border-radius: 4px;
-    font-size: 0.8rem;
-    white-space: nowrap;
-    transition: opacity 0.2s, visibility 0.2s;
-}
-
-.chart-bar-container:hover .chart-bar .tooltip {
-    visibility: visible;
-    opacity: 1;
-}
-
-.chart-label {
-    margin-top: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: var(--text-secondary);
+/* Responsive adjustments */
+@media (max-width: 900px) {
+    .stats-body {
+        grid-template-columns: 1fr; /* Stack charts on smaller screens */
+    }
 }
 
 @media (max-width: 600px) {
@@ -164,11 +132,15 @@
         gap: 1rem;
     }
 
-    .stats-grid {
-        grid-template-columns: 1fr;
+    .deck-info h2 {
+        font-size: 2rem;
     }
 
-    .deck-info h2 {
+    .stats-grid {
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+
+    .stat-value {
         font-size: 1.5rem;
     }
 }
