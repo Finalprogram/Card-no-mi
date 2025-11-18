@@ -266,7 +266,7 @@ try {
                     const cardCount = deckDetails.main.reduce((acc, item) => acc + item.quantity, 0);
 
                     drawerContent.innerHTML = `
-                        <img src="${leaderImage}" alt="Leader" style="width:100%; border-radius: 8px; margin-bottom: 1rem;">
+                        <img src="${leaderImage}" alt="Leader" style="width:70%; max-width: 280px; display: block; margin: 0 auto 1rem; border-radius: 8px;">
                         ${deckDetails.leader && deckDetails.leader.card ? `
                             <div class="leader-card">
                                                         <h3>${deckDetails.leader.card.name}</h3>
