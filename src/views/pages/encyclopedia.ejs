@@ -1,38 +1,19 @@
 <%- include('../partials/header') %>
+<link rel="stylesheet" href="/css/cardSearch.css">
 <%- include('../partials/navbar') %>
 
 <main class="container">
-  <h1 class="display-4">Enciclopédia de Cartas</h1>
-  <p class="lead">Explore todas as cartas de One Piece.</p>
+  <div class="page-header">
+    <h1 class="display-4">Enciclopédia de Cartas</h1>
+    <div class="header-controls">
+      <input type="search" id="search-input" name="q" placeholder="Buscar por nome..." value="<%= filters && filters.q ? filters.q : '' %>" class="search-input-main" />
+      <button id="open-filters-btn" class="btn-primary">
+        <i class="fas fa-filter"></i> Filtros
+      </button>
+    </div>
+  </div>
 
   <div class="search-container">
-    <aside class="filters">
-      <h3>Filtros</h3>
-      <div class="filters-container">
-        <input type="search" id="search-input" name="q" placeholder="Buscar por nome..." value="<%= filters && filters.q ? filters.q : '' %>" class="form-control mb-3" />
-        
-        <% if (filterGroups && filterGroups.length > 0) { %>
-          <% filterGroups.forEach(group => { %>
-            <div class="filter-group">
-              <h4 class="filter-toggle"><%= group.name %></h4>
-              <div class="filter-options" hidden>
-              <% group.options.forEach(option => { 
-                   const value = typeof option === 'object' ? option.value : option;
-                   const label = typeof option === 'object' ? option.display : option;
-                   const isActive = (filters && filters[group.key] === value);
-              %>
-                <a href="#" class="filter-option <%= isActive ? 'active' : '' %>" data-filter-key="<%= group.key %>" data-filter-value="<%= value %>">
-                  <%= label %>
-                </a>
-              <% }) %>
-              </div>
-            </div>
-          <% }) %>
-        <% } %>
-        <a href="/encyclopedia" class="btn btn-secondary w-100 mt-3">Limpar Filtros</a>
-      </div>
-    </aside>
-
     <section class="results">
       <div id="card-list" class="cards-grid">
         <!-- As cartas serão carregadas aqui via JavaScript -->
@@ -45,9 +26,45 @@
       </div>
     </section>
   </div>
+
+  <!-- Modal de Filtros -->
+  <div id="filters-modal" class="filters-modal" style="display: none;">
+    <div class="filters-modal-overlay"></div>
+    <div class="filters-modal-content">
+      <div class="filters-modal-header">
+        <h2>Filtros</h2>
+        <button id="close-filters-btn" class="close-modal-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="filters-modal-body">
+        <% if (filterGroups && filterGroups.length > 0) { %>
+          <% filterGroups.forEach(group => { %>
+            <div class="filter-group-modal">
+              <h3 class="filter-group-title"><%= group.name %></h3>
+              <div class="filter-options-grid">
+              <% group.options.forEach(option => { 
+                   const value = typeof option === 'object' ? option.value : option;
+                   const label = typeof option === 'object' ? option.display : option;
+                   const isActive = (filters && filters[group.key] === value);
+              %>
+                <button class="filter-chip <%= isActive ? 'active' : '' %>" data-filter-key="<%= group.key %>" data-filter-value="<%= value %>">
+                  <%= label %>
+                </button>
+              <% }) %>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+      <div class="filters-modal-footer">
+        <button id="clear-filters-btn" class="btn-secondary">Limpar Filtros</button>
+        <button id="apply-filters-btn" class="btn-primary">Aplicar</button>
+      </div>
+    </div>
+  </div>
 </main>
 
 <%- include('../partials/footer') %>
 
 <script src="/js/encyclopedia.js"></script>
-<script src="/js/accordion-filters.js"></script>

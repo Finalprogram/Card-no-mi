@@ -1,4 +1,5 @@
 <%- include('../partials/header') %>
+<link rel="stylesheet" href="/css/cardSearch.css">
 
 <main class="container">
   <%- include('../partials/navbar') %>
@@ -8,95 +9,68 @@
     <span class="list-item-count hidden">0</span>
   </a>
 
-  <h1>Explorar Cartas de One Piece</h1>
+  <div class="page-header">
+    <h1>Explorar Cartas de One Piece</h1>
+    <div class="header-controls">
+      <input type="search" id="search-input" name="q" placeholder="Buscar por nome..." value="<%= filters && filters.q ? filters.q : '' %>" class="search-input-main" />
+      <button id="open-filters-btn" class="btn-primary">
+        <i class="fas fa-filter"></i> Filtros
+      </button>
+    </div>
+  </div>
 
   <div class="search-container">
-    <aside class="filters">
-      <h3>Filtros</h3>
-      <form action="/cards" method="GET">
+    <section class="results">
+      <div id="card-list" class="cards-grid">
+        <!-- As cartas serão carregadas aqui via JavaScript -->
+      </div>
+
+      <div class="pagination d-flex justify-content-center mt-4">
+          <button id="prev-page" class="btn-secondary" disabled>&larr; Página anterior</button>
+          <span id="page-indicator" class="align-self-center mx-3">Página 1</span>
+          <button id="next-page" class="btn-primary">Próxima página &rarr;</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Modal de Filtros -->
+  <div id="filters-modal" class="filters-modal" style="display: none;">
+    <div class="filters-modal-overlay"></div>
+    <div class="filters-modal-content">
+      <div class="filters-modal-header">
+        <h2>Filtros</h2>
+        <button id="close-filters-btn" class="close-modal-btn">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="filters-modal-body">
         <% if (filterGroups && filterGroups.length > 0) { %>
           <% filterGroups.forEach(group => { %>
-            <div class="filter-group">
-              <h4 class="filter-toggle"><%= group.name %></h4>
-              <div class="filter-options" hidden>
+            <div class="filter-group-modal">
+              <h3 class="filter-group-title"><%= group.name %></h3>
+              <div class="filter-options-grid">
               <% group.options.forEach(option => { 
                    const value = typeof option === 'object' ? option.value : option;
                    const label = typeof option === 'object' ? option.label : option;
-                   const isChecked = (filters && filters[group.key] === value) || (!filters[group.key] && value === '');
+                   const isActive = (filters && filters[group.key] === value);
               %>
-                <label>
-                  <input type="radio" name="<%= group.key %>" value="<%= value %>" <%= isChecked ? 'checked' : '' %> onchange="this.form.submit()" />
+                <button class="filter-chip <%= isActive ? 'active' : '' %>" data-filter-key="<%= group.key %>" data-filter-value="<%= value %>">
                   <%= label %>
-                </label>
+                </button>
               <% }) %>
               </div>
             </div>
           <% }) %>
         <% } %>
-
-        <!-- Campo de busca opcional -->
-        <input type="search" name="q" placeholder="Buscar por nome" value="<%= filters && filters.q ? filters.q : '' %>" />
-        <button type="submit" class="btn-primary">Buscar</button>
-        <a href="/cards" class="btn-secondary">Limpar Filtros</a>
-      </form>
-    </aside>
-
-    <section class="results">
-      <div class="cards-grid">
-        <% if (cards && cards.length > 0) { %>
-          <% cards.forEach(card => { %>
-            <div class="card-item">
-              <a href="/card/<%= card._id %>" class="card-link">
-                <div class="card-image-container">
-                  <img src="<%= card.image_url %>" alt="<%= card.name %>">
-                </div>
-                <h4><%= card.name %></h4>
-                <p>
-                  Menor Preço: <%= card.lowestAvailablePrice ? formatPrice(card.lowestAvailablePrice) : 'N/A' %>
-                  <% if (card.price_trend === 'up') { %>
-                    <span style="color: green; font-size: 1.5em;">▲</span>
-                  <% } else if (card.price_trend === 'down') { %>
-                    <span style="color: red; font-size: 1.5em;">▼</span>
-                  <% } else { %>
-                    <span style="color: #555; font-size: 1.5em;">→</span>
-                  <% } %>
-                </p>
-              </a>
-              <!-- <div class="add-to-list-controls">
-                <div class="quantity-selector">
-                  <button class="quantity-btn minus" type="button">-</button>
-                  <input type="number" class="quantity-input" value="1" min="1">
-                  <button class="quantity-btn plus" type="button">+</button>
-                </div> -->
-                <button class="add-to-list-btn" data-cardid="<%= card._id %>">+ Lista</button>
-            </div>
-          <% }) %>
-        <% } else { %>
-          <p>Nenhuma carta encontrada com esses filtros.</p>
-        <% } %>
       </div>
-
-      <% if (totalCards > 0) { 
-           const params = new URLSearchParams(filters || {});
-           const filterQueryString = params.toString();
-      %>
-        <div class="pagination">
-          <% if (currentPage > 1) { %>
-            <a href="/cards?p=<%= currentPage - 1 %>&<%= filterQueryString %>" class="btn-secondary">&larr; Página anterior</a>
-          <% } else { %>
-            <div></div>
-          <% } %>
-
-          <% if (hasMore) { %>
-            <a href="/cards?p=<%= currentPage + 1 %>&<%= filterQueryString %>" class="btn-primary">Próxima página &rarr;</a>
-          <% } %>
-        </div>
-      <% } %>
-    </section>
+      <div class="filters-modal-footer">
+        <button id="clear-filters-btn" class="btn-secondary">Limpar Filtros</button>
+        <button id="apply-filters-btn" class="btn-primary">Aplicar</button>
+      </div>
+    </div>
   </div>
 </main>
 <script src="/js/card-actions.js" defer></script>
 <script src="/js/list.js" defer></script>
 <script src="/js/cardSearch.js" defer></script>
-<script src="/js/accordion-filters.js"></script>
 <%- include('../partials/footer') %>

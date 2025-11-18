@@ -54,6 +54,15 @@ router.get('/api/cards/search-available', cardController.searchAvailableCards);
 router.get('/api/cards/all', cardController.getAllCards);
 
 /**
+ * Rota da API para obter cartas disponíveis (com anúncios ativos) com filtros.
+ * @name GET /api/cards/available
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
+router.get('/api/cards/available', cardController.getAvailableCards);
+
+/**
  * Rota da API para buscar cartas para o deck builder.
  * @name GET /api/decks/search-cards
  * @function

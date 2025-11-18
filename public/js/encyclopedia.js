@@ -3,13 +3,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevPageButton = document.getElementById('prev-page');
     const nextPageButton = document.getElementById('next-page');
     const pageIndicator = document.getElementById('page-indicator');
-    const filtersContainer = document.querySelector('.filters-container');
     const searchInput = document.getElementById('search-input');
     const resultsSection = document.querySelector('.results');
+    
+    // Modal elements
+    const filtersModal = document.getElementById('filters-modal');
+    const openFiltersBtn = document.getElementById('open-filters-btn');
+    const closeFiltersBtn = document.getElementById('close-filters-btn');
+    const applyFiltersBtn = document.getElementById('apply-filters-btn');
+    const clearFiltersBtn = document.getElementById('clear-filters-btn');
+    const modalOverlay = document.querySelector('.filters-modal-overlay');
 
     let currentFilters = {
         page: 1
     };
+    let tempFilters = {}; // Temporary filters before applying
     let debounceTimer;
 
     // --- FUNÇÕES ---
@@ -79,25 +87,87 @@ document.addEventListener('DOMContentLoaded', () => {
         nextPageButton.disabled = !hasMore;
     };
 
+    // --- MODAL FUNCTIONS ---
+
+    const openModal = () => {
+        // Copy current filters to temp filters
+        tempFilters = { ...currentFilters };
+        delete tempFilters.page;
+        delete tempFilters.q;
+        
+        // Update modal chip states based on current filters
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            const key = chip.dataset.filterKey;
+            const value = chip.dataset.filterValue;
+            chip.classList.toggle('active', tempFilters[key] === value);
+        });
+        
+        filtersModal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeModal = () => {
+        filtersModal.style.display = 'none';
+        document.body.style.overflow = '';
+        tempFilters = {};
+    };
+
+    const applyFilters = () => {
+        // Apply temp filters to current filters
+        Object.keys(tempFilters).forEach(key => {
+            currentFilters[key] = tempFilters[key];
+        });
+        
+        // Remove filters that were cleared
+        const tempKeys = Object.keys(tempFilters);
+        Object.keys(currentFilters).forEach(key => {
+            if (key !== 'page' && key !== 'q' && !tempKeys.includes(key)) {
+                delete currentFilters[key];
+            }
+        });
+        
+        currentFilters.page = 1;
+        closeModal();
+        fetchCards();
+    };
+
+    const clearFilters = () => {
+        tempFilters = {};
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.classList.remove('active');
+        });
+    };
+
     // --- EVENT LISTENERS ---
 
-    // Listener para os filtros
-    filtersContainer.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-option')) {
-            e.preventDefault();
+    // Modal controls
+    openFiltersBtn.addEventListener('click', openModal);
+    closeFiltersBtn.addEventListener('click', closeModal);
+    modalOverlay.addEventListener('click', closeModal);
+    applyFiltersBtn.addEventListener('click', applyFilters);
+    clearFiltersBtn.addEventListener('click', clearFilters);
+
+    // Filter chip clicks
+    filtersModal.addEventListener('click', (e) => {
+        if (e.target.classList.contains('filter-chip')) {
             const key = e.target.dataset.filterKey;
             const value = e.target.dataset.filterValue;
-
-            // Remove a classe 'active' de outras opções no mesmo grupo
-            const siblings = e.target.closest('.filter-options').querySelectorAll('.filter-option');
-            siblings.forEach(sib => sib.classList.remove('active'));
-
-            // Adiciona a classe 'active' à opção clicada
-            e.target.classList.add('active');
-
-            currentFilters[key] = value;
-            currentFilters.page = 1; // Reseta para a primeira página ao aplicar um novo filtro
-            fetchCards();
+            
+            // If clicking "Todas", remove filter
+            if (value === 'all') {
+                delete tempFilters[key];
+                // Remove active from all chips in this group
+                const groupChips = filtersModal.querySelectorAll(`.filter-chip[data-filter-key="${key}"]`);
+                groupChips.forEach(chip => chip.classList.remove('active'));
+                e.target.classList.add('active');
+            } else {
+                // Set filter and update chip states
+                tempFilters[key] = value;
+                // Remove active from all chips in this group
+                const groupChips = filtersModal.querySelectorAll(`.filter-chip[data-filter-key="${key}"]`);
+                groupChips.forEach(chip => chip.classList.remove('active'));
+                e.target.classList.add('active');
+            }
         }
     });
 
@@ -131,13 +201,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const params = new URLSearchParams(window.location.search);
         params.forEach((value, key) => {
             currentFilters[key] = value;
-            
-            // Ativa visualmente os filtros que vieram da URL
-            const activeFilter = filtersContainer.querySelector(`.filter-option[data-filter-key="${key}"][data-filter-value="${value}"]`);
-            if (activeFilter) {
-                activeFilter.classList.add('active');
-            }
         });
+        
+        // Initialize search input from URL
+        if (currentFilters.q) {
+            searchInput.value = currentFilters.q;
+        }
+        
         fetchCards();
     };
 

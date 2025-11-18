@@ -1,0 +1,297 @@
+/* Estilos para a página de busca de cartas */
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.page-header h1 {
+    margin: 0;
+    flex: 1;
+    min-width: 250px;
+}
+
+.header-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex: 1;
+    min-width: 300px;
+}
+
+.search-input-main {
+    flex: 1;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border, #ddd);
+    border-radius: 8px;
+    font-size: 1rem;
+    background-color: var(--bg-surface, #fff);
+    color: var(--text-primary, #000);
+    transition: border-color 0.2s;
+}
+
+.search-input-main:focus {
+    outline: none;
+    border-color: var(--accent-primary, #007bff);
+}
+
+#open-filters-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    white-space: nowrap;
+}
+
+/* Modal de Filtros */
+.filters-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+}
+
+.filters-modal[style*="display: block"] {
+    display: flex !important;
+    animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.filters-modal-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+}
+
+.filters-modal-content {
+    position: relative;
+    background-color: var(--bg-surface, #fff);
+    border-radius: 16px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    width: 90%;
+    max-width: 800px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease-out;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.filters-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid var(--border, #ddd);
+}
+
+.filters-modal-header h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: var(--text-primary, #000);
+}
+
+.close-modal-btn {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: var(--text-secondary, #666);
+    cursor: pointer;
+    padding: 0.5rem;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-modal-btn:hover {
+    background-color: var(--bg-hover, #f0f0f0);
+    color: var(--text-primary, #000);
+}
+
+.filters-modal-body {
+    padding: 2rem;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.filter-group-modal {
+    margin-bottom: 2rem;
+}
+
+.filter-group-modal:last-child {
+    margin-bottom: 0;
+}
+
+.filter-group-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary, #000);
+}
+
+.filter-options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 0.75rem;
+}
+
+/* Grid especial para edições (mais compacto e com scroll) */
+.filter-group-modal:has([data-filter-key="set"]) .filter-options-grid {
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: 0.6rem;
+    max-height: 250px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+/* Scrollbar customizada */
+.filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar {
+    width: 8px;
+}
+
+.filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar-track {
+    background: var(--bg-surface, #f1f1f1);
+    border-radius: 4px;
+}
+
+.filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar-thumb {
+    background: var(--border, #888);
+    border-radius: 4px;
+}
+
+.filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar-thumb:hover {
+    background: var(--accent-primary, #555);
+}
+
+.filter-chip {
+    padding: 0.6rem 1rem;
+    border: 2px solid var(--border, #ddd);
+    border-radius: 24px;
+    background-color: var(--bg-surface, #fff);
+    color: var(--text-primary, #000);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    white-space: normal; /* Permite quebra de linha */
+    word-break: break-word;
+    line-height: 1.3;
+}
+
+/* Chips de edição mais compactos */
+.filter-group-modal:has([data-filter-key="set"]) .filter-chip {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.85rem;
+    min-width: 80px;
+}
+
+.filter-chip:hover {
+    border-color: var(--accent-primary, #007bff);
+    background-color: var(--bg-hover, #f0f0f0);
+    transform: translateY(-2px);
+}
+
+.filter-chip.active {
+    background-color: var(--accent-primary, #007bff);
+    border-color: var(--accent-primary, #007bff);
+    color: white;
+}
+
+.filters-modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding: 1.5rem 2rem;
+    border-top: 1px solid var(--border, #ddd);
+}
+
+.filters-modal-footer button {
+    padding: 0.75rem 2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .header-controls {
+        flex-direction: column;
+        min-width: 100%;
+    }
+
+    #open-filters-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .filters-modal-content {
+        width: 95%;
+        max-height: 90vh;
+        border-radius: 12px;
+    }
+
+    .filters-modal-header,
+    .filters-modal-body,
+    .filters-modal-footer {
+        padding: 1rem 1.5rem;
+    }
+
+    .filter-options-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.5rem;
+    }
+
+    .filter-chip {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.85rem;
+    }
+}
+
+/* Ajustes para a seção de resultados sem sidebar */
+.search-container {
+    display: block;
+}
+
+.results {
+    width: 100%;
+}

@@ -17,8 +17,9 @@ const showCardsPage = async (req, res) => {
     if (req.query.color && req.query.color !== '') cardMatchQuery.colors = new RegExp(req.query.color, 'i');
     if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
     if (req.query.set && req.query.set !== '') {
-      const setCode = req.query.set.replace(/OP-?/, '');
-      cardMatchQuery.set_name = new RegExp(`OP-?${setCode}`, 'i');
+      // Aceita qualquer tipo de edição (OP, ST, PRB, P, etc)
+      const setCode = req.query.set.replace(/-/g, '-?');
+      cardMatchQuery.set_name = new RegExp(setCode, 'i');
     }
     if (req.query.q && req.query.q !== '') cardMatchQuery.name = new RegExp(req.query.q, 'i');
 
@@ -62,27 +63,66 @@ const showCardsPage = async (req, res) => {
     const colors = await Card.distinct('colors', { game: 'onepiece' });
     const types = await Card.distinct('type_line', { game: 'onepiece' });
 
-    // Busca TODAS as edições do jogo, não apenas as que têm listings
-    const rawSets = await Card.distinct('set_name', {
-      game: 'onepiece',
-      set_name: /OP-?\d+/
-    });
+    // Busca TODAS as edições do jogo (OP, ST, PRB, P, etc)
+    const rawSets = await Card.distinct('set_name', { game: 'onepiece' });
 
-    const opSetPattern = /(OP-?\d+)/;
-    const normalizedSet = new Set();
+    // Normaliza e organiza as edições
+    const setsByType = {
+      op: [],      // Edições principais (OP01, OP02, etc)
+      st: [],      // Starter Decks (ST01, ST02, etc)
+      prb: [],     // Prize Cards
+      p: [],       // Promotional
+      other: []    // Outras edições
+    };
+
     rawSets.forEach(rawSet => {
-      const match = rawSet.match(opSetPattern);
-      if (match) {
-        const setCode = 'OP' + match[1].replace(/OP-?/, '').padStart(2, '0');
-        normalizedSet.add(setCode);
+      if (!rawSet) return;
+      
+      // Tenta identificar o tipo de edição
+      const opMatch = rawSet.match(/OP-?(\d+)/i);
+      const stMatch = rawSet.match(/ST-?(\d+)/i);
+      const prbMatch = rawSet.match(/PRB-?(\d+)/i);
+      const pMatch = rawSet.match(/P-?(\d+)/i);
+      
+      if (opMatch) {
+        const setCode = 'OP' + opMatch[1].padStart(2, '0');
+        if (!setsByType.op.includes(setCode)) setsByType.op.push(setCode);
+      } else if (stMatch) {
+        const setCode = 'ST' + stMatch[1].padStart(2, '0');
+        if (!setsByType.st.includes(setCode)) setsByType.st.push(setCode);
+      } else if (prbMatch) {
+        const setCode = 'PRB-' + prbMatch[1].padStart(3, '0');
+        if (!setsByType.prb.includes(setCode)) setsByType.prb.push(setCode);
+      } else if (pMatch) {
+        const setCode = 'P-' + pMatch[1].padStart(3, '0');
+        if (!setsByType.p.includes(setCode)) setsByType.p.push(setCode);
+      } else {
+        // Outras edições que não se encaixam nos padrões acima
+        if (!setsByType.other.includes(rawSet)) setsByType.other.push(rawSet);
       }
     });
 
-    const sortedSets = Array.from(normalizedSet).sort((a, b) => {
-      const numA = parseInt(a.match(/\d+/)[0]);
-      const numB = parseInt(b.match(/\d+/)[0]);
+    // Ordena cada tipo numericamente
+    const sortNumerically = (a, b) => {
+      const numA = parseInt(a.match(/\d+/)?.[0] || 0);
+      const numB = parseInt(b.match(/\d+/)?.[0] || 0);
       return numA - numB;
-    });
+    };
+
+    setsByType.op.sort(sortNumerically);
+    setsByType.st.sort(sortNumerically);
+    setsByType.prb.sort(sortNumerically);
+    setsByType.p.sort(sortNumerically);
+    setsByType.other.sort();
+
+    // Combina todas as edições: OP primeiro, depois ST, PRB, P e outras
+    const sortedSets = [
+      ...setsByType.op,
+      ...setsByType.st,
+      ...setsByType.prb,
+      ...setsByType.p,
+      ...setsByType.other
+    ];
 
     // Define os filtros que serão enviados para a view (com opção "Todas")
     const filterGroups = [
@@ -421,6 +461,73 @@ const debugCardSearch = async (req, res) => {
   }
 };
 
+// Nova função para a API de cartas disponíveis (com filtros)
+const getAvailableCards = async (req, res) => {
+  try {
+    const currentPage = parseInt(req.query.p) || 1;
+    const limit = 50;
+    
+    // Define a busca base para 'onepiece'
+    const cardMatchQuery = { game: 'onepiece' };
+
+    // Adiciona os filtros de One Piece se eles existirem na URL e não forem vazios
+    if (req.query.rarity && req.query.rarity !== '') cardMatchQuery.rarity = req.query.rarity;
+    if (req.query.color && req.query.color !== '') cardMatchQuery.colors = new RegExp(req.query.color, 'i');
+    if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
+    if (req.query.set && req.query.set !== '') {
+      // Aceita qualquer tipo de edição (OP, ST, PRB, P, etc)
+      const setCode = req.query.set.replace(/-/g, '-?');
+      cardMatchQuery.set_name = new RegExp(setCode, 'i');
+    }
+    if (req.query.q && req.query.q !== '') cardMatchQuery.name = new RegExp(req.query.q, 'i');
+
+    // Busca no banco de dados - apenas cartas COM anúncios ativos
+    const distinctCardIds = await Listing.distinct('card', { quantity: { $gt: 0 } });
+    const totalCards = await Card.countDocuments({ _id: { $in: distinctCardIds }, ...cardMatchQuery });
+
+    const cards = await Card.aggregate([
+      { $match: { _id: { $in: distinctCardIds }, game: 'onepiece', ...cardMatchQuery }},
+      { $lookup: {
+          from: 'listings',
+          localField: '_id',
+          foreignField: 'card',
+          pipeline: [
+            { $match: { quantity: { $gt: 0 } } }
+          ],
+          as: 'listings'
+      }},
+      { $addFields: {
+          lowestAvailablePrice: { $min: '$listings.price' }
+      }},
+      { $project: {
+          _id: 1,
+          name: 1,
+          image_url: 1,
+          set_name: 1,
+          rarity: 1,
+          type_line: 1,
+          averagePrice: 1,
+          price_trend: 1,
+          lowestAvailablePrice: 1
+      }},
+      { $sort: { name: 1 }},
+      { $skip: (currentPage - 1) * limit },
+      { $limit: limit }
+    ]);
+
+    res.json({
+      cards: cards,
+      hasMore: (currentPage * limit) < totalCards,
+      currentPage: currentPage,
+      totalCards: totalCards
+    });
+
+  } catch (error) {
+    console.error("Erro na API de cartas disponíveis:", error);
+    res.status(500).json({ message: 'Erro no servidor', cards: [], hasMore: false, currentPage: 1, totalCards: 0 });
+  }
+};
+
 module.exports = {
   showCardsPage,
   showCardDetailPage,
@@ -429,5 +536,6 @@ module.exports = {
   getAllCards,
   searchForDeckBuilder,
   debugCardSearch,
-  getLeaders, // Export the new getLeaders function
+  getLeaders,
+  getAvailableCards, // Nova função
 };
