@@ -1,0 +1,437 @@
+/* Página do Vendedor - Estilo Moderno */
+
+.seller-page-main {
+    min-height: calc(100vh - 200px);
+    padding: 2rem 0;
+    background: var(--bg-main);
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem;
+}
+
+/* Cabeçalho do Vendedor */
+.seller-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.seller-info {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.seller-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    color: var(--text-secondary);
+    border: 2px solid var(--border);
+}
+
+.seller-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.seller-username {
+    font-family: var(--font-titles);
+    font-size: 2rem;
+    margin: 0;
+    color: var(--text-primary);
+    letter-spacing: 1px;
+}
+
+.seller-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    width: fit-content;
+}
+
+.shop-badge {
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-gold));
+    color: var(--text-primary);
+    border: none;
+}
+
+.user-badge {
+    background: var(--muted);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+}
+
+/* Estatísticas do Vendedor */
+.seller-stats {
+    display: flex;
+    gap: 2rem;
+}
+
+.stat-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-purple);
+    font-family: var(--font-titles);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Seção de Anúncios */
+.listings-section {
+    margin-top: 2rem;
+}
+
+.section-title {
+    font-family: var(--font-titles);
+    font-size: 1.75rem;
+    color: var(--text-primary);
+    margin-bottom: 1.5rem;
+    letter-spacing: 1px;
+}
+
+.listings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+/* Card de Anúncio */
+.listing-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    overflow: hidden;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+}
+
+.listing-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    border-color: var(--accent-purple);
+}
+
+.card-image-link {
+    display: block;
+    text-decoration: none;
+}
+
+.card-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-top: 139.86%; /* Aspect ratio 5:7 para cartas */
+    background: var(--muted);
+    overflow: hidden;
+}
+
+.card-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.listing-card:hover .card-image {
+    transform: scale(1.05);
+}
+
+/* Informações do Card */
+.card-info {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    flex: 1;
+}
+
+.card-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+    line-height: 1.3;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.detail-label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.detail-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.card-price {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background: var(--muted);
+    border-radius: 8px;
+    margin-top: auto;
+}
+
+.price-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.price-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    font-family: var(--font-titles);
+}
+
+.btn-add-cart {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: linear-gradient(90deg, var(--accent-purple), var(--accent-gold));
+    color: var(--text-primary);
+    border: none;
+    border-radius: var(--radius-button);
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+}
+
+.btn-add-cart:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(162, 89, 255, 0.4);
+}
+
+.btn-add-cart:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Botão Flutuante do Carrinho */
+#floating-cart-button {
+    position: fixed;
+    top: 150px;
+    right: 30px;
+    z-index: 1000;
+    background-color: var(--accent-primary);
+    color: white;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    font-size: 1.5rem;
+    transition: transform 0.2s ease-in-out;
+    animation: fadeInScale 0.3s ease-out;
+}
+
+#floating-cart-button:hover {
+    transform: scale(1.1);
+}
+
+#floating-cart-button .badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background-color: var(--accent-red);
+    color: white;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: bold;
+}
+
+#floating-cart-button .badge.hidden {
+    display: none;
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.5);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* Estado Vazio */
+.no-listings {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 4rem 2rem;
+    text-align: center;
+    margin-top: 2rem;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.no-listings h2 {
+    font-family: var(--font-titles);
+    font-size: 1.75rem;
+    color: var(--text-primary);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: 1px;
+}
+
+.no-listings p {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+
+    .seller-header {
+        padding: 1.5rem;
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .seller-info {
+        width: 100%;
+    }
+
+    .seller-avatar {
+        width: 60px;
+        height: 60px;
+        font-size: 2rem;
+    }
+
+    .seller-username {
+        font-size: 1.5rem;
+    }
+
+    .seller-stats {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .listings-grid {
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+    }
+
+    .card-info {
+        padding: 1rem;
+    }
+
+    .card-name {
+        font-size: 1rem;
+    }
+
+    .price-value {
+        font-size: 1.2rem;
+    }
+
+    .no-listings {
+        padding: 3rem 1.5rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .seller-page-main {
+        padding: 1rem 0;
+    }
+
+    .listings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .seller-username {
+        font-size: 1.25rem;
+    }
+
+    .stat-value {
+        font-size: 1.5rem;
+    }
+}

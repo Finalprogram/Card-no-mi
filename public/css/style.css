@@ -1489,6 +1489,20 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   font-size: 0.9rem;
 }
 
+.listings-section .table .seller-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  transition: color 0.2s;
+  position: relative;
+  z-index: 1;
+  cursor: pointer;
+}
+
+.listings-section .table .seller-link:hover {
+  color: var(--accent-purple);
+  text-decoration: underline;
+}
+
 .card-link {
   text-decoration: none;
   color: inherit;

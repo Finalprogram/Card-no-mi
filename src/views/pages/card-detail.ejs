@@ -49,13 +49,24 @@
         <tbody>
           <% listings.forEach(listing => { %>
             <tr>
-              <td><%= listing.seller.username %></td>
+              <td>
+                <a href="/vendedores/<%= listing.seller._id %>" class="seller-link">
+                  <%= listing.seller.username %>
+                </a>
+              </td>
               <td><%= listing.condition %></td>
               <td><%= listing.language %></td>
               <td><%= formatPrice(listing.price) %></td>
               <td><%= listing.quantity %></td>
               <td>
-                <button class="btn btn-primary add-to-cart-btn" data-listing-id="<%= listing._id %>" data-vendor-id="<%= listing.seller._id %>">Adicionar ao Carrinho</button>
+                <button class="btn btn-primary add-to-cart-btn" 
+                        data-listing-id="<%= listing._id %>" 
+                        data-card-id="<%= card._id %>"
+                        data-seller-id="<%= listing.seller._id %>"
+                        data-price="<%= listing.price %>"
+                        data-max-qty="<%= listing.quantity %>">
+                  <i class="fas fa-cart-plus"></i> Adicionar
+                </button>
               </td>
             </tr>
           <% }) %>
@@ -68,64 +79,12 @@
 
 </main>
 
+<!-- Botão Flutuante do Carrinho -->
+<a href="/carrinho" id="floating-cart-button" style="display: none;">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="badge hidden">0</span>
+</a>
+
 <%- include('../partials/footer') %>
 
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.add-to-cart-btn').forEach(button => {
-    button.addEventListener('click', async (event) => {
-      const listingId = event.target.dataset.listingId;
-      const vendorId = event.target.dataset.vendorId;
-      const row = event.target.closest('tr');
-      const cells = row.querySelectorAll('td');
-      
-      const sellerName = cells[0].textContent.trim();
-      const condition = cells[1].textContent.trim();
-      const language = cells[2].textContent.trim();
-      const price = parseFloat(cells[3].textContent.replace('R$', '').replace(',', '.'));
-      const quantity = 1; // Default to 1 for now
-
-      const cardName = document.querySelector('h1').textContent.trim();
-      const imageUrl = document.querySelector('.card-image-section img').src;
-      
-      const body = {
-        listingId,
-        cardId: '<%= card._id %>',
-        vendorId,
-        price,
-        qty: quantity,
-        meta: {
-          cardName,
-          imageUrl,
-          sellerName,
-          condition,
-          language,
-        }
-      };
-
-      try {
-        const response = await fetch('/cart/add', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body)
-        });
-        const data = await response.json();
-        if (data.ok) {
-          // Update cart count in navbar
-          const cartBadge = document.querySelector('#floating-cart-button .badge');
-          if (cartBadge) {
-            cartBadge.textContent = data.count;
-            cartBadge.classList.toggle('hidden', data.count <= 0);
-          }
-          window.showToast('Carta adicionada ao carrinho!', 'success');
-        } else {
-          window.showToast('Erro ao adicionar ao carrinho.', 'error');
-        }
-      } catch (error) {
-        console.error('Error adding to cart:', error);
-        window.showToast('Erro ao adicionar ao carrinho.', 'error');
-      }
-    });
-  });
-});
-</script>
+<script src="/js/card-detail.js"></script>

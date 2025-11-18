@@ -3,52 +3,125 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Página do Vendedor - <%= seller.username %></title>
-    <!-- Você pode querer adicionar um CSS específico para esta página -->
-    <!-- <link rel="stylesheet" href="/css/seller-page.css"> -->
-    <style>
-        /* Estilos básicos para demonstração */
-        body { font-family: sans-serif; margin: 0; background-color: #f4f4f4; }
-        .container { max-width: 1200px; margin: 20px auto; padding: 20px; }
-        .seller-header { border-bottom: 2px solid #ddd; padding-bottom: 20px; margin-bottom: 20px; }
-        .seller-header h1 { margin: 0; }
-        .listings-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
-        .listing-card { background-color: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 15px; text-align: center; }
-        .listing-card img { max-width: 100%; height: auto; border-radius: 4px; }
-        .listing-card h3 { font-size: 1em; margin: 10px 0 5px; }
-        .listing-card p { margin: 5px 0; color: #555; }
-        .no-listings { text-align: center; padding: 50px; background-color: #fff; border-radius: 8px; }
-    </style>
+    
+    <!-- Importa a fonte Inter do Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700&family=Inter:wght@400;500;700;900&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap" rel="stylesheet">
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="/css/seller-page.css">
+    <link rel="icon" href="/images/logo.svg" type="image/svg+xml">
+    
+    <title>Anúncios de <%= seller.username %> - Car'D No Mi</title>
 </head>
-<body>
+<body class="public-site">
+
+<%- include('../partials/navbar') %>
+
+<main class="seller-page-main">
     <div class="container">
+        <!-- Cabeçalho do Vendedor -->
         <div class="seller-header">
-            <h1>Anúncios de <%= seller.username %></h1>
-            <!-- Futuramente, pode adicionar mais informações do vendedor aqui, como reputação, etc. -->
+            <div class="seller-info">
+                <div class="seller-avatar">
+                    <i class="fas fa-user-circle"></i>
+                </div>
+                <div class="seller-details">
+                    <h1 class="seller-username"><%= seller.username %></h1>
+                    <% if (seller.accountType === 'shop') { %>
+                        <span class="seller-badge shop-badge">
+                            <i class="fas fa-store"></i> LOJA OFICIAL
+                        </span>
+                    <% } else { %>
+                        <span class="seller-badge user-badge">
+                            <i class="fas fa-user"></i> VENDEDOR
+                        </span>
+                    <% } %>
+                </div>
+            </div>
+            
+            <div class="seller-stats">
+                <div class="stat-item">
+                    <span class="stat-value"><%= listings.length %></span>
+                    <span class="stat-label">Anúncios Ativos</span>
+                </div>
+            </div>
         </div>
 
+        <!-- Grade de Anúncios -->
         <% if (listings && listings.length > 0) { %>
-            <div class="listings-grid">
-                <% listings.forEach(listing => { %>
-                    <div class="listing-card">
-                        <% if (listing.card && listing.card.image_url) { %>
-                            <a href="/card/<%= listing.card.slug %>"> <!-- Link para a página da carta -->
-                                <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>">
-                            </a>
-                        <% } %>
-                        <h3><%= listing.card ? listing.card.name : 'Carta não encontrada' %></h3>
-                        <p><strong>Preço:</strong> R$ <%= listing.price.toFixed(2) %></p>
-                        <p><strong>Condição:</strong> <%= listing.condition %></p>
-                        <p><strong>Idioma:</strong> <%= listing.language %></p>
-                        <p><strong>Disponível:</strong> <%= listing.quantity %></p>
-                    </div>
-                <% }) %>
+            <div class="listings-section">
+                <h2 class="section-title">Anúncios</h2>
+                <div class="listings-grid">
+                    <% listings.forEach(listing => { %>
+                        <div class="listing-card">
+                            <% if (listing.card && listing.card.image_url) { %>
+                                <a href="/card/<%= listing.card.slug %>" class="card-image-link">
+                                    <div class="card-image-wrapper">
+                                        <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>" class="card-image">
+                                    </div>
+                                </a>
+                            <% } %>
+                            
+                            <div class="card-info">
+                                <h3 class="card-name"><%= listing.card ? listing.card.name : 'Carta não encontrada' %></h3>
+                                
+                                <div class="card-details">
+                                    <div class="detail-row">
+                                        <span class="detail-label">Condição:</span>
+                                        <span class="detail-value"><%= listing.condition %></span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Idioma:</span>
+                                        <span class="detail-value"><%= listing.language %></span>
+                                    </div>
+                                    <div class="detail-row">
+                                        <span class="detail-label">Disponível:</span>
+                                        <span class="detail-value"><%= listing.quantity %> un.</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-price">
+                                    <span class="price-label">Preço:</span>
+                                    <span class="price-value">R$ <%= listing.price.toFixed(2) %></span>
+                                </div>
+                                
+                                <button class="btn-add-cart" 
+                                        data-listing-id="<%= listing._id %>"
+                                        data-card-id="<%= listing.card._id %>"
+                                        data-seller-id="<%= seller._id %>"
+                                        data-price="<%= listing.price %>"
+                                        data-max-qty="<%= listing.quantity %>">
+                                    <i class="fas fa-cart-plus"></i> Adicionar ao Carrinho
+                                </button>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
             </div>
         <% } else { %>
             <div class="no-listings">
-                <h2>Este vendedor ainda não tem nenhum anúncio ativo.</h2>
+                <div class="empty-icon">
+                    <i class="fas fa-box-open"></i>
+                </div>
+                <h2>Nenhum anúncio ativo</h2>
+                <p>Este vendedor ainda não possui anúncios cadastrados.</p>
             </div>
         <% } %>
     </div>
+</main>
+
+<!-- Botão Flutuante do Carrinho -->
+<a href="/carrinho" id="floating-cart-button" style="display: none;">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="badge hidden">0</span>
+</a>
+
+<%- include('../partials/footer') %>
+
+<script src="/js/seller-page.js"></script>
 </body>
 </html>

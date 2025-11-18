@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const Listing = require('../models/Listing');
+const Card = require('../models/Card');
 
 /** Cria/retorna o carrinho na sessão */
 function getCart(req) {
@@ -32,7 +33,7 @@ function normalizeMeta(baseMeta = {}, { cardId, vendorId }) {
   // Dados da carta para exibir no modal
   safe.cardId    = safe.cardId    || cardId;
   safe.cardName  = safe.cardName  || baseMeta?.cardName  || 'Carta';
-  safe.imageUrl  = safe.imageUrl  || baseMeta?.imageUrl  || '/img/card-placeholder.png';
+  safe.imageUrl  = safe.imageUrl  || baseMeta?.imageUrl  || '/images/default-avatar.png';
   safe.condition = safe.condition || baseMeta?.condition || null;
 
   // Origem do frete (se você já tiver isso por vendedor)
@@ -89,6 +90,22 @@ async function add(req, res) {
     // }
     // --- FIM DA VALIDAÇÃO ---
 
+    // Buscar dados da carta do banco de dados
+    const card = await Card.findById(cardId);
+    if (!card) {
+      return res.status(404).json({ error: 'Carta não encontrada.' });
+    }
+
+    // Preparar meta com dados da carta
+    const cardMeta = {
+      cardName: card.name,
+      imageUrl: card.image_url,
+      condition: listing.condition || meta?.condition,
+      language: listing.language || meta?.language,
+      sellerName: seller.username || seller.name,
+      sellerId: vendorId
+    };
+
     if (!found) {
       found = {
         key,
@@ -97,12 +114,12 @@ async function add(req, res) {
         listingId, // Adicionado para referência futura
         price: p,
         qty: 0,
-        meta: normalizeMeta(meta, { cardId, vendorId })
+        meta: normalizeMeta(cardMeta, { cardId, vendorId })
       };
       cart.items.push(found);
     } else {
       if (Number.isFinite(p)) found.price = p;
-      found.meta = normalizeMeta({ ...(found.meta || {}), ...(meta || {}) }, { cardId, vendorId });
+      found.meta = normalizeMeta({ ...(found.meta || {}), ...cardMeta, ...(meta || {}) }, { cardId, vendorId });
     }
 
     found.qty = requestedTotalQty; // Atualiza com a quantidade total solicitada
