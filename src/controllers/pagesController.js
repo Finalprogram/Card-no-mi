@@ -172,13 +172,19 @@ const showOrderDetailPage = async (req, res) => {
 
 const getEncyclopediaPage = async (req, res) => {
   try {
+    // Filtro base para excluir cartas inválidas
+    const baseFilter = { 
+      game: 'onepiece',
+      name: { $exists: true, $ne: null, $ne: '', $ne: 'undefined' }
+    };
+    
     // Busca as opções de filtro dinamicamente do banco de dados
-    const rarities = await Card.distinct('rarity', { game: 'onepiece' });
-    const colors = await Card.distinct('colors', { game: 'onepiece' });
-    const types = await Card.distinct('type_line', { game: 'onepiece' });
+    const rarities = await Card.distinct('rarity', baseFilter);
+    const colors = await Card.distinct('colors', baseFilter);
+    const types = await Card.distinct('type_line', baseFilter);
 
     // Busca e ordena todas as edições
-    const rawSets = await Card.distinct('set_name', { game: 'onepiece' });
+    const rawSets = await Card.distinct('set_name', baseFilter);
 
     function normalizeSetName(setName) {
       const squareBracketMatch = setName.match(/\[([^\]]+)\]/); // Changed to square brackets

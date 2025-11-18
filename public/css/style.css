@@ -1357,6 +1357,21 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   scroll-snap-align: start;
 }
 
+.cards-carousel .card-item a {
+  text-decoration: none !important;
+  color: inherit;
+}
+
+.cards-carousel .card-item a:hover,
+.cards-carousel .card-item a:visited {
+  text-decoration: none !important;
+}
+
+.cards-carousel .card-item h4 {
+  color: var(--text-primary);
+  text-decoration: none !important;
+}
+
 /* Scrollbar padrão para carousel */
 .cards-carousel::-webkit-scrollbar {
   height: 8px;

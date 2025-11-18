@@ -398,8 +398,11 @@ const getAllCards = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 52; // 4 linhas de 13 cartas
 
-    // Constrói a query de filtro
-    const filterQuery = { game: 'onepiece' };
+    // Constrói a query de filtro, excluindo cartas com nome inválido
+    const filterQuery = { 
+      game: 'onepiece',
+      name: { $exists: true, $ne: null, $ne: '', $ne: 'undefined' }
+    };
     if (req.query.rarity) filterQuery.rarity = req.query.rarity;
     if (req.query.color) filterQuery.colors = new RegExp(req.query.color, 'i');
     if (req.query.type) filterQuery.type_line = req.query.type;
