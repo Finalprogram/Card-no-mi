@@ -576,10 +576,10 @@
   background: transparent;
 }
 .leader-gallery::-webkit-scrollbar-thumb {
-  background: var(--deck-border); /* Using a relevant variable */
+  background: var(--surface, #f0f0f0);
   border-radius: 10px;
-  border: 1px solid var(--deck-border);
+  border: 1px solid var(--border, #ddd);
 }
 .leader-gallery::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-color); /* Using a relevant variable */
+  background: var(--accent-purple, #8b5cf6);
 }

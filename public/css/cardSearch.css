@@ -4,6 +4,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-top: 2rem;
     margin-bottom: 2rem;
     gap: 1rem;
     flex-wrap: wrap;
@@ -183,17 +184,17 @@
 }
 
 .filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar-track {
-    background: var(--bg-surface, #f1f1f1);
-    border-radius: 4px;
+    background: transparent;
 }
 
 .filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar-thumb {
-    background: var(--border, #888);
-    border-radius: 4px;
+    background: var(--surface, #f0f0f0);
+    border-radius: 10px;
+    border: 1px solid var(--border, #ddd);
 }
 
 .filter-group-modal:has([data-filter-key="set"]) .filter-options-grid::-webkit-scrollbar-thumb:hover {
-    background: var(--accent-primary, #555);
+    background: var(--accent-purple, #8b5cf6);
 }
 
 .filter-chip {
