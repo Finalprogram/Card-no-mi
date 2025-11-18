@@ -218,9 +218,13 @@ document.addEventListener('DOMContentLoaded', () => {
         const type_line = pick(r, ['type_line', 'type', 'typeLine']) || '';
         const rarity = pick(r, ['rarity']) || '';
         const id = pick(r, ['_id', 'id', 'cardId', 'card_id']) || '';
+        const api_id = pick(r, ['api_id', 'apiId', 'opcg_id']) || '';
+        const code = pick(r, ['code', 'card_code', 'cardCode']) || '';
 
         return {
             _id: id,
+            api_id: api_id,
+            code: code,
             name,
             image_url,
             colors,
@@ -234,6 +238,8 @@ document.addEventListener('DOMContentLoaded', () => {
             __raw: r
         };
     }
+
+    // (Removed set abbreviation helper — display will show only Código)
 
     // ==========================================================================
     // SEÇÃO DO LÍDER (NOVAS FUNÇÕES)
@@ -277,7 +283,6 @@ document.addEventListener('DOMContentLoaded', () => {
                             ${colors.map(color => `<div class="color-chip ${color.toLowerCase()}" title="${color}"></div>`).join('')}
                         </div>
                         <span class="leader-power">Poder: ${card.power || 'N/A'}</span>
-                        <span class="leader-set">Set: ${card.set_name || 'N/A'}</span>
                     </div>
                     <div class="leader-effect">
                         ${card.ability || 'Esta carta não possui efeito descrito.'}
@@ -460,9 +465,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div style="flex:1;min-width:300px;">
                     <h2 style="margin-top:0;margin-bottom:8px;">${card.name}</h2>
                     <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">${colorChips}<span style="background:var(--muted);padding:4px 8px;border-radius:6px;font-weight:600;">${card.rarity||'N/A'}</span></div>
+                    <div style="margin-bottom:8px;font-size:0.9rem;color:var(--text-secondary);">Código: <strong style="color:var(--text-primary);">${card.code || 'N/A'}</strong></div>
                     <div style="margin-bottom:8px;">
                         <strong>Tipo:</strong> ${card.type_line || 'N/A'}<br />
-                        <strong>Set:</strong> ${card.set_name || 'N/A'}<br />
                         <strong>Custo:</strong> ${card.cost !== undefined ? card.cost : 'N/A'} &nbsp; <strong>Poder:</strong> ${card.power !== undefined ? card.power : 'N/A'}
                     </div>
                     <div style="background:var(--muted);padding:12px;border-radius:8px;color:var(--text-secondary);max-height:60vh;overflow:auto;">${card.ability || 'Esta carta não possui habilidade descrita.'}</div>
@@ -491,14 +496,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     function createDeckCardElement(item) {
-        const card = item.card;
+        const card = normalizeCardData(item.card || {});
         const cardElement = document.createElement('div');
         cardElement.classList.add('deck-card');
-        cardElement.dataset.cardId = card._id;
+        cardElement.dataset.cardId = card._id || '';
 
         cardElement.innerHTML = `
             <span>${item.quantity}x</span>
-            <p>${card.name} (${card.set_name})</p>
+            <p>${card.name}</p>
             <div class="deck-card-actions">
                 ${isOwner ? `
                 <button class="remove-card-btn" title="Remover 1 cópia">-</button>
@@ -558,7 +563,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <img src="${c.image_url}" alt="${c.name}" tabindex="0" class="search-thumb">
                 <div class="card-info">
                     <p><strong>${c.name}</strong></p>
-                    <p>${c.set_name} - ${c.rarity}</p>
+                    <p style="font-size:0.85rem;color:var(--text-secondary);">${c.rarity} • Código: <strong style="color:var(--text-primary);">${c.code || 'N/A'}</strong></p>
                     <p class="card-type">${c.type_line}</p>
                 </div>
                 ${isOwner ? '<button class="add-card-btn">Adicionar</button>' : ''}

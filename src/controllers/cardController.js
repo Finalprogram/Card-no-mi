@@ -276,6 +276,8 @@ const searchForDeckBuilder = async (req, res) => {
           set_name: 1,
           image_url: 1,
           images: 1,
+          api_id: 1,
+          code: 1,
           status: 1,
           rarity: 1,
           type_line: 1,
