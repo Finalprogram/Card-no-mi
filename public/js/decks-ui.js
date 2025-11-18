@@ -21,6 +21,7 @@ try {
         
         let deckToDeleteId = null;
         let draggedItem = null;
+        const pendingDeletes = new Map(); // deckId -> { timeoutId, cardNode, title }
 
         // --- New elements for Leader Selection Modal ---
         const createDeckBtn = qs('#create-deck-btn');
@@ -134,16 +135,43 @@ try {
 
         // --- Toasts ---
         const toastContainer = qs('#toast-container');
-        const showToast = (message, type = 'info') => {
+        const showToast = (message, type = 'info', options = {}) => {
             const toast = document.createElement('div');
             toast.className = `toast ${type}`;
-            toast.textContent = message;
+
+            const msgSpan = document.createElement('span');
+            msgSpan.textContent = message;
+            toast.appendChild(msgSpan);
+
+            if (options.actionText && typeof options.actionCallback === 'function') {
+                const actionBtn = document.createElement('button');
+                actionBtn.className = 'toast-action';
+                actionBtn.type = 'button';
+                actionBtn.textContent = options.actionText;
+                actionBtn.addEventListener('click', (ev) => {
+                    ev.stopPropagation();
+                    try {
+                        options.actionCallback();
+                    } catch (e) {
+                        console.error('Error in toast action callback', e);
+                    }
+                    // remove toast immediately
+                    toast.classList.add('hiding');
+                    toast.addEventListener('animationend', () => toast.remove());
+                });
+                toast.appendChild(actionBtn);
+            }
+
             toastContainer.appendChild(toast);
 
-            setTimeout(() => {
-                toast.classList.add('hiding');
-                toast.addEventListener('animationend', () => toast.remove());
-            }, 3000);
+            const duration = options.duration || 3000;
+            if (!options.persistent) {
+                setTimeout(() => {
+                    toast.classList.add('hiding');
+                    toast.addEventListener('animationend', () => toast.remove());
+                }, duration);
+            }
+            return toast;
         };
 
         // --- Modals ---
@@ -225,8 +253,11 @@ try {
             // View (Quick Preview)
             if (target.closest('.view-btn')) {
                 try {
+                    const viewBtn = target.closest('.view-btn');
+                    if (viewBtn) viewBtn.classList.add('loading');
                     const response = await fetch(`/api/decks/${deckId}`);
                     if (!response.ok) {
+                        if (viewBtn) { viewBtn.classList.remove('loading'); viewBtn.classList.add('error'); setTimeout(()=>{viewBtn.classList.remove('error');},1200); }
                         throw new Error('Erro ao buscar detalhes do deck.');
                     }
                     const deckDetails = await response.json();
@@ -250,6 +281,7 @@ try {
                         <a href="/decks/analytics/${deckId}" class="btn btn-primary" style="width: 100%; margin-top: 1rem;">Ver Estatísticas do Deck</a>
                     `;
                     openDrawer();
+                    if (viewBtn) { viewBtn.classList.remove('loading'); viewBtn.classList.add('success'); setTimeout(()=>{viewBtn.classList.remove('success');},900); }
                 } catch (error) {
                     console.error('Erro ao carregar a visualização rápida do deck:', error);
                     showToast('Não foi possível carregar os detalhes do deck.', 'error');
@@ -266,8 +298,11 @@ try {
             // Duplicate
             if (target.closest('.duplicate-btn')) {
                 try {
+                    const dupBtn = target.closest('.duplicate-btn');
+                    if (dupBtn) dupBtn.classList.add('loading');
                     const response = await fetch(`/api/decks/${deckId}`);
                     if (!response.ok) {
+                        if (dupBtn) { dupBtn.classList.remove('loading'); dupBtn.classList.add('error'); setTimeout(()=>{dupBtn.classList.remove('error');},1200); }
                         throw new Error('Erro ao buscar detalhes do deck.');
                     }
                     const deckDetails = await response.json();
@@ -291,9 +326,11 @@ try {
                         await navigator.clipboard.writeText(decklist.trim());
                         console.log('Calling showToast for copy confirmation'); // Debug log
                         showToast(`Lista do deck "${deckDetails.title}" copiada para a área de transferência!`, 'success');
+                        if (dupBtn) { dupBtn.classList.remove('loading'); dupBtn.classList.add('success'); setTimeout(()=>{dupBtn.classList.remove('success');},900); }
                     } catch (clipboardError) {
                         console.error('Erro ao copiar para a área de transferência:', clipboardError);
                         showToast('Erro ao copiar para a área de transferência. Verifique as permissões do navegador.', 'error');
+                        if (dupBtn) { dupBtn.classList.remove('loading'); dupBtn.classList.add('error'); setTimeout(()=>{dupBtn.classList.remove('error');},1200); }
                     }
 
                 } catch (error) {
@@ -302,40 +339,63 @@ try {
                 }
             }
 
-            // Delete directly (no modal)
+            // Delete with undo (grace period)
             if (target.closest('.delete-btn')) {
                 e.preventDefault();
                 const card = target.closest('.deck-card');
+                if (!card) return;
                 const deckId = card.dataset.deckId;
+                const deckTitle = card.querySelector('.deck-card-title')?.textContent || '';
 
-                // Disable the button to avoid double clicks
-                const btn = target.closest('.delete-btn');
-                if (btn) btn.disabled = true;
+                // Clone node to allow reinsertion if user undoes
+                const cardClone = card.cloneNode(true);
+                // Remove from DOM optimistically
+                card.remove();
 
-                try {
-                    const response = await fetch(`/api/decks/${deckId}`, {
-                        method: 'DELETE',
-                        credentials: 'same-origin',
-                        headers: { 'Accept': 'application/json' }
-                    });
+                const graceMs = 8000;
 
-                    if (response.ok) {
-                        card.remove();
-                        showToast('Deck excluído com sucesso.', 'success');
-                    } else {
-                        let errMsg = 'Erro ao excluir deck.';
-                        try {
-                            const errorData = await response.json();
-                            if (errorData && errorData.message) errMsg = `Erro ao excluir deck: ${errorData.message}`;
-                        } catch (e) {}
-                        showToast(errMsg, 'error');
-                        if (btn) btn.disabled = false;
+                const undo = () => {
+                    const pending = pendingDeletes.get(deckId);
+                    if (!pending) return;
+                    clearTimeout(pending.timeoutId);
+                    // Reinsert the cloned card
+                    deckList.appendChild(pending.cardNode);
+                    pendingDeletes.delete(deckId);
+                    showToast('Exclusão cancelada.', 'info');
+                };
+
+                const timeoutId = setTimeout(async () => {
+                    try {
+                        const response = await fetch(`/api/decks/${deckId}`, {
+                            method: 'DELETE',
+                            credentials: 'same-origin',
+                            headers: { 'Accept': 'application/json' }
+                        });
+
+                        if (response.ok) {
+                            showToast(`Deck "${deckTitle}" excluído.`, 'success');
+                        } else {
+                            // reinstate on error
+                            deckList.appendChild(cardClone);
+                            let errMsg = 'Erro ao excluir deck.';
+                            try {
+                                const errorData = await response.json();
+                                if (errorData && errorData.message) errMsg = `Erro ao excluir deck: ${errorData.message}`;
+                            } catch (e) {}
+                            showToast(errMsg, 'error');
+                        }
+                    } catch (error) {
+                        console.error('Erro ao excluir deck:', error);
+                        deckList.appendChild(cardClone);
+                        showToast('Ocorreu um erro de rede ao tentar excluir o deck.', 'error');
+                    } finally {
+                        pendingDeletes.delete(deckId);
                     }
-                } catch (error) {
-                    console.error('Erro ao excluir deck:', error);
-                    showToast('Ocorreu um erro de rede ao tentar excluir o deck.', 'error');
-                    if (btn) btn.disabled = false;
-                }
+                }, graceMs);
+
+                pendingDeletes.set(deckId, { timeoutId, cardNode: cardClone, title: deckTitle });
+
+                showToast(`Deck "${deckTitle}" excluído.`, 'info', { actionText: 'Desfazer', actionCallback: undo, duration: graceMs });
             }
         });
 

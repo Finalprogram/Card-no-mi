@@ -51,6 +51,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
         deckViewContainer.addEventListener('click', handleDeckActions);
 
+        // Card detail modal handlers (delegated click on grid items)
+        const cardDetailModal = document.getElementById('card-detail-modal');
+        const cardDetailContent = document.getElementById('card-detail-content');
+        if (cardDetailModal) {
+            // Close button
+            cardDetailModal.querySelector('.close-btn')?.addEventListener('click', () => {
+                cardDetailModal.style.display = 'none';
+                cardDetailModal.setAttribute('aria-hidden', 'true');
+                cardDetailContent.innerHTML = '';
+            });
+            // Close when clicking overlay
+            cardDetailModal.addEventListener('click', (ev) => {
+                if (ev.target === cardDetailModal) {
+                    cardDetailModal.style.display = 'none';
+                    cardDetailModal.setAttribute('aria-hidden', 'true');
+                    cardDetailContent.innerHTML = '';
+                }
+            });
+        }
+
         // Listeners de import/export e modais... (mantidos do original)
     }
 
@@ -247,6 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const card = item.card;
                 const gridItem = document.createElement('div');
                 gridItem.classList.add('deck-grid-item');
+                gridItem.dataset.card = JSON.stringify(card);
                 gridItem.innerHTML = `
                     <img src="${card.image_url}" alt="${card.name}" title="${card.name}">
                     <span class="card-quantity-indicator">${item.quantity}x</span>
@@ -256,6 +277,54 @@ document.addEventListener('DOMContentLoaded', () => {
         
         container.appendChild(gridContainer);
     }
+
+    // Show card details in modal
+    function showCardDetail(card) {
+        const modal = document.getElementById('card-detail-modal');
+        const content = document.getElementById('card-detail-content');
+        if (!modal || !content) return;
+
+        const colors = card.colors || [];
+        // Render color chips without text (visual indicators only), keep title for accessibility
+        const colorChips = colors.map(c => `<span class="color-chip ${c.toLowerCase()}" title="${c}"></span>`).join(' ');
+
+        content.innerHTML = `
+            <div class="card-detail-grid" style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
+                <div style="flex:0 0 260px;min-width:200px;">
+                    <img src="${card.image_url || '/images/default-avatar.png'}" alt="${card.name}" style="width:100%;border-radius:8px;box-shadow:0 10px 30px rgba(0,0,0,0.5);" />
+                </div>
+                <div style="flex:1;min-width:300px;">
+                    <h2 style="margin-top:0;margin-bottom:8px;">${card.name}</h2>
+                    <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap;">${colorChips}<span style="background:var(--muted);padding:4px 8px;border-radius:6px;font-weight:600;">${card.rarity||'N/A'}</span></div>
+                    <div style="margin-bottom:8px;">
+                        <strong>Tipo:</strong> ${card.type_line || 'N/A'}<br />
+                        <strong>Set:</strong> ${card.set_name || 'N/A'}<br />
+                        <strong>Custo:</strong> ${card.cost !== undefined ? card.cost : 'N/A'} &nbsp; <strong>Poder:</strong> ${card.power !== undefined ? card.power : 'N/A'}
+                    </div>
+                    <div style="background:var(--muted);padding:12px;border-radius:8px;color:var(--text-secondary);max-height:60vh;overflow:auto;">${card.ability || 'Esta carta não possui habilidade descrita.'}</div>
+                </div>
+            </div>
+        `;
+
+        modal.style.display = 'block';
+        modal.setAttribute('aria-hidden', 'false');
+    }
+
+    // Delegate click for grid items to open card modal
+    deckViewContainer.addEventListener('click', (e) => {
+        const gridItem = e.target.closest('.deck-grid-item');
+        if (!gridItem) return;
+        // Only handle clicks when in grid view
+        if (activeView !== 'grid') return;
+        const cardJson = gridItem.dataset.card;
+        if (!cardJson) return;
+        try {
+            const card = JSON.parse(cardJson);
+            showCardDetail(card);
+        } catch (err) {
+            console.error('Erro ao parsear dados da carta para o modal:', err);
+        }
+    });
     
     function createDeckCardElement(item) {
         const card = item.card;
