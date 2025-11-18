@@ -42,6 +42,11 @@ const orderItemSchema = new mongoose.Schema({
   isReviewed: { type: Boolean, default: false },
   marketplaceFee: { type: Number, required: true },
   sellerNet: { type: Number, required: true },
+  
+  // Controle de saldo e repasse
+  balanceProcessed: { type: Boolean, default: false },
+  includedInPayout: { type: Boolean, default: false },
+  payoutId: { type: mongoose.Schema.Types.ObjectId, ref: 'Payout' }
 });
 
 const orderSchema = new mongoose.Schema({
@@ -94,7 +99,7 @@ const orderSchema = new mongoose.Schema({
   ],
 }, { timestamps: true });
 
-// Hook para notificar sobre mudança de status
+// Hook para notificar sobre mudança de status e atualizar saldos
 orderSchema.pre('save', async function (next) {
   // `isModified` só está disponível em documentos, não em queries.
   // Este hook é para `document.save()`, que é o caso de uso aqui.
@@ -129,6 +134,11 @@ orderSchema.pre('save', async function (next) {
         sendEmail(email, subject, htmlContent)
           .catch(err => logger.error(`Falha ao enviar e-mail de notificação de status para ${email}`, err));
       }
+
+      // Atualizar saldo dos vendedores quando status mudar
+      const { updateSellerBalancesForOrder } = require('../services/balanceService');
+      updateSellerBalancesForOrder(this._id.toString())
+        .catch(err => logger.error(`Falha ao atualizar saldo para pedido ${orderId}:`, err));
 
     } catch (error) {
       logger.error(`Erro no hook de notificação de status do pedido ${this._id}:`, error);

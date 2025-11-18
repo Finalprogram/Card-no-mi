@@ -39,7 +39,80 @@ const UserSchema = new mongoose.Schema({
   // Se for nulo, o sistema usa a taxa padrão do 'accountType'.
   fee_override_percentage: { 
     type: Number,
-    default: null 
+    default: 8.0  // Valor padrão de 8% 
+  },
+
+  // Dados bancários para repasses
+  bankInfo: {
+    // Dados PIX
+    pixKey: { type: String },
+    pixKeyType: { 
+      type: String, 
+      enum: ['cpf', 'cnpj', 'email', 'phone', 'random', null],
+      default: null 
+    },
+    
+    // Dados bancários tradicionais
+    bankName: { type: String },
+    bankCode: { type: String },
+    accountType: { 
+      type: String, 
+      enum: ['checking', 'savings', null],
+      default: null 
+    },
+    accountNumber: { type: String },
+    accountDigit: { type: String },
+    agencyNumber: { type: String },
+    agencyDigit: { type: String },
+    
+    // Método preferencial
+    preferredPaymentMethod: {
+      type: String,
+      enum: ['PIX', 'BankTransfer', 'MercadoPago', null],
+      default: 'PIX'
+    },
+    
+    // Verificação
+    isVerified: { type: Boolean, default: false },
+    verifiedAt: { type: Date }
+  },
+
+  // Configurações de repasse
+  payoutSettings: {
+    // Frequência desejada de repasse
+    frequency: {
+      type: String,
+      enum: ['weekly', 'biweekly', 'monthly', 'on-demand'],
+      default: 'weekly'
+    },
+    
+    // Valor mínimo para solicitar repasse
+    minimumAmount: {
+      type: Number,
+      default: 50.00 // R$ 50,00
+    },
+    
+    // Auto-repasse quando atingir o valor mínimo
+    autoPayoutEnabled: {
+      type: Boolean,
+      default: false
+    },
+    
+    // Dia preferencial para repasse (1-31)
+    preferredPayoutDay: {
+      type: Number,
+      min: 1,
+      max: 31,
+      default: 1
+    }
+  },
+
+  // Saldo disponível para saque
+  balance: {
+    available: { type: Number, default: 0 },      // Disponível para saque
+    pending: { type: Number, default: 0 },        // Pendente (pedidos não entregues)
+    frozen: { type: Number, default: 0 },         // Congelado (disputas, problemas)
+    lifetime: { type: Number, default: 0 }        // Total histórico de vendas
   },
 
   lastActivityAt: { type: Date },

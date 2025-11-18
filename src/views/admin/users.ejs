@@ -248,7 +248,7 @@
         <div class="card-body">
             <form id="setDefaultFeeForm">
                 <div class="input-group">
-                    <input type="number" step="0.01" class="form-control" id="defaultFeeInput" placeholder="New Default Fee %" value="<%= defaultFees['individual'] || 0 %>">
+                    <input type="number" step="0.01" class="form-control" id="defaultFeeInput" placeholder="New Default Fee %" value="<%= defaultFees['individual'] || 8.0 %>">
                     <button type="submit" class="btn btn-primary">Set Global Default</button>
                 </div>
             </form>
@@ -273,15 +273,15 @@
                     <td><%= user.accountType %></td>
                     <td>
                         <% if (user.fee_override_percentage !== null) { %>
-                            <%= user.fee_override_percentage %> (Override)
+                            <%= user.fee_override_percentage %>% (Override)
                         <% } else { %>
-                            <%= defaultFees[user.accountType] || 0 %> (Default)
+                            <%= defaultFees[user.accountType] || 8.0 %>% (Default)
                         <% } %>
                     </td>
                     <td>
                         <form class="set-fee-form" data-user-id="<%= user._id %>">
                             <div class="input-group">
-                                <input type="number" step="0.01" class="form-control form-control-sm" placeholder="New Fee %" value="<%= user.fee_override_percentage !== null ? user.fee_override_percentage : '' %>">
+                                <input type="number" step="0.01" class="form-control form-control-sm" placeholder="New Fee %" value="<%= user.fee_override_percentage !== null ? user.fee_override_percentage : '' %>" />
                                 <button type="submit" class="btn btn-sm btn-primary">Set</button>
                                 <% if (user.fee_override_percentage !== null) { %>
                                     <button type="button" class="btn btn-sm btn-outline-secondary reset-fee-btn">Reset</button>
@@ -321,15 +321,15 @@
         }
     });
 
-    document.querySelectorAll('.set-fee-form').forEach(form => {
-        form.addEventListener('submit', async (e) => {
+    document.querySelectorAll('.set-fee-form').forEach(function(form) {
+        form.addEventListener('submit', async function(e) {
             e.preventDefault();
-            const userId = form.dataset.userId;
+            const userId = form.getAttribute('data-user-id');
             const input = form.querySelector('input[type="number"]');
             const newFee = input.value.trim();
 
             try {
-                const res = await fetch(`/admin/users/${userId}/set-fee`, {
+                const res = await fetch('/admin/users/' + userId + '/set-fee', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -351,11 +351,11 @@
 
         const resetBtn = form.querySelector('.reset-fee-btn');
         if (resetBtn) {
-            resetBtn.addEventListener('click', async () => {
-                const userId = form.dataset.userId;
-                if (confirm('Are you sure you want to reset this user's fee to default?')) {
+            resetBtn.addEventListener('click', async function() {
+                const userId = form.getAttribute('data-user-id');
+                if (confirm('Are you sure you want to reset this user\'s fee to default?')) {
                     try {
-                        const res = await fetch(`/admin/users/${userId}/set-fee`, {
+                        const res = await fetch('/admin/users/' + userId + '/set-fee', {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',

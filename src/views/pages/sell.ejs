@@ -10,7 +10,7 @@
 </div>
     <main class="container">
         <div class="sell-container">
-            
+
             <section class="sell-section">
                 <h1>O que você quer vender?</h1>
                 <p>Comece buscando pela carta que você deseja anunciar no Car'D No Mi.</p>
@@ -38,6 +38,10 @@
 
     <%- include('../partials/footer') %>
     
+    <script>
+        // Pass seller fee to JavaScript
+        window.sellerFeePercentage = <%= sellerFeePercentage %>;
+    </script>
     <script src="/js/sell.js"></script>
 </body>
 </html>

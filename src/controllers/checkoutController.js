@@ -39,7 +39,7 @@ async function calculateCartFees(cartItems) {
     if (feePercentage === null || feePercentage === undefined) {
       const settingKey = `fee_${seller.accountType}_percentage`;
       const defaultFeeSetting = await Setting.findOne({ key: settingKey });
-      feePercentage = defaultFeeSetting ? defaultFeeSetting.value : 0; // Fallback to 0 if setting not found
+      feePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0; // Fallback to 8% if setting not found
     }
 
     const itemTotalPrice = item.price * item.qty;
@@ -261,7 +261,7 @@ async function confirm(req, res) {
       if (feePercentage === null || feePercentage === undefined) {
         const settingKey = `fee_${seller.accountType}_percentage`;
         const defaultFeeSetting = await Setting.findOne({ key: settingKey });
-        feePercentage = defaultFeeSetting ? defaultFeeSetting.value : 0;
+        feePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
       }
 
       const itemTotalPrice = item.price * item.qty;

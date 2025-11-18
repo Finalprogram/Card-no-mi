@@ -76,7 +76,7 @@ const showSellerDashboard = async (req, res) => {
     let sellerFeePercentage = seller.fee_override_percentage;
     const settingKey = `fee_${seller.accountType}_percentage`;
     const defaultFeeSetting = await Setting.findOne({ key: settingKey });
-    const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 0; // Fallback to 0 if setting not found
+    const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0; // Fallback to 8% if setting not found
 
     if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
       sellerFeePercentage = defaultFeePercentage;

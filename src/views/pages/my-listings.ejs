@@ -71,6 +71,34 @@
         .listing-card__actions form {
             display: contents; /* Faz o form não ocupar espaço */
         }
+        .fee-info-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .fee-info-banner h3 {
+            margin: 0 0 10px 0;
+            font-size: 1.3rem;
+        }
+        .fee-info-banner p {
+            margin: 5px 0;
+            opacity: 0.95;
+        }
+        .fee-highlight {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin: 10px 0;
+        }
+        .net-price-info {
+            background-color: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-top: 8px;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
@@ -79,6 +107,25 @@
     </div>
     <main class="container">
         <h1>Meus Anúncios</h1>
+
+        <!-- Fee Information Banner -->
+        <div class="fee-info-banner">
+            <h3><i class="fas fa-info-circle"></i> Taxa do Marketplace</h3>
+            <p class="fee-highlight">
+                <% if (sellerFeePercentage === defaultFeePercentage) { %>
+                    <%= sellerFeePercentage %>% (Taxa Padrão)
+                <% } else { %>
+                    <%= sellerFeePercentage %>% (Taxa Personalizada)
+                <% } %>
+            </p>
+            <p>Esta é a taxa cobrada sobre cada venda realizada. O valor líquido que você recebe é o preço do anúncio menos esta taxa.</p>
+            <% if (listings && listings.length > 0) { %>
+                <div class="net-price-info">
+                    <strong>Exemplo:</strong> Um anúncio de R$ 100,00 resulta em R$ <%= (100 - (100 * sellerFeePercentage / 100)).toFixed(2).replace('.', ',') %> para você
+                    (taxa de R$ <%= (100 * sellerFeePercentage / 100).toFixed(2).replace('.', ',') %>).
+                </div>
+            <% } %>
+        </div>
 
         <% if (listings && listings.length > 0) { %>
             <div class="listings-grid">
@@ -96,12 +143,23 @@
                             </div>
                             <div class="listing-card__price">
                                 <% 
-                                    let priceStr = 'R$ ' + Number(listing.price || 0).toFixed(2).replace('.', ',');
+                                    const price = Number(listing.price || 0);
+                                    const fee = price * (sellerFeePercentage / 100);
+                                    const netPrice = price - fee;
+                                    
+                                    let priceStr = 'R$ ' + price.toFixed(2).replace('.', ',');
                                     if (priceStr.endsWith(',00')) {
                                         priceStr = priceStr.slice(0, -3);
                                     }
+                                    
+                                    let netPriceStr = 'R$ ' + netPrice.toFixed(2).replace('.', ',');
                                 %>
-                                <%= priceStr %>
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 1.2rem; font-weight: 700;"><%= priceStr %></span>
+                                    <span style="font-size: 0.85rem; color: var(--text-muted);">
+                                        <i class="fas fa-arrow-right"></i> Você recebe: <strong style="color: var(--accent-green);"><%= netPriceStr %></strong>
+                                    </span>
+                                </div>
                             </div>
                         </div>
                         <div class="listing-card__actions">

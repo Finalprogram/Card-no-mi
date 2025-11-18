@@ -72,12 +72,28 @@ const showProfilePage = async (req, res) => {
       averageRating = totalRating / reviews.length;
     }
 
+    // Buscar informações da taxa do vendedor (se for vendedor)
+    let sellerFeePercentage = null;
+    let defaultFeePercentage = null;
+    if (profileUser.accountType === 'shop' || profileUser.accountType === 'individual') {
+      sellerFeePercentage = profileUser.fee_override_percentage;
+      const settingKey = `fee_${profileUser.accountType}_percentage`;
+      const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+      defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
+
+      if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
+        sellerFeePercentage = defaultFeePercentage;
+      }
+    }
+
     res.render('pages/profile', { 
       profileUser,
       listings, // Pass the listings to the view
       reviews, // Pass the reviews to the view
       averageRating, // Pass the average rating to the view
-      error: errorMessage // Passa a mensagem de erro para a view
+      error: errorMessage, // Passa a mensagem de erro para a view
+      sellerFeePercentage, // Pass seller fee
+      defaultFeePercentage // Pass default fee
     });
 
   } catch (error) {
@@ -89,7 +105,25 @@ const showProfilePage = async (req, res) => {
 const showSellPage = async (req, res) => {
   try {
     const allCards = await Card.find({}); // Fetch all cards from the database
-    res.render('pages/sell', { searchResults: allCards }); // Pass all cards to the view
+    
+    // Buscar informações da taxa do vendedor
+    const userId = req.session.user.id;
+    const seller = await User.findById(userId);
+    
+    let sellerFeePercentage = seller.fee_override_percentage;
+    const settingKey = `fee_${seller.accountType}_percentage`;
+    const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+    const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
+
+    if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
+      sellerFeePercentage = defaultFeePercentage;
+    }
+    
+    res.render('pages/sell', { 
+      searchResults: allCards,
+      sellerFeePercentage: sellerFeePercentage,
+      defaultFeePercentage: defaultFeePercentage
+    }); // Pass all cards to the view
   } catch (error) {
     console.error('Erro ao carregar a página de venda:', error);
     res.status(500).send('Erro no servidor');
@@ -106,8 +140,24 @@ const showMyListingsPage = async (req, res) => {
     const userId = req.session.user.id;
     const listings = await Listing.find({ seller: userId }).populate('card');
 
+    // Buscar informações da taxa do vendedor
+    const User = require('../models/User');
+    const Setting = require('../models/Setting');
+    const seller = await User.findById(userId);
+    
+    let sellerFeePercentage = seller.fee_override_percentage;
+    const settingKey = `fee_${seller.accountType}_percentage`;
+    const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+    const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
+
+    if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
+      sellerFeePercentage = defaultFeePercentage;
+    }
+
     res.render('pages/my-listings', {
       listings: listings,
+      sellerFeePercentage: sellerFeePercentage,
+      defaultFeePercentage: defaultFeePercentage
     });
   } catch (error) {
     console.error('Error fetching user listings:', error);

@@ -8,6 +8,7 @@ const Listing = require('../models/Listing');
 const { addItemToCart, purchaseShipments, generateLabels, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
 const { sendEmail } = require('../services/emailService');
+const { updateSellerBalancesForOrder } = require('../services/balanceService');
 
 // Helper function to get seller's origin CEP (copied from paymentController)
 async function getSellerOriginCep(sellerId) {
@@ -173,6 +174,10 @@ const worker = new Worker('post-payment', async (job) => {
     order.status = 'Paid';
     await order.save();
     logger.info(`[worker] Order ${orderId} status updated to Paid.`);
+
+    // Update seller balances (add to pending)
+    await updateSellerBalancesForOrder(orderId);
+    logger.info(`[worker] Seller balances updated for order ${orderId}`);
 
   } catch (error) {
     logger.error(`[worker] Error processing order ${orderId}:`, error);

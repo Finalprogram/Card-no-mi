@@ -92,13 +92,35 @@ document.addEventListener('DOMContentLoaded', () => {
                         <option value="EN">Inglês</option>
                     </select>
                     <input type="number" name="quantity" class="form-control" placeholder="Qtd." min="1" value="1">
-                    <input type="number" name="price" class="form-control" placeholder="Preço (R$)" step="0.01" min="0">
+                    <input type="number" name="price" class="form-control price-input" placeholder="Preço (R$)" step="0.01" min="0">
+                    <div class="net-price-display" style="grid-column: span 2; font-size: 0.85rem; color: var(--text-muted); padding: 5px 10px; background: var(--bg-surface); border-radius: 4px; display: none;">
+                        <span class="net-price-text"></span>
+                    </div>
                 </div>
             </div>
             <button class="btn-danger remove-staging-btn">Remover</button>
         `;
 
         stagingArea.appendChild(listingElement);
+        
+        // Add price change listener to show net amount
+        const priceInput = listingElement.querySelector('.price-input');
+        const netPriceDisplay = listingElement.querySelector('.net-price-display');
+        const netPriceText = listingElement.querySelector('.net-price-text');
+        
+        priceInput.addEventListener('input', () => {
+            const price = parseFloat(priceInput.value);
+            if (price > 0) {
+                const feePercentage = window.sellerFeePercentage || 0;
+                const fee = price * (feePercentage / 100);
+                const netPrice = price - fee;
+                
+                netPriceDisplay.style.display = 'block';
+                netPriceText.innerHTML = `<i class="fas fa-arrow-right"></i> Você receberá: <strong style="color: var(--accent-green);">R$ ${netPrice.toFixed(2).replace('.', ',')}</strong>`;
+            } else {
+                netPriceDisplay.style.display = 'none';
+            }
+        });
     });
 
     // --- 3. Lógica para Remover da Área de Anúncio ---

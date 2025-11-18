@@ -61,7 +61,7 @@ async function listUsers(req, res) {
     const accountTypes = ['individual', 'shop'];
     for (const type of accountTypes) {
       const setting = await Setting.findOne({ key: `fee_${type}_percentage` });
-      defaultFees[type] = setting ? setting.value : 0;
+      defaultFees[type] = setting ? setting.value : 8.0; // Default to 8% if not set
     }
 
     res.render('admin/users', {
