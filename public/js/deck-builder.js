@@ -174,6 +174,67 @@ document.addEventListener('DOMContentLoaded', () => {
         if (img) removeZoomPreview();
     }
 
+    // ---------------------- Card Normalization Utility ----------------------
+    // Some card objects come from different sources/shapes. Normalize them so
+    // the rest of the UI (same logic as leader) can rely on consistent fields.
+    function normalizeCardData(raw) {
+        if (!raw) return {};
+        let r = raw;
+        // Unwrap common wrappers
+        if (r.card) r = r.card;
+        if (r._doc) r = r._doc;
+
+        // Helpers to read fields with many possible aliases
+        const pick = (obj, keys) => {
+            for (const k of keys) {
+                if (!obj) continue;
+                const v = obj[k];
+                if (v !== undefined && v !== null && v !== '') return v;
+            }
+            return undefined;
+        };
+
+        const image_url = pick(r, ['image_url', 'imageUrl', 'imageUrlLarge'])
+            || (r.image_uris && (r.image_uris.normal || r.image_uris.large || r.image_uris.small))
+            || (r.image && (r.image.large || r.image.small))
+            || (r.card_faces && r.card_faces[0] && r.card_faces[0].image_uris && (r.card_faces[0].image_uris.normal || r.card_faces[0].image_uris.large))
+            || '';
+
+        const name = pick(r, ['name', 'card_name', 'title']) || '';
+        const colors = Array.isArray(r.colors) ? r.colors : (r.color ? [r.color] : (r.color_identity || []));
+
+        // Ability/text can live in many places; collect from common fields and faces
+        let ability = pick(r, ['ability', 'text', 'oracle_text', 'description', 'rules_text', 'card_text', 'effect', 'long_text', 'oracle', 'flavor_text']) || '';
+        if (!ability && Array.isArray(r.abilities) && r.abilities.length) {
+            ability = r.abilities.map(a => (a.text || a)).filter(Boolean).join('\n');
+        }
+        if (!ability && Array.isArray(r.card_faces) && r.card_faces.length) {
+            ability = r.card_faces.map(f => f.oracle_text || f.text || '').filter(Boolean).join('\n\n');
+        }
+
+        const cost = (r.cost !== undefined && r.cost !== null) ? r.cost : (r.mana_cost !== undefined ? r.mana_cost : r.cmc);
+        const power = (r.power !== undefined && r.power !== null) ? r.power : (r.attack !== undefined ? r.attack : r.strength);
+        const set_name = pick(r, ['set_name', 'set', 'setName']) || '';
+        const type_line = pick(r, ['type_line', 'type', 'typeLine']) || '';
+        const rarity = pick(r, ['rarity']) || '';
+        const id = pick(r, ['_id', 'id', 'cardId', 'card_id']) || '';
+
+        return {
+            _id: id,
+            name,
+            image_url,
+            colors,
+            ability: ability || '',
+            cost,
+            power,
+            set_name,
+            type_line,
+            rarity,
+            // keep original raw for debugging if needed
+            __raw: r
+        };
+    }
+
     // ==========================================================================
     // SEÇÃO DO LÍDER (NOVAS FUNÇÕES)
     // ==========================================================================
@@ -362,14 +423,17 @@ document.addEventListener('DOMContentLoaded', () => {
         gridContainer.classList.add('deck-grid-view');
 
         deck.main
-            .sort((a, b) => a.card.name.localeCompare(b.card.name))
+            .sort((a, b) => (a.card?.name || '').localeCompare(b.card?.name || ''))
             .forEach(item => {
-                const card = item.card;
+                // normalize card so we always have the same fields as leader
+                const rawCard = item.card || {};
+                const card = normalizeCardData(rawCard);
                 const gridItem = document.createElement('div');
                 gridItem.classList.add('deck-grid-item');
                 gridItem.dataset.card = JSON.stringify(card);
                 gridItem.innerHTML = `
                     <img src="${card.image_url}" alt="${card.name}" title="${card.name}">
+                    <div class="grid-hover-overlay">Clique para detalhes</div>
                     <span class="card-quantity-indicator">${item.quantity}x</span>
                 `;
                 gridContainer.appendChild(gridItem);
@@ -485,15 +549,17 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
         cards.forEach(card => {
+            // Normalize incoming card data so fields match leader's shape
+            const c = normalizeCardData(card);
             const cardElement = document.createElement('div');
             cardElement.classList.add('card-result');
-            cardElement.dataset.card = JSON.stringify(card);
+            cardElement.dataset.card = JSON.stringify(c);
             cardElement.innerHTML = `
-                <img src="${card.image_url}" alt="${card.name}" tabindex="0" class="search-thumb">
+                <img src="${c.image_url}" alt="${c.name}" tabindex="0" class="search-thumb">
                 <div class="card-info">
-                    <p><strong>${card.name}</strong></p>
-                    <p>${card.set_name} - ${card.rarity}</p>
-                    <p class="card-type">${card.type_line}</p>
+                    <p><strong>${c.name}</strong></p>
+                    <p>${c.set_name} - ${c.rarity}</p>
+                    <p class="card-type">${c.type_line}</p>
                 </div>
                 ${isOwner ? '<button class="add-card-btn">Adicionar</button>' : ''}
             `;
@@ -506,9 +572,31 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function handleAddCardClick(e) {
+        // If clicked the add button, add card to deck
         if (e.target.classList.contains('add-card-btn')) {
-            const cardData = JSON.parse(e.target.closest('.card-result').dataset.card);
-            addCardToDeck(cardData);
+            try {
+                const cardData = JSON.parse(e.target.closest('.card-result').dataset.card);
+                addCardToDeck(cardData);
+            } catch (err) {
+                console.error('Não foi possível obter dados da carta (add):', err, e.target.closest('.card-result'));
+            }
+            return;
+        }
+
+        // If clicked elsewhere on the card result (not the add button), open details modal
+        const cardResult = e.target.closest && e.target.closest('.card-result');
+        if (cardResult && !e.target.classList.contains('add-card-btn')) {
+            try {
+                const cardJson = cardResult.dataset.card;
+                if (!cardJson) {
+                    console.warn('Resultado da busca sem dados da carta em dataset.card', cardResult);
+                    return;
+                }
+                const cardData = JSON.parse(cardJson);
+                showCardDetail(cardData);
+            } catch (err) {
+                console.error('Erro ao abrir modal de detalhes da carta:', err, cardResult);
+            }
         }
     }
 

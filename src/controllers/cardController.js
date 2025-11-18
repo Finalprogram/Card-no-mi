@@ -271,12 +271,19 @@ const searchForDeckBuilder = async (req, res) => {
       },
       {
         $project: {
+          _id: 1,
           name: 1,
           set_name: 1,
           image_url: 1,
+          images: 1,
           status: 1,
           rarity: 1,
           type_line: 1,
+          colors: 1,
+          color: 1,
+          ability: 1,
+          cost: 1,
+          power: 1,
           opcg_id: '$card_id',
           price: 1
         }
