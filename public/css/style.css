@@ -946,7 +946,7 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   border-radius:10px; border:1px solid var(--border);
 }
 .card-title{ margin:0; color:var(--text); font-size:1.2rem; line-height:1.2; }
-.card-sub,.card-qty{ margin:4px 0 0; color:var(--muted); font-size:.92rem; }
+.card-sub,.card-qty{ margin:4px 0 0; color:#FFFFFF; font-size:.92rem; }
 
 .list-card__right{ display:flex; align-items:center; gap:8px; }
 .price-chip{
@@ -1000,14 +1000,36 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   grid-template-columns: 1.5fr .9fr .8fr .6fr .9fr .9fr .9fr;
 }
 .sellers-head{
-  background:var(--surface); color:var(--text-secondary);
+  background:var(--surface); color:var(--text-primary);
+  opacity: 0.85;
   padding:10px 12px; font-size:.85rem; text-transform:uppercase; letter-spacing:.03em;
+  font-weight: 600;
 }
 .sellers-body{ background:var(--bg-main); }
 .seller-row{
   align-items:center; padding:12px; border-top:1px solid var(--border);
+  color: var(--text-primary);
 }
+
+.seller-row > span {
+  opacity: 0.9;
+}
+
+.sellers-head > span:nth-child(2),
+.sellers-head > span:nth-child(6),
+.seller-row > span:nth-child(2),
+.seller-row > span:nth-child(6) {
+  color: #FFFFFF !important;
+  opacity: 1 !important;
+}
+
 .seller-name{ color:var(--text-primary); font-weight:600; display:flex; align-items:center; gap:8px; }
+.seller-link{
+  color:var(--text-primary); text-decoration:none; transition: color 0.2s;
+}
+.seller-link:hover{
+  color:var(--accent-purple); text-decoration:underline;
+}
 .shop-badge{
   font-size:.72rem; background:var(--muted); color:var(--text-primary);
   border:1px solid var(--border); padding:2px 6px; border-radius:6px;

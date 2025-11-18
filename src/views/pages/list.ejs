@@ -131,7 +131,13 @@
                      data-listingid="<%= v._id %>">
 
                   <span class="seller-name">
-                    <%= sellerName %>
+                    <% if (vendorId) { %>
+                      <a href="/vendedores/<%= vendorId %>" class="seller-link" title="Ver página do vendedor">
+                        <%= sellerName %>
+                      </a>
+                    <% } else { %>
+                      <%= sellerName %>
+                    <% } %>
                     <% if (v.seller && v.seller.accountType === 'shop') { %>
                       <span class="shop-badge">LOJA</span>
                     <% } %>
