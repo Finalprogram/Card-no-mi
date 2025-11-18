@@ -1401,9 +1401,9 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
 
 .carousel-btn {
   position: absolute;
-  top: 50%;
+  top: 45%;
   transform: translateY(-50%);
-  background-color: rgba(var(--bg-main), 0.5);
+  background-color: rgba(0, 0, 0, 0.6);
   color: white;
   border: none;
   border-radius: 50%;
@@ -1419,11 +1419,11 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
 }
 
 .carousel-btn.prev {
-  left: -20px;
+  left: -50px;
 }
 
 .carousel-btn.next {
-  right: -20px;
+  right: -50px;
 }
 
 .carousel-btn:hover {
