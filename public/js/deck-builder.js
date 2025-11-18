@@ -51,6 +51,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
         deckViewContainer.addEventListener('click', handleDeckActions);
 
+        // Image zoom preview handlers (delegated) for search results
+        if (searchResultsContainer) {
+            searchResultsContainer.addEventListener('mouseover', onSearchImageOver);
+            searchResultsContainer.addEventListener('mouseout', onSearchImageOut);
+            searchResultsContainer.addEventListener('mousemove', onSearchImageMove);
+            // keyboard accessibility: show on focus/blur
+            searchResultsContainer.addEventListener('focusin', onSearchImageFocus);
+            searchResultsContainer.addEventListener('focusout', onSearchImageBlur);
+        }
+
         // Card detail modal handlers (delegated click on grid items)
         const cardDetailModal = document.getElementById('card-detail-modal');
         const cardDetailContent = document.getElementById('card-detail-content');
@@ -72,6 +82,96 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         // Listeners de import/export e modais... (mantidos do original)
+    }
+
+    // ---------------------- Image Zoom Preview Logic -----------------------
+    let zoomPreviewEl = null;
+    let zoomedImgSrc = null;
+
+    function createZoomPreview(src, alt) {
+        removeZoomPreview();
+        zoomPreviewEl = document.createElement('div');
+        zoomPreviewEl.className = 'image-zoom-preview';
+        const img = document.createElement('img');
+        img.src = src;
+        img.alt = alt || '';
+        zoomPreviewEl.appendChild(img);
+        document.body.appendChild(zoomPreviewEl);
+    }
+
+    function removeZoomPreview() {
+        if (zoomPreviewEl && zoomPreviewEl.parentNode) {
+            zoomPreviewEl.parentNode.removeChild(zoomPreviewEl);
+        }
+        zoomPreviewEl = null;
+        zoomedImgSrc = null;
+    }
+
+    function positionZoomPreview(clientX, clientY) {
+        if (!zoomPreviewEl) return;
+        const padding = 12;
+        const rect = zoomPreviewEl.getBoundingClientRect();
+        const vw = window.innerWidth;
+        const vh = window.innerHeight;
+
+        // Try to position above the cursor, otherwise below
+        let left = clientX + 18; // offset to the right of cursor
+        let top = clientY - rect.height / 2;
+
+        // Keep inside viewport horizontally
+        if (left + rect.width + padding > vw) {
+            left = clientX - rect.width - 18;
+        }
+        if (left < padding) left = padding;
+
+        // Keep inside vertically
+        if (top < padding) top = padding;
+        if (top + rect.height + padding > vh) top = vh - rect.height - padding;
+
+        zoomPreviewEl.style.left = `${Math.round(left)}px`;
+        zoomPreviewEl.style.top = `${Math.round(top)}px`;
+    }
+
+    function onSearchImageOver(e) {
+        const img = e.target.closest && e.target.closest('.card-result img');
+        if (!img) return;
+        // create preview if not same src
+        if (img.src && img.src !== zoomedImgSrc) {
+            zoomedImgSrc = img.src;
+            createZoomPreview(img.src, img.alt || img.title || '');
+            // initial position
+            positionZoomPreview(e.clientX, e.clientY);
+        }
+    }
+
+    function onSearchImageMove(e) {
+        if (!zoomPreviewEl) return;
+        positionZoomPreview(e.clientX, e.clientY);
+    }
+
+    function onSearchImageOut(e) {
+        // If leaving an image element, remove preview
+        const fromImg = e.target.closest && e.target.closest('.card-result img');
+        if (fromImg) {
+            removeZoomPreview();
+        }
+    }
+
+    function onSearchImageFocus(e) {
+        const img = e.target.closest && e.target.closest('.card-result img');
+        if (!img) return;
+        if (img.src && img.src !== zoomedImgSrc) {
+            zoomedImgSrc = img.src;
+            createZoomPreview(img.src, img.alt || img.title || '');
+            // position near the image center
+            const r = img.getBoundingClientRect();
+            positionZoomPreview(r.right + 10, r.top + r.height / 2);
+        }
+    }
+
+    function onSearchImageBlur(e) {
+        const img = e.target.closest && e.target.closest('.card-result img');
+        if (img) removeZoomPreview();
     }
 
     // ==========================================================================
@@ -285,8 +385,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!modal || !content) return;
 
         const colors = card.colors || [];
-        // Render color chips without text (visual indicators only), keep title for accessibility
-        const colorChips = colors.map(c => `<span class="color-chip ${c.toLowerCase()}" title="${c}"></span>`).join(' ');
+        // Render color chips without text (visual indicators only), use data-title for custom tooltip
+        const colorChips = colors.map(c => `<span class="color-chip ${c.toLowerCase()}" data-title="${c}"></span>`).join(' ');
 
         content.innerHTML = `
             <div class="card-detail-grid" style="display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;">
@@ -389,7 +489,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cardElement.classList.add('card-result');
             cardElement.dataset.card = JSON.stringify(card);
             cardElement.innerHTML = `
-                <img src="${card.image_url}" alt="${card.name}">
+                <img src="${card.image_url}" alt="${card.name}" tabindex="0" class="search-thumb">
                 <div class="card-info">
                     <p><strong>${card.name}</strong></p>
                     <p>${card.set_name} - ${card.rarity}</p>
