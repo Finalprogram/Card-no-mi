@@ -12,40 +12,44 @@ const showCardsPage = async (req, res) => {
     // Define a busca base para 'onepiece'
     const cardMatchQuery = { game: 'onepiece' };
 
-    // Adiciona os filtros de One Piece se eles existirem na URL
-    if (req.query.rarity) cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color) cardMatchQuery.colors = new RegExp(req.query.color, 'i');
-    if (req.query.type) cardMatchQuery.type_line = req.query.type;
-    if (req.query.set) {
+    // Adiciona os filtros de One Piece se eles existirem na URL e não forem vazios
+    if (req.query.rarity && req.query.rarity !== '') cardMatchQuery.rarity = req.query.rarity;
+    if (req.query.color && req.query.color !== '') cardMatchQuery.colors = new RegExp(req.query.color, 'i');
+    if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
+    if (req.query.set && req.query.set !== '') {
       const setCode = req.query.set.replace(/OP-?/, '');
       cardMatchQuery.set_name = new RegExp(`OP-?${setCode}`, 'i');
     }
-    if (req.query.q) cardMatchQuery.name = new RegExp(req.query.q, 'i');
+    if (req.query.q && req.query.q !== '') cardMatchQuery.name = new RegExp(req.query.q, 'i');
 
-    // Busca no banco de dados
-    const distinctCardIds = await Listing.distinct('card');
+    // Busca no banco de dados - apenas cartas COM anúncios ativos
+    const distinctCardIds = await Listing.distinct('card', { quantity: { $gt: 0 } });
     const totalCards = await Card.countDocuments({ _id: { $in: distinctCardIds }, ...cardMatchQuery });
 
     const cards = await Card.aggregate([
-      { $match: { game: 'onepiece', ...cardMatchQuery }},
+      { $match: { _id: { $in: distinctCardIds }, game: 'onepiece', ...cardMatchQuery }},
       { $lookup: {
           from: 'listings',
           localField: '_id',
           foreignField: 'card',
+          pipeline: [
+            { $match: { quantity: { $gt: 0 } } }
+          ],
           as: 'listings'
       }},
-      { $unwind: { path: '$listings', preserveNullAndEmptyArrays: true } },
-      { $match: { 'listings.quantity': { $gt: 0 } } }, // Filter for available listings
-      { $group: {
-          _id: '$_id',
-          name: { $first: '$name' },
-          image_url: { $first: '$image_url' },
-          set_name: { $first: '$set_name' },
-          rarity: { $first: '$rarity' },
-          type_line: { $first: '$type_line' },
-          averagePrice: { $first: '$averagePrice' }, // Keep the averagePrice from Card model
-          price_trend: { $first: '$price_trend' },   // Keep the price_trend from Card model
-          lowestAvailablePrice: { $min: '$listings.price' } // Calculate lowest available price
+      { $addFields: {
+          lowestAvailablePrice: { $min: '$listings.price' }
+      }},
+      { $project: {
+          _id: 1,
+          name: 1,
+          image_url: 1,
+          set_name: 1,
+          rarity: 1,
+          type_line: 1,
+          averagePrice: 1,
+          price_trend: 1,
+          lowestAvailablePrice: 1
       }},
       { $sort: { name: 1 }},
       { $skip: (currentPage - 1) * limit },
@@ -53,11 +57,12 @@ const showCardsPage = async (req, res) => {
     ]);
     const formattedCards = cards; // No need for further mapping, use as is
 
-    // Busca as opções de filtro dinamicamente do banco de dados
-    const rarities = await Card.distinct('rarity');
-    const colors = await Card.distinct('colors');
-    const types = await Card.distinct('type_line');
+    // Busca as opções de filtro dinamicamente do banco de dados (todas as cartas, não só as com listings)
+    const rarities = await Card.distinct('rarity', { game: 'onepiece' });
+    const colors = await Card.distinct('colors', { game: 'onepiece' });
+    const types = await Card.distinct('type_line', { game: 'onepiece' });
 
+    // Busca TODAS as edições do jogo, não apenas as que têm listings
     const rawSets = await Card.distinct('set_name', {
       game: 'onepiece',
       set_name: /OP-?\d+/
@@ -79,12 +84,12 @@ const showCardsPage = async (req, res) => {
       return numA - numB;
     });
 
-    // Define os filtros que serão enviados para a view
+    // Define os filtros que serão enviados para a view (com opção "Todas")
     const filterGroups = [
-      { name: 'Raridade', key: 'rarity', options: rarities.sort() },
-      { name: 'Cor', key: 'color', options: colors.sort() },
-      { name: 'Tipo', key: 'type', options: types.sort() },
-      { name: 'Edição', key: 'set', options: sortedSets }
+      { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
+      { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
+      { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
+      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] }
     ];
 
     res.render('pages/cardSearchPage', {
@@ -235,21 +240,39 @@ const searchAvailableCards = async (req, res) => {
 const searchForDeckBuilder = async (req, res) => {
   try {
     const searchQuery = req.query.q;
-    if (!searchQuery || searchQuery.length < 3) {
+    if (!searchQuery || searchQuery.length < 2) {
       return res.json([]);
     }
 
+    // Verifica se a busca é por código de edição (ex: OP13, OP-13, op13)
+    const setPattern = /^OP-?(\d+)$/i;
+    const setMatch = searchQuery.match(setPattern);
+    
+    let matchQuery;
+    if (setMatch) {
+      // Busca por edição: todas as cartas que começam com OP13 (ex: OP13-001, OP13-002, etc)
+      const setNumber = setMatch[1].padStart(2, '0'); // Garante 2 dígitos (ex: 01, 13)
+      matchQuery = {
+        game: 'onepiece',
+        $or: [
+          { api_id: { $regex: `^OP-?${setNumber}`, $options: 'i' } },
+          { code: { $regex: `^OP-?${setNumber}`, $options: 'i' } }
+        ]
+      };
+    } else {
+      // Busca normal por nome ou código
+      matchQuery = {
+        game: 'onepiece',
+        $or: [
+          { name: { $regex: searchQuery, $options: 'i' } },
+          { code: { $regex: searchQuery, $options: 'i' } },
+          { api_id: { $regex: searchQuery, $options: 'i' } }
+        ]
+      };
+    }
+
     const cards = await Card.aggregate([
-      {
-        $match: {
-          game: 'onepiece',
-          $or: [ // Add $or to search by name or code
-            { name: { $regex: searchQuery, $options: 'i' } },
-            { code: { $regex: searchQuery, $options: 'i' } }
-          ]
-        }
-      },
-      // Removed $limit: 10 to return all matching cards
+      { $match: matchQuery },
       {
         $lookup: {
           from: 'listings',
@@ -289,7 +312,8 @@ const searchForDeckBuilder = async (req, res) => {
           opcg_id: '$card_id',
           price: 1
         }
-      }
+      },
+      { $sort: { code: 1, name: 1 } } // Ordena por código primeiro
     ]);
 
     res.json(cards);

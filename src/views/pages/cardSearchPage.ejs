@@ -22,10 +22,10 @@
               <% group.options.forEach(option => { 
                    const value = typeof option === 'object' ? option.value : option;
                    const label = typeof option === 'object' ? option.label : option;
-                   const checked = (filters && filters[group.key] === value) ? 'checked' : '';
+                   const isChecked = (filters && filters[group.key] === value) || (!filters[group.key] && value === '');
               %>
                 <label>
-                  <input type="radio" name="<%= group.key %>" value="<%= value %>" <%= checked %> onchange="this.form.submit()" />
+                  <input type="radio" name="<%= group.key %>" value="<%= value %>" <%= isChecked ? 'checked' : '' %> onchange="this.form.submit()" />
                   <%= label %>
                 </label>
               <% }) %>
