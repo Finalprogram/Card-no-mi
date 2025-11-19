@@ -35,12 +35,13 @@
     <main>
         <!-- 1. Seção "Herói" -->
         <section class="hero">
-            <h1>O seu Arsenal de Cartas em um Só Lugar <img src="/images/fruta.png" alt="Car'D No Mi Logo" class="hero-logo-inline"></h1>
-            <p>Encontre, compre e venda cards de One Piece TCG! com segurança.</p>
-            <form action="/cards" method="GET" class="hero-search">
+          <form action="/cards" method="GET" class="hero-search">
   <input type="search" name="q" placeholder="Qual carta você procura?" required>
   <button>Buscar</button>
 </form>
+            <h1>O seu Arsenal de Cartas em um Só Lugar <img src="/images/fruta.png" alt="Car'D No Mi Logo" class="hero-logo-inline"></h1>
+            <p>Encontre, compre e venda cards de One Piece TCG! com segurança.</p>
+            
         </section>
         <section class="recently-added">
             <h2>Recém-Adicionados</h2>
@@ -50,13 +51,24 @@
                     <% if (typeof recentListings !== 'undefined' && recentListings.length) { %>
                         <% recentListings.forEach(listing => { %>
                             <div class="card-item">
-                                <a href="/card/<%= listing.card._id %>">
+                                <div class="card-image-container" 
+                                     data-card-id="<%= listing.card._id %>"
+                                     data-card-name="<%= listing.card.name %>"
+                                     data-card-image="<%= listing.card.image_url %>"
+                                     data-card-price="<%= formatPrice(listing.price) %>"
+                                     data-listing-id="<%= listing._id %>"
+                                     data-card-type="<%= listing.card.type || '' %>"
+                                     data-card-color="<%= listing.card.color || '' %>"
+                                     data-card-cost="<%= listing.card.cost || '' %>"
+                                     data-card-power="<%= listing.card.power || '' %>"
+                                     data-card-ability="<%= (listing.card.ability || listing.card.effect || '').replace(/"/g, '&quot;') %>"
+                                     onclick="openCardModal(this)">
                                     <img src="<%= listing.card.image_url %>" alt="<%= listing.card.name %>">
-                                    <div class="card-info">
-                                        <h4><%= listing.card.name %></h4>
-                                        <p><%= formatPrice(listing.price) %></p>
-                                    </div>
-                                </a>
+                                </div>
+                                <div class="card-info">
+                                    <h4><%= listing.card.name %></h4>
+                                    <p><%= formatPrice(listing.price) %></p>
+                                </div>
                             </div>
                         <% }); %>
                     <% } else { %>
@@ -107,9 +119,61 @@
     </main>
 </div> <!-- A tag </div> do container é fechada aqui -->
 
+<!-- Card Detail Modal -->
+<div class="card-modal-overlay" id="cardModal" onclick="closeCardModal(event)">
+    <div class="card-modal-content" onclick="event.stopPropagation()">
+        <button class="card-modal-close" onclick="closeCardModal()">&times;</button>
+        
+        <div class="card-modal-image-container">
+            <img class="card-modal-image" id="modalCardImage" src="" alt="">
+        </div>
+        
+        <div class="card-modal-info">
+            <h3 id="modalCardName"></h3>
+            
+            <div class="card-modal-details">
+                <div class="card-modal-detail-item" id="modalTypeContainer">
+                    <div class="card-modal-detail-label">Tipo</div>
+                    <div class="card-modal-detail-value" id="modalCardType"></div>
+                </div>
+                <div class="card-modal-detail-item" id="modalColorContainer">
+                    <div class="card-modal-detail-label">Cor</div>
+                    <div class="card-modal-detail-value" id="modalCardColor"></div>
+                </div>
+                <div class="card-modal-detail-item" id="modalCostContainer">
+                    <div class="card-modal-detail-label">Custo</div>
+                    <div class="card-modal-detail-value" id="modalCardCost"></div>
+                </div>
+                <div class="card-modal-detail-item" id="modalPowerContainer">
+                    <div class="card-modal-detail-label">Poder</div>
+                    <div class="card-modal-detail-value" id="modalCardPower"></div>
+                </div>
+            </div>
+            
+            <div class="card-modal-ability" id="modalAbilityContainer">
+                <div class="card-modal-ability-label">Habilidade</div>
+                <div class="card-modal-ability-text" id="modalCardAbility"></div>
+            </div>
+            
+            <div class="card-modal-price" id="modalCardPrice"></div>
+            
+            <div class="card-modal-actions">
+                <a id="modalCardLink" href="#" class="btn btn-primary" style="width: 100%;">Ver Página Completa</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botão Flutuante do Carrinho -->
+<a href="/carrinho" id="floating-cart-button" style="display: none;">
+    <i class="fas fa-shopping-cart"></i>
+    <span class="badge hidden">0</span>
+</a>
+
 <%- include('../partials/footer') %>
 
 <script>
+// Carousel controls
 document.addEventListener('DOMContentLoaded', () => {
     const carousel = document.querySelector('.cards-carousel');
     const prevBtn = document.querySelector('.carousel-btn.prev');
@@ -129,5 +193,119 @@ document.addEventListener('DOMContentLoaded', () => {
         carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
     });
 });
+
+// Card Modal functions
+function openCardModal(element) {
+    const modal = document.getElementById('cardModal');
+    const cardId = element.dataset.cardId;
+    const listingId = element.dataset.listingId;
+    const cardName = element.dataset.cardName;
+    const cardImage = element.dataset.cardImage;
+    const cardPrice = element.dataset.cardPrice;
+    const cardType = element.dataset.cardType;
+    const cardColor = element.dataset.cardColor;
+    const cardCost = element.dataset.cardCost;
+    const cardPower = element.dataset.cardPower;
+    const cardAbility = element.dataset.cardAbility;
+
+    // Set image and name
+    document.getElementById('modalCardImage').src = cardImage;
+    document.getElementById('modalCardImage').alt = cardName;
+    document.getElementById('modalCardName').textContent = cardName;
+    
+    // Set details (show/hide based on availability)
+    const typeContainer = document.getElementById('modalTypeContainer');
+    const colorContainer = document.getElementById('modalColorContainer');
+    const costContainer = document.getElementById('modalCostContainer');
+    const powerContainer = document.getElementById('modalPowerContainer');
+    const abilityContainer = document.getElementById('modalAbilityContainer');
+    
+    if (cardType) {
+        document.getElementById('modalCardType').textContent = cardType;
+        typeContainer.style.display = 'block';
+    } else {
+        typeContainer.style.display = 'none';
+    }
+    
+    if (cardColor) {
+        document.getElementById('modalCardColor').textContent = cardColor;
+        colorContainer.style.display = 'block';
+    } else {
+        colorContainer.style.display = 'none';
+    }
+    
+    if (cardCost) {
+        document.getElementById('modalCardCost').textContent = cardCost;
+        costContainer.style.display = 'block';
+    } else {
+        costContainer.style.display = 'none';
+    }
+    
+    if (cardPower) {
+        document.getElementById('modalCardPower').textContent = cardPower;
+        powerContainer.style.display = 'block';
+    } else {
+        powerContainer.style.display = 'none';
+    }
+    
+    if (cardAbility) {
+        document.getElementById('modalCardAbility').textContent = cardAbility;
+        abilityContainer.style.display = 'block';
+    } else {
+        abilityContainer.style.display = 'none';
+    }
+    
+    // Set price and link
+    document.getElementById('modalCardPrice').textContent = cardPrice;
+    document.getElementById('modalCardLink').href = `/card/${cardId}`;
+
+    modal.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeCardModal(event) {
+    if (!event || event.target === document.getElementById('cardModal')) {
+        const modal = document.getElementById('cardModal');
+        modal.classList.remove('active');
+        document.body.style.overflow = '';
+    }
+}
+
+// Close modal with ESC key
+document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+        closeCardModal();
+    }
+});
+
+// Update cart badge on page load
+async function updateCartBadge() {
+    try {
+        const floatingBtn = document.getElementById('floating-cart-button');
+        if (!floatingBtn) return;
+
+        const response = await fetch('/cart/json');
+        if (!response.ok) return;
+        
+        const data = await response.json();
+        const count = Number(data.totalQty || 0);
+        
+        const badge = floatingBtn.querySelector('.badge');
+        if (badge) {
+            badge.textContent = String(count);
+            badge.classList.toggle('hidden', count <= 0);
+        }
+
+        // Show floating button if there are items
+        if (count > 0) {
+            floatingBtn.style.display = 'flex';
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar badge do carrinho:', error);
+    }
+}
+
+// Update badge on page load
+updateCartBadge();
 </script>
 

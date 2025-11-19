@@ -168,8 +168,10 @@ exports.updateDeck = async (req, res) => {
 
         // Sanitize the leader and main deck to store only the necessary info
         if (leader && leader.card) {
+            // Check if card is already an ID or an object
+            const leaderCardId = typeof leader.card === 'string' ? leader.card : leader.card._id;
             deck.leader = {
-                card: leader.card._id,
+                card: leaderCardId,
                 quantity: 1
             };
         } else {
@@ -177,10 +179,14 @@ exports.updateDeck = async (req, res) => {
         }
 
         if (main && Array.isArray(main)) {
-            deck.main = main.map(item => ({
-                card: item.card._id,
-                quantity: item.quantity
-            }));
+            deck.main = main.map(item => {
+                // Check if card is already an ID or an object
+                const cardId = typeof item.card === 'string' ? item.card : item.card._id;
+                return {
+                    card: cardId,
+                    quantity: item.quantity
+                };
+            });
         } else {
             deck.main = [];
         }

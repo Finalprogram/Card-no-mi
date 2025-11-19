@@ -126,8 +126,31 @@ orderSchema.pre('save', async function (next) {
       });
 
       // Envio de e-mails
+      const statusTranslations = {
+        'PendingPayment': 'Pagamento Pendente',
+        'Paid': 'Pago',
+        'Processing': 'Em Processamento',
+        'Shipped': 'Enviado',
+        'Delivered': 'Entregue',
+        'Cancelled': 'Cancelado'
+      };
+      const translatedStatus = statusTranslations[newStatus] || newStatus;
+
       const subject = `Atualização do Pedido #${orderId}`;
-      const htmlContent = `<p>Olá,</p><p>O status do seu pedido #${orderId} foi atualizado para: <strong>${newStatus}</strong>.</p><p>Acesse o site para mais detalhes.</p>`;
+      const htmlContent = `
+  <div style="font-family: Arial, Helvetica, sans-serif; line-height:1.5; color:#222;">
+    <p style="text-align:center;"><img src="https://www.cardnomi.com.br/images/Logo.png" alt="CardNoMi Logo" style="max-width: 150px;"></p>
+    <p>Olá,</p>
+    <p>O status do seu pedido <strong>#${orderId}</strong> foi atualizado para: <strong>${translatedStatus}</strong>.</p>
+    <p style="text-align:center; margin:20px 0;">
+      <a href="https://www.cardnomi.com.br/pedidos/${orderId}" style="display:inline-block; padding:12px 20px; text-decoration:none; border-radius:6px; border:1px solid #1a73e8; background-color: #1a73e8; color: #ffffff;">
+        Ver detalhes do pedido
+      </a>
+    </p>
+    <p>Se tiver dúvidas, responda este e-mail ou acesse nossa Central de Ajuda.</p>
+    <p>Abraços,<br/>Equipe Car'D No Mi</p>
+  </div>
+`;
 
       for (const email of emailsToNotify) {
         // Não esperamos a conclusão do envio para não bloquear o processo

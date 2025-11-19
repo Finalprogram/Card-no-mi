@@ -118,7 +118,7 @@
                     <%= sellerFeePercentage %>% (Taxa Personalizada)
                 <% } %>
             </p>
-            <p>Esta é a taxa cobrada sobre cada venda realizada. O valor líquido que você recebe é o preço do anúncio menos esta taxa.</p>
+            <p>Esta é a taxa cobrada sobre cada venda realizada. O valor líquido que você recebe é o preço do anúncio menos a taxa.</p>
             <% if (listings && listings.length > 0) { %>
                 <div class="net-price-info">
                     <strong>Exemplo:</strong> Um anúncio de R$ 100,00 resulta em R$ <%= (100 - (100 * sellerFeePercentage / 100)).toFixed(2).replace('.', ',') %> para você
