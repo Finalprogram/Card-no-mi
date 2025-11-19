@@ -195,8 +195,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Card Modal functions
-function openCardModal(element) {
+window.openCardModal = function(element) {
+    console.log('openCardModal chamado', element);
     const modal = document.getElementById('cardModal');
+    console.log('Modal encontrado:', modal);
+    
+    if (!modal) {
+        console.error('Modal #cardModal não encontrado no DOM!');
+        return;
+    }
+    
     const cardId = element.dataset.cardId;
     const listingId = element.dataset.listingId;
     const cardName = element.dataset.cardName;
@@ -259,8 +267,10 @@ function openCardModal(element) {
     document.getElementById('modalCardPrice').textContent = cardPrice;
     document.getElementById('modalCardLink').href = `/card/${cardId}`;
 
+    console.log('Abrindo modal...');
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    console.log('Modal aberto! Classes:', modal.classList);
 }
 
 function closeCardModal(event) {
