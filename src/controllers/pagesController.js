@@ -5,6 +5,7 @@ const Card = require('../models/Card');
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Deck = require('../models/Deck');
+const Setting = require('../models/Setting');
 const showHomePage = async (req, res) => {
   try {
     const recentListings = await Listing.find()

@@ -86,6 +86,9 @@ const showProfilePage = async (req, res) => {
       }
     }
 
+    // garante que sellerFeePercentage exista para a view (previne ReferenceError)
+    res.locals = res.locals || {};
+    if (typeof res.locals.sellerFeePercentage === "undefined") res.locals.sellerFeePercentage = null;
     res.render('pages/profile', { 
       profileUser,
       listings, // Pass the listings to the view
