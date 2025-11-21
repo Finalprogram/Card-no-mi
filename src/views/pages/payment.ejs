@@ -1,8 +1,12 @@
 <%- include('../partials/header') %>
-<main class="container" style="max-width: 680px; margin-top: 24px;">
+
+<body class="public-site">
+
+<div class="container">
   <%- include('../partials/navbar') %>
 
-  <h1 style="margin: 24px 0 16px;">Pagamento</h1>
+  <main>
+    <h1 style="margin: 24px 0 16px;">Pagamento</h1>
 
   <div class="panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border)">
     <p>Selecione a forma de pagamento desejada. Por enquanto, qualquer opção irá finalizar o pedido.</p>
@@ -14,8 +18,11 @@
 
     </div>
   </div>
+  </main>
+</div>
 
-</main>
 <%- include('../partials/footer') %>
 
 <script src="/js/payment.js"></script>
+</body>
+</html>

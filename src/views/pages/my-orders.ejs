@@ -51,10 +51,13 @@
   }
 </style>
 
-<main class="container" style="max-width: 880px; margin-top: 24px;">
+<body class="public-site">
+
+<div class="container">
   <%- include('../partials/navbar') %>
 
-  <h1 style="margin: 24px 0 16px;">Minhas Compras</h1>
+  <main>
+    <h1 style="margin: 24px 0 16px;">Minhas Compras</h1>
 
   <div class="orders-container">
     <% if (orders && orders.length > 0) { %>
@@ -114,6 +117,9 @@
       </div>
     <% } %>
   </div>
+  </main>
+</div>
 
-</main>
 <%- include('../partials/footer') %>
+</body>
+</html>

@@ -103,9 +103,29 @@ const showSellerDashboard = async (req, res) => {
       }
     ]);
 
+    // Calcular métricas apenas de pedidos PAGOS
+    const paidSalesData = await Order.aggregate([
+      // Encontra pedidos pagos que contenham pelo menos um item do vendedor
+      { $match: { 
+        'items.seller': sellerObjectId,
+        status: { $in: ['Paid', 'Processing', 'Shipped', 'Delivered'] }
+      }},
+      { $unwind: '$items' },
+      { $match: { 'items.seller': sellerObjectId } },
+      {
+        $group: {
+          _id: null,
+          totalPaidRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
+          totalPaidItemsSold: { $sum: '$items.quantity' }
+        }
+      }
+    ]);
+
     // O aggregate agora retorna um único objeto com os totais, ou um array vazio se não houver vendas
     const totalRevenue = salesData.length > 0 ? salesData[0].totalRevenue : 0;
     const totalItemsSold = salesData.length > 0 ? salesData[0].totalItemsSold : 0;
+    const totalPaidRevenue = paidSalesData.length > 0 ? paidSalesData[0].totalPaidRevenue : 0;
+    const totalPaidItemsSold = paidSalesData.length > 0 ? paidSalesData[0].totalPaidItemsSold : 0;
 
     // Calculate sales comparison for the last 7 days vs previous 7 days
     const today = new Date();
@@ -166,6 +186,8 @@ const showSellerDashboard = async (req, res) => {
       stats: {
         totalRevenue,
         totalItemsSold,
+        totalPaidRevenue,
+        totalPaidItemsSold,
         activeListingsCount,
         sellerFeePercentage,
         defaultFeePercentage,

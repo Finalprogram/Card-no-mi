@@ -149,16 +149,23 @@
   <div class="dashboard-grid">
     <a href="/meus-pedidos-vendidos" class="stat-card-link">
       <div class="stat-card">
+        <div class="icon"><i class="fas fa-check-circle"></i></div>
+        <div class="value"><%= formatPrice(stats.totalPaidRevenue) %></div>
+        <div class="label">Total Vendido (Pago)</div>
+      </div>
+    </a>
+    <a href="/meus-pedidos-vendidos" class="stat-card-link">
+      <div class="stat-card">
         <div class="icon"><i class="fas fa-money-bill-wave"></i></div>
         <div class="value"><%= formatPrice(stats.totalRevenue) %></div>
-        <div class="label">Total Vendido</div>
+        <div class="label">Total Vendido (Todos)</div>
       </div>
     </a>
     <a href="/meus-pedidos-vendidos" class="stat-card-link">
       <div class="stat-card">
         <div class="icon"><i class="fas fa-box"></i></div>
-        <div class="value"><%= stats.totalItemsSold %></div>
-        <div class="label">Itens Vendidos</div>
+        <div class="value"><%= stats.totalPaidItemsSold %> / <%= stats.totalItemsSold %></div>
+        <div class="label">Itens Pagos / Total</div>
       </div>
     </a>
     <a href="/meus-anuncios" class="stat-card-link">
@@ -168,17 +175,6 @@
         <div class="label">Anúncios Ativos</div>
       </div>
     </a>
-    <div class="stat-card">
-      <div class="icon"><i class="fas fa-receipt"></i></div>
-      <div class="value">
-        <% if (stats.sellerFeePercentage === stats.defaultFeePercentage) { %>
-          Taxa Padrão: <%= stats.defaultFeePercentage %>%
-        <% } else { %>
-          <%= stats.sellerFeePercentage %>%
-        <% } %>
-      </div>
-      <div class="label">Sua Taxa do Marketplace</div>
-    </div>
   </div>
 
   <div class="performance-panel panel" style="background:var(--bg-surface); padding:20px; border-radius:12px; border:1px solid var(--border); margin-bottom: 2rem; text-align: center;">

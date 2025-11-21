@@ -1,8 +1,12 @@
 <%- include('../partials/header') %>
-<main class="container" style="max-width: 880px; margin-top: 24px;">
+
+<body class="public-site">
+
+<div class="container">
   <%- include('../partials/navbar') %>
 
-  <h1 style="margin: 24px 0 16px;">Checkout</h1>
+  <main>
+    <h1 style="margin: 24px 0 16px;">Checkout</h1>
 
   <% if (typeof message !== 'undefined' && message) { %>
     <div class="alert alert-<%= message.type %>" role="alert">
@@ -85,11 +89,12 @@
 
     <button class="btn btn-primary btn-submit-full" type="submit">Ir para Pagamento</button>
   </form>
-
-
-</main>
+  </main>
+</div>
 
 <%- include('../partials/footer') %>
+</body>
+</html>
 
 <script src="/js/checkout.js"></script>
 
