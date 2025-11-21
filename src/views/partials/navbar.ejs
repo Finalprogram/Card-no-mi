@@ -8,10 +8,27 @@
   </a>
 
       <ul class="navbar-menu">
-    <li><a href="/cards">Explorar Cartas</a></li>
-    <li><a href="/encyclopedia">Enciclopédia</a></li>
-    <li><a href="/decks/community">Decks da Comunidade</a></li>
-    <li><a href="/comunidade">Comunidade</a></li>
+    <li class="navbar-dropdown">
+      <a href="#" class="dropdown-toggle-navbar">
+        Explorar Cartas
+        <span class="dropdown-arrow">▼</span>
+      </a>
+      <div class="dropdown-menu-navbar">
+        <a href="/cards" class="dropdown-item-navbar">Cartas à Venda</a>
+        <a href="/encyclopedia" class="dropdown-item-navbar">Enciclopédia</a>
+      </div>
+    </li>
+    <li><a href="/decks/community">Deck Builder</a></li>
+    <li class="navbar-dropdown">
+      <a href="#" class="dropdown-toggle-navbar">
+        Comunidade
+        <span class="dropdown-arrow">▼</span>
+      </a>
+      <div class="dropdown-menu-navbar">
+        <a href="/comunidade" class="dropdown-item-navbar">Página da Comunidade</a>
+        <a href="/forum" class="dropdown-item-navbar">Fórum</a>
+      </div>
+    </li>
     <li><a href="/about">Sobre</a></li>
 </ul>
 

@@ -111,7 +111,8 @@ try {
         }
 
         // --- Event Listeners for Leader Selection Modal ---
-        createDeckBtn?.addEventListener('click', () => {
+        createDeckBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
             leaderSelectionModal.style.display = 'block';
             fetchLeaders(); // Fetch leaders when modal opens
         });
@@ -454,6 +455,13 @@ try {
                     return closest;
                 }
             }, { offset: Number.NEGATIVE_INFINITY }).element;
+        }
+
+        // --- Initialize UI State ---
+        if (createDeckBtn) {
+            createDeckBtn.classList.remove('disabled');
+            createDeckBtn.setAttribute('aria-disabled', 'false');
+            createDeckBtn.innerHTML = '<i class="fas fa-plus"></i> Criar Novo Deck';
         }
     });
 } catch (e) {

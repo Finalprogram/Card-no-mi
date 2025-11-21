@@ -39,6 +39,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // Dropdowns da navbar (Explorar Cartas e Comunidade)
+  const navbarDropdowns = qsa('.navbar-dropdown');
+  console.log('main.js: navbarDropdowns elements found:', navbarDropdowns.length);
+  
+  navbarDropdowns.forEach(navbarDropdown => {
+    const toggle = navbarDropdown.querySelector('.dropdown-toggle-navbar');
+    toggle?.addEventListener('click', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      
+      // Fecha outros dropdowns abertos
+      navbarDropdowns.forEach(otherDropdown => {
+        if (otherDropdown !== navbarDropdown) {
+          otherDropdown.classList.remove('active');
+        }
+      });
+      
+      navbarDropdown.classList.toggle('active');
+    });
+  });
+
+  // Fecha dropdowns ao clicar fora
+  document.addEventListener('click', (e) => {
+    navbarDropdowns.forEach(navbarDropdown => {
+      if (navbarDropdown.classList.contains('active') && !navbarDropdown.contains(e.target)) {
+        navbarDropdown.classList.remove('active');
+      }
+    });
+  });
+
   // Test Dropdown
   const testDropdown = qs('.test-dropdown');
   if (testDropdown) {
