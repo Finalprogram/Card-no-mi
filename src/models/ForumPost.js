@@ -16,10 +16,19 @@ const forumPostSchema = new mongoose.Schema({
     required: true,
     maxlength: 50000
   },
-  // Resposta a outro post (threading)
-  replyTo: {
+  // Estrutura hierárquica estilo Reddit
+  parentPost: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumPost'
+    ref: 'ForumPost',
+    default: null
+  },
+  depth: {
+    type: Number,
+    default: 0
+  },
+  path: {
+    type: String,
+    default: ''
   },
   // Citação de outro post
   quotedPost: {
@@ -32,23 +41,19 @@ const forumPostSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
   }],
-  // Reações
-  reactions: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User',
-      required: true
-    },
-    type: {
-      type: String,
-      enum: ['like', 'love', 'wow', 'haha', 'sad', 'angry'],
-      required: true
-    },
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
+  // Sistema de votos estilo Reddit
+  upvotes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
   }],
+  downvotes: [{
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  }],
+  score: {
+    type: Number,
+    default: 0
+  },
   // Status
   isDeleted: {
     type: Boolean,
@@ -99,33 +104,49 @@ const forumPostSchema = new mongoose.Schema({
 
 // Índices
 forumPostSchema.index({ thread: 1, createdAt: 1 });
+forumPostSchema.index({ thread: 1, path: 1 });
 forumPostSchema.index({ author: 1, createdAt: -1 });
-forumPostSchema.index({ replyTo: 1 });
+forumPostSchema.index({ parentPost: 1 });
 forumPostSchema.index({ mentions: 1 });
 forumPostSchema.index({ isDeleted: 1, thread: 1 });
 forumPostSchema.index({ content: 'text' });
+forumPostSchema.index({ score: -1, thread: 1 });
 
 // Virtual para contar respostas
 forumPostSchema.virtual('replyCount', {
   ref: 'ForumPost',
   localField: '_id',
-  foreignField: 'replyTo',
+  foreignField: 'parentPost',
   count: true
 });
 
-// Método para adicionar reação
-forumPostSchema.methods.addReaction = function(userId, reactionType) {
-  this.reactions = this.reactions.filter(r => r.user.toString() !== userId.toString());
-  this.reactions.push({
-    user: userId,
-    type: reactionType
-  });
+// Método para adicionar voto
+forumPostSchema.methods.addVote = function(userId, voteType) {
+  const userIdStr = userId.toString();
+  
+  // Remover voto anterior
+  this.upvotes = this.upvotes.filter(id => id.toString() !== userIdStr);
+  this.downvotes = this.downvotes.filter(id => id.toString() !== userIdStr);
+  
+  // Adicionar novo voto
+  if (voteType === 'upvote') {
+    this.upvotes.push(userId);
+  } else if (voteType === 'downvote') {
+    this.downvotes.push(userId);
+  }
+  
+  // Calcular score
+  this.score = this.upvotes.length - this.downvotes.length;
+  
   return this.save();
 };
 
-// Método para remover reação
-forumPostSchema.methods.removeReaction = function(userId) {
-  this.reactions = this.reactions.filter(r => r.user.toString() !== userId.toString());
+// Método para remover voto
+forumPostSchema.methods.removeVote = function(userId) {
+  const userIdStr = userId.toString();
+  this.upvotes = this.upvotes.filter(id => id.toString() !== userIdStr);
+  this.downvotes = this.downvotes.filter(id => id.toString() !== userIdStr);
+  this.score = this.upvotes.length - this.downvotes.length;
   return this.save();
 };
 

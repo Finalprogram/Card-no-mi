@@ -1,0 +1,115 @@
+<%
+  // Partial para renderizar comentário estilo Reddit
+  // Parâmetros: post, depth, user, reactionEmojis (se existir)
+  const maxDepth = 8;
+  const actualDepth = Math.min(post.depth || 0, maxDepth);
+  const indentWidth = 20; // pixels por nível
+%>
+
+<div class="reddit-comment" 
+     id="post-<%= post._id %>" 
+     style="margin-left: <%= actualDepth * indentWidth %>px;"
+     data-depth="<%= actualDepth %>">
+  
+  <!-- Linha vertical de conexão -->
+  <% if (actualDepth > 0) { %>
+    <div class="comment-line"></div>
+  <% } %>
+  
+  <!-- Voting (Upvote/Downvote) -->
+  <div class="comment-vote">
+    <% if (user) { %>
+      <%
+        const userId = (user._id || user.id).toString();
+        const hasUpvoted = post.upvotes && post.upvotes.some(id => id.toString() === userId);
+        const hasDownvoted = post.downvotes && post.downvotes.some(id => id.toString() === userId);
+      %>
+      <button class="vote-btn upvote <%= hasUpvoted ? 'active' : '' %>" 
+              onclick="votePost('<%= post._id %>', '<%= hasUpvoted ? 'remove' : 'upvote' %>')">
+        <i class="fas fa-arrow-up"></i>
+      </button>
+      <span class="vote-score <%= (post.score || 0) > 0 ? 'positive' : (post.score || 0) < 0 ? 'negative' : '' %>">
+        <%= post.score || 0 %>
+      </span>
+      <button class="vote-btn downvote <%= hasDownvoted ? 'active' : '' %>" 
+              onclick="votePost('<%= post._id %>', '<%= hasDownvoted ? 'remove' : 'downvote' %>')">
+        <i class="fas fa-arrow-down"></i>
+      </button>
+    <% } else { %>
+      <div class="vote-score-only">
+        <i class="fas fa-arrow-up"></i>
+        <span><%= post.score || 0 %></span>
+        <i class="fas fa-arrow-down"></i>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Conteúdo do comentário -->
+  <div class="comment-body">
+    <div class="comment-header">
+      <a href="/forum/user/<%= post.author.username %>" class="comment-author">
+        <img src="<%= post.author.avatar || '/images/default-avatar.png' %>" 
+             alt="<%= post.author.username %>"
+             class="comment-avatar">
+        <%= post.author.username %>
+      </a>
+      <% if (post.author.reputation) { %>
+        <span class="comment-rep-level">Nível <%= post.author.reputation.level %></span>
+      <% } %>
+      <span class="comment-time">
+        <%= new Date(post.createdAt).toLocaleString('pt-BR', {
+          day: 'numeric',
+          month: 'short',
+          hour: '2-digit',
+          minute: '2-digit'
+        }) %>
+      </span>
+    </div>
+
+    <% if (post.quotedContent) { %>
+      <div class="comment-quoted">
+        <i class="fas fa-quote-left"></i>
+        <%= post.quotedContent.substring(0, 150) %>...
+      </div>
+    <% } %>
+
+    <div class="comment-content">
+      <%- post.content.replace(/\n/g, '<br>') %>
+    </div>
+
+    <div class="comment-actions">
+      <% if (user) { %>
+        <button class="comment-action-btn" onclick="showReplyForm('<%= post._id %>', '<%= post.author.username %>')">
+          <i class="fas fa-reply"></i> Responder
+        </button>
+        <button class="comment-action-btn" onclick="quotePost('<%= post._id %>', `<%= post.content.substring(0, 200).replace(/'/g, "\\'").replace(/\n/g, ' ') %>`)">
+          <i class="fas fa-quote-left"></i> Citar
+        </button>
+        <% 
+          const postAuthorId = post.author._id || post.author.id;
+          const isPostAuthor = user && (user._id || user.id) && postAuthorId && (user._id || user.id).toString() === postAuthorId.toString();
+        %>
+        <% if (isPostAuthor) { %>
+          <button class="comment-action-btn">
+            <i class="fas fa-edit"></i> Editar
+          </button>
+        <% } %>
+      <% } %>
+      
+      <% if (post.replies && post.replies.length > 0) { %>
+        <button class="comment-action-btn collapse-btn" onclick="toggleReplies('<%= post._id %>')">
+          <i class="fas fa-minus-square"></i> Ocultar respostas (<%= post.replies.length %>)
+        </button>
+      <% } %>
+    </div>
+  </div>
+</div>
+
+<!-- Renderizar respostas recursivamente -->
+<div class="comment-replies" id="replies-<%= post._id %>">
+  <% if (post.replies && post.replies.length > 0) { %>
+    <% post.replies.forEach(reply => { %>
+      <%- include('reddit-comment', { post: reply, depth: actualDepth + 1, user }) %>
+    <% }) %>
+  <% } %>
+</div>

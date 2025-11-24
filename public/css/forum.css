@@ -1921,3 +1921,236 @@
   color: var(--primary-color);
   font-weight: bold;
 }
+
+/* ============================================================================
+   ESTILOS ESTILO REDDIT
+   ============================================================================ */
+
+.posts-section.reddit-style {
+  margin-top: 2rem;
+}
+
+.reddit-comment {
+  position: relative;
+  display: flex;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0;
+}
+
+.comment-line {
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border-color);
+  opacity: 0.3;
+}
+
+.comment-vote {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  min-width: 40px;
+  flex-shrink: 0;
+}
+
+.vote-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.25rem;
+  font-size: 1.25rem;
+  transition: all 0.2s ease;
+}
+
+.vote-btn:hover {
+  color: var(--text-primary);
+}
+
+.vote-btn.upvote.active {
+  color: #ff6b35;
+}
+
+.vote-btn.downvote.active {
+  color: #7c7cff;
+}
+
+.vote-score {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 0.25rem 0;
+  color: var(--text-secondary);
+}
+
+.vote-score.positive {
+  color: #ff6b35;
+}
+
+.vote-score.negative {
+  color: #7c7cff;
+}
+
+.vote-score-only {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  gap: 0.25rem;
+}
+
+.comment-body {
+  flex: 1;
+  background: var(--bg-secondary);
+  border-radius: 8px;
+  padding: 0.75rem;
+  border-left: 2px solid var(--border-color);
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.comment-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.comment-author:hover {
+  color: var(--primary-color);
+}
+
+.comment-rep-level {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+  background: var(--primary-color);
+  color: white;
+  border-radius: 12px;
+}
+
+.comment-time {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.comment-quoted {
+  background: var(--bg-primary);
+  border-left: 3px solid var(--primary-color);
+  padding: 0.5rem;
+  margin: 0.5rem 0;
+  border-radius: 4px;
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+.comment-content {
+  color: var(--text-primary);
+  line-height: 1.6;
+  margin: 0.5rem 0;
+  word-wrap: break-word;
+}
+
+.comment-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.comment-action-btn {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 0.875rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.comment-action-btn:hover {
+  background: var(--bg-primary);
+  color: var(--primary-color);
+}
+
+.comment-action-btn i {
+  font-size: 0.875rem;
+}
+
+.collapse-btn {
+  font-weight: 600;
+}
+
+.comment-replies {
+  display: block;
+}
+
+/* Dark Mode para estilos Reddit */
+[data-theme="dark"] .reddit-comment {
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .comment-body {
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .comment-line {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+[data-theme="dark"] .vote-btn:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="dark"] .comment-action-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  .reddit-comment {
+    font-size: 0.875rem;
+  }
+  
+  .comment-vote {
+    min-width: 30px;
+    padding: 0.25rem;
+  }
+  
+  .vote-btn {
+    font-size: 1rem;
+  }
+  
+  .comment-body {
+    padding: 0.5rem;
+  }
+  
+  .comment-avatar {
+    width: 20px;
+    height: 20px;
+  }
+}

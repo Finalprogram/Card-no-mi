@@ -39,11 +39,11 @@ router.get('/:categorySlug/:threadSlug', forumController.getThread);
 // Criar post/resposta
 router.post('/:categorySlug/:threadSlug/reply', forumController.createPost);
 
+// Votar em post (upvote/downvote estilo Reddit)
+router.post('/post/:postId/vote', forumController.votePost);
+
 // Reagir a thread
 router.post('/thread/:threadId/react', forumController.reactToThread);
-
-// Reagir a post
-router.post('/post/:postId/react', forumController.reactToPost);
 
 // ============================================================================
 // ROTAS DE MODERAÇÃO (Futuro)

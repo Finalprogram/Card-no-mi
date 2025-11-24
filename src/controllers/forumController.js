@@ -176,18 +176,36 @@ exports.getThread = async (req, res) => {
         // Incrementar visualizações (não await para não bloquear)
         ForumThread.findByIdAndUpdate(thread._id, { $inc: { viewCount: 1 } }).exec();
 
-        // Buscar posts
+        // Buscar todos os posts (sem paginação para estrutura hierárquica)
         const posts = await ForumPost.find({ 
             thread: thread._id,
             isDeleted: false 
         })
             .populate('author', 'username avatar createdAt')
-            .populate('replyTo')
+            .populate('parentPost')
             .populate('quotedPost')
-            .sort({ createdAt: 1 })
-            .skip(skip)
-            .limit(limit)
+            .sort({ path: 1, createdAt: 1 })
             .lean();
+        
+        // Construir árvore de comentários estilo Reddit
+        const postsMap = {};
+        const rootPosts = [];
+        
+        posts.forEach(post => {
+            post.replies = [];
+            postsMap[post._id.toString()] = post;
+        });
+        
+        posts.forEach(post => {
+            if (post.parentPost) {
+                const parent = postsMap[post.parentPost._id ? post.parentPost._id.toString() : post.parentPost.toString()];
+                if (parent) {
+                    parent.replies.push(post);
+                }
+            } else {
+                rootPosts.push(post);
+            }
+        });
 
         // Buscar reputação dos autores
         const authorIds = [thread.author._id, ...posts.map(p => p.author._id)];
@@ -210,13 +228,11 @@ exports.getThread = async (req, res) => {
             thread: thread._id,
             isDeleted: false 
         });
-        const totalPages = Math.ceil(totalPosts / limit);
 
         res.render('pages/forum/thread', {
             thread,
-            posts,
-            currentPage: page,
-            totalPages,
+            posts: rootPosts, // Apenas posts raiz, replies estão aninhados
+            totalPosts,
             user: req.session.user || null,
             pageTitle: thread.title
         });
@@ -340,7 +356,7 @@ exports.createPost = async (req, res) => {
         }
 
         const userId = req.session.user._id || req.session.user.id;
-        const { content, replyTo, quotedPostId } = req.body;
+        const { content, parentPostId, quotedPostId } = req.body;
         const thread = await ForumThread.findOne({ 
             slug: req.params.threadSlug,
             isDeleted: false 
@@ -358,11 +374,25 @@ exports.createPost = async (req, res) => {
             return res.status(400).json({ success: false, message: 'Conteúdo é obrigatório' });
         }
 
+        // Calcular depth e path para estrutura hierárquica
+        let depth = 0;
+        let path = '';
+        
+        if (parentPostId) {
+            const parentPost = await ForumPost.findById(parentPostId);
+            if (parentPost) {
+                depth = parentPost.depth + 1;
+                path = parentPost.path ? `${parentPost.path}/${parentPost._id}` : `${parentPost._id}`;
+            }
+        }
+
         const post = new ForumPost({
             thread: thread._id,
             author: userId,
             content,
-            replyTo: replyTo || null
+            parentPost: parentPostId || null,
+            depth,
+            path
         });
 
         // Se está citando outro post
@@ -455,48 +485,43 @@ exports.reactToThread = async (req, res) => {
     }
 };
 
-// @desc    Add reaction to post
-// @route   POST /forum/post/:postId/react
+// @desc    Vote on post (upvote/downvote estilo Reddit)
+// @route   POST /forum/post/:postId/vote
 // @access  Private
-exports.reactToPost = async (req, res) => {
+exports.votePost = async (req, res) => {
     try {
         if (!req.session.user) {
             return res.status(401).json({ success: false, message: 'Não autorizado' });
         }
 
-        const { reactionType } = req.body;
+        const { voteType } = req.body; // 'upvote', 'downvote', ou 'remove'
         const post = await ForumPost.findById(req.params.postId);
 
         if (!post) {
             return res.status(404).json({ success: false, message: 'Post não encontrado' });
         }
 
-        const validReactions = ['like', 'love', 'wow', 'haha', 'sad', 'angry'];
-        if (!validReactions.includes(reactionType)) {
-            return res.status(400).json({ success: false, message: 'Reação inválida' });
+        if (!['upvote', 'downvote', 'remove'].includes(voteType)) {
+            return res.status(400).json({ success: false, message: 'Tipo de voto inválido' });
         }
 
         const userId = req.session.user._id || req.session.user.id;
         
-        const existingReaction = post.reactions.find(
-            r => r.user.toString() === userId.toString()
-        );
-
-        if (existingReaction && existingReaction.type === reactionType) {
-            await post.removeReaction(userId);
+        if (voteType === 'remove') {
+            await post.removeVote(userId);
         } else {
-            await post.addReaction(userId, reactionType);
+            await post.addVote(userId, voteType);
         }
 
-        const reactionCounts = {};
-        validReactions.forEach(type => {
-            reactionCounts[type] = post.reactions.filter(r => r.type === type).length;
+        res.json({ 
+            success: true, 
+            score: post.score,
+            upvotes: post.upvotes.length,
+            downvotes: post.downvotes.length
         });
-
-        res.json({ success: true, reactions: reactionCounts });
     } catch (error) {
-        logger.error('Erro ao reagir ao post:', error);
-        res.status(500).json({ success: false, message: 'Erro ao reagir' });
+        logger.error('Erro ao votar no post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao votar' });
     }
 };
 
