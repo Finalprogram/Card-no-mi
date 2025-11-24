@@ -1,0 +1,435 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<link rel="stylesheet" href="/css/forum.css">
+
+<div class="forum-container thread-page">
+  <!-- Breadcrumb -->
+  <div class="forum-breadcrumb">
+    <a href="/forum"><i class="fas fa-home"></i> Fórum</a>
+    <span class="separator">/</span>
+    <a href="/forum/<%= thread.category.slug %>">
+      <%= thread.category.icon %> <%= thread.category.name %>
+    </a>
+    <span class="separator">/</span>
+    <span class="current"><%= thread.title %></span>
+  </div>
+
+  <!-- Thread Principal -->
+  <div class="thread-main">
+    <!-- Status Badges -->
+    <div class="thread-badges">
+      <% if (thread.isPinned) { %>
+        <span class="badge badge-pinned">
+          <i class="fas fa-thumbtack"></i> Fixado
+        </span>
+      <% } %>
+      <% if (thread.isLocked) { %>
+        <span class="badge badge-locked">
+          <i class="fas fa-lock"></i> Bloqueado
+        </span>
+      <% } %>
+    </div>
+
+    <!-- Título -->
+    <h1 class="thread-main-title"><%= thread.title %></h1>
+
+    <!-- Tags -->
+    <% if (thread.tags && thread.tags.length > 0) { %>
+      <div class="thread-main-tags">
+        <% thread.tags.forEach(tag => { %>
+          <a href="/forum/<%= thread.category.slug %>?tag=<%= tag %>" class="tag">#<%= tag %></a>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Autor e Conteúdo -->
+    <div class="post-container op-post">
+      <div class="post-author-info">
+        <a href="/forum/user/<%= thread.author.username %>">
+          <img src="<%= thread.author.avatar || '/images/default-avatar.png' %>" 
+               alt="<%= thread.author.username %>"
+               class="author-avatar-large">
+        </a>
+        <div class="author-details">
+          <a href="/forum/user/<%= thread.author.username %>" class="author-name">
+            <%= thread.author.username %>
+          </a>
+          <% if (thread.author.reputation) { %>
+            <div class="author-reputation">
+              <span class="rep-title"><%= thread.author.reputation.title %></span>
+              <span class="rep-level">Nível <%= thread.author.reputation.level %></span>
+              <div class="rep-badges">
+                <% thread.author.reputation.badges.slice(0, 3).forEach(badge => { %>
+                  <span class="badge-icon" title="<%= badge.description %>"><%= badge.icon %></span>
+                <% }) %>
+              </div>
+            </div>
+          <% } %>
+          <div class="author-stats">
+            <span><i class="fas fa-comments"></i> <%= thread.author.reputation?.stats.postsCreated || 0 %> posts</span>
+            <span><i class="fas fa-calendar-alt"></i> Membro desde <%= new Date(thread.author.createdAt).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) %></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="post-content-area">
+        <div class="post-date">
+          <i class="far fa-clock"></i>
+          <%= new Date(thread.createdAt).toLocaleString('pt-BR', {
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }) %>
+        </div>
+
+        <div class="post-content">
+          <%- thread.content.replace(/\n/g, '<br>') %>
+        </div>
+
+        <!-- Reações da Thread -->
+        <div class="post-reactions">
+          <div class="reactions-display">
+            <% 
+              const reactionEmojis = {
+                like: '👍',
+                love: '❤️',
+                wow: '😮',
+                haha: '😂',
+                sad: '😢',
+                angry: '😡'
+              };
+              const reactionCounts = {};
+              thread.reactions.forEach(r => {
+                reactionCounts[r.type] = (reactionCounts[r.type] || 0) + 1;
+              });
+            %>
+            <% Object.keys(reactionCounts).forEach(type => { %>
+              <span class="reaction-count">
+                <%= reactionEmojis[type] %> <%= reactionCounts[type] %>
+              </span>
+            <% }) %>
+          </div>
+
+          <% if (user) { %>
+            <div class="reactions-buttons">
+              <% 
+                const currentUserId = (user._id || user.id).toString();
+              %>
+              <% Object.keys(reactionEmojis).forEach(type => { %>
+                <button class="reaction-btn <%= thread.reactions.find(r => r.user.toString() === currentUserId && r.type === type) ? 'active' : '' %>"
+                        onclick="reactToThread('<%= thread._id %>', '<%= type %>')">
+                  <%= reactionEmojis[type] %>
+                </button>
+              <% }) %>
+            </div>
+          <% } %>
+        </div>
+
+        <div class="post-actions">
+          <button class="btn-action" onclick="showReplyForm(null, '<%= thread.author.username %>')">
+            <i class="fas fa-reply"></i> Responder
+          </button>
+          <button class="btn-action" onclick="quotePost(null, `<%= thread.content.substring(0, 200).replace(/'/g, "\\'") %>`)">
+            <i class="fas fa-quote-left"></i> Citar
+          </button>
+          <% 
+            const userId = user ? (user._id || user.id) : null;
+            const authorId = thread.author._id || thread.author.id;
+            const isAuthor = userId && authorId && userId.toString() === authorId.toString();
+          %>
+          <% if (isAuthor) { %>
+            <button class="btn-action">
+              <i class="fas fa-edit"></i> Editar
+            </button>
+          <% } %>
+        </div>
+      </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="thread-stats-bar">
+      <span><i class="fas fa-eye"></i> <%= thread.viewCount %> visualizações</span>
+      <span><i class="fas fa-comments"></i> <%= posts.length %> respostas</span>
+      <span><i class="fas fa-heart"></i> <%= thread.reactions.length %> reações</span>
+    </div>
+  </div>
+
+  <!-- Posts/Respostas -->
+  <div class="posts-section">
+    <h2 class="section-title">
+      <i class="fas fa-comments"></i>
+      Respostas (<%= posts.length %>)
+    </h2>
+
+    <% if (posts.length === 0) { %>
+      <div class="no-posts">
+        <i class="fas fa-comment-slash fa-3x"></i>
+        <p>Nenhuma resposta ainda. Seja o primeiro a comentar!</p>
+      </div>
+    <% } else { %>
+      <% posts.forEach(post => { %>
+        <div class="post-container" id="post-<%= post._id %>">
+          <div class="post-author-info">
+            <a href="/forum/user/<%= post.author.username %>">
+              <img src="<%= post.author.avatar || '/images/default-avatar.png' %>" 
+                   alt="<%= post.author.username %>"
+                   class="author-avatar-large">
+            </a>
+            <div class="author-details">
+              <a href="/forum/user/<%= post.author.username %>" class="author-name">
+                <%= post.author.username %>
+              </a>
+              <% if (post.author.reputation) { %>
+                <div class="author-reputation">
+                  <span class="rep-title"><%= post.author.reputation.title %></span>
+                  <span class="rep-level">Nível <%= post.author.reputation.level %></span>
+                  <div class="rep-badges">
+                    <% post.author.reputation.badges.slice(0, 3).forEach(badge => { %>
+                      <span class="badge-icon" title="<%= badge.description %>"><%= badge.icon %></span>
+                    <% }) %>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+          </div>
+
+          <div class="post-content-area">
+            <div class="post-date">
+              <i class="far fa-clock"></i>
+              <%= new Date(post.createdAt).toLocaleString('pt-BR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %>
+            </div>
+
+            <% if (post.quotedContent) { %>
+              <div class="quoted-post">
+                <i class="fas fa-quote-left"></i>
+                <%= post.quotedContent.substring(0, 150) %>...
+              </div>
+            <% } %>
+
+            <div class="post-content">
+              <%- post.content.replace(/\n/g, '<br>') %>
+            </div>
+
+            <!-- Reações do Post -->
+            <div class="post-reactions">
+              <div class="reactions-display">
+                <% 
+                  const postReactionCounts = {};
+                  post.reactions.forEach(r => {
+                    postReactionCounts[r.type] = (postReactionCounts[r.type] || 0) + 1;
+                  });
+                %>
+                <% Object.keys(postReactionCounts).forEach(type => { %>
+                  <span class="reaction-count">
+                    <%= reactionEmojis[type] %> <%= postReactionCounts[type] %>
+                  </span>
+                <% }) %>
+              </div>
+
+              <% if (user) { %>
+                <div class="reactions-buttons">
+                  <% 
+                    const postUserId = (user._id || user.id).toString();
+                  %>
+                  <% Object.keys(reactionEmojis).forEach(type => { %>
+                    <button class="reaction-btn <%= post.reactions.find(r => r.user.toString() === postUserId && r.type === type) ? 'active' : '' %>"
+                            onclick="reactToPost('<%= post._id %>', '<%= type %>')">
+                      <%= reactionEmojis[type] %>
+                    </button>
+                  <% }) %>
+                </div>
+              <% } %>
+            </div>
+
+            <div class="post-actions">
+              <button class="btn-action" onclick="showReplyForm('<%= post._id %>', '<%= post.author.username %>')">
+                <i class="fas fa-reply"></i> Responder
+              </button>
+              <button class="btn-action" onclick="quotePost('<%= post._id %>', `<%= post.content.substring(0, 200).replace(/'/g, "\\'") %>`)">
+                <i class="fas fa-quote-left"></i> Citar
+              </button>
+              <% 
+                const postAuthorId = post.author._id || post.author.id;
+                const isPostAuthor = user && (user._id || user.id) && postAuthorId && (user._id || user.id).toString() === postAuthorId.toString();
+              %>
+              <% if (isPostAuthor) { %>
+                <button class="btn-action">
+                  <i class="fas fa-edit"></i> Editar
+                </button>
+              <% } %>
+            </div>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <!-- Formulário de Resposta -->
+  <% if (user && !thread.isLocked) { %>
+    <div class="reply-form" id="replyForm">
+      <h3 class="form-title">
+        <i class="fas fa-reply"></i>
+        Responder à Thread
+      </h3>
+      <form id="postForm">
+        <input type="hidden" id="replyTo" name="replyTo">
+        <input type="hidden" id="quotedPostId" name="quotedPostId">
+        
+        <div id="replyingTo" class="replying-to" style="display: none;">
+          Respondendo a <strong id="replyingToUser"></strong>
+          <button type="button" onclick="cancelReply()" class="btn-cancel-reply">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
+
+        <div id="quotedContent" class="quoted-preview" style="display: none;"></div>
+
+        <textarea id="postContent" name="content" rows="6" placeholder="Digite sua resposta..." required></textarea>
+        
+        <div class="form-actions">
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-paper-plane"></i> Enviar Resposta
+          </button>
+        </div>
+      </form>
+    </div>
+  <% } else if (thread.isLocked) { %>
+    <div class="thread-locked-notice">
+      <i class="fas fa-lock fa-2x"></i>
+      <p>Esta thread está bloqueada e não aceita mais respostas.</p>
+    </div>
+  <% } else { %>
+    <div class="login-prompt">
+      <i class="fas fa-sign-in-alt fa-2x"></i>
+      <p>Você precisa estar logado para responder.</p>
+      <a href="/auth/login?redirect=<%= encodeURIComponent(`/forum/${thread.category.slug}/${thread.slug}`) %>" class="btn btn-primary">
+        Fazer Login
+      </a>
+    </div>
+  <% } %>
+
+  <!-- Paginação -->
+  <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% if (currentPage > 1) { %>
+        <a href="?page=<%= currentPage - 1 %>" class="page-link">
+          <i class="fas fa-chevron-left"></i>
+        </a>
+      <% } %>
+
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+          <a href="?page=<%= i %>" class="page-link <%= i === currentPage ? 'active' : '' %>">
+            <%= i %>
+          </a>
+        <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+          <span class="page-ellipsis">...</span>
+        <% } %>
+      <% } %>
+
+      <% if (currentPage < totalPages) { %>
+        <a href="?page=<%= currentPage + 1 %>" class="page-link">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+let currentReplyTo = null;
+let currentQuotedPost = null;
+
+function showReplyForm(postId, username) {
+  currentReplyTo = postId;
+  document.getElementById('replyTo').value = postId || '';
+  document.getElementById('replyingToUser').textContent = username;
+  document.getElementById('replyingTo').style.display = 'flex';
+  document.getElementById('postContent').focus();
+  document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function cancelReply() {
+  currentReplyTo = null;
+  document.getElementById('replyTo').value = '';
+  document.getElementById('replyingTo').style.display = 'none';
+}
+
+function quotePost(postId, content) {
+  currentQuotedPost = postId;
+  document.getElementById('quotedPostId').value = postId || '';
+  document.getElementById('quotedContent').innerHTML = '<i class="fas fa-quote-left"></i> ' + content;
+  document.getElementById('quotedContent').style.display = 'block';
+  document.getElementById('postContent').focus();
+  document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+async function reactToThread(threadId, reactionType) {
+  try {
+    const response = await fetch(`/forum/thread/${threadId}/react`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reactionType })
+    });
+    const data = await response.json();
+    if (data.success) {
+      location.reload();
+    }
+  } catch (error) {
+    console.error('Erro ao reagir:', error);
+  }
+}
+
+async function reactToPost(postId, reactionType) {
+  try {
+    const response = await fetch(`/forum/post/${postId}/react`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reactionType })
+    });
+    const data = await response.json();
+    if (data.success) {
+      location.reload();
+    }
+  } catch (error) {
+    console.error('Erro ao reagir:', error);
+  }
+}
+
+document.getElementById('postForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  
+  const content = document.getElementById('postContent').value;
+  const replyTo = document.getElementById('replyTo').value;
+  const quotedPostId = document.getElementById('quotedPostId').value;
+
+  try {
+    const response = await fetch(window.location.pathname + '/reply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content, replyTo, quotedPostId })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.message || 'Erro ao enviar resposta');
+    }
+  } catch (error) {
+    console.error('Erro ao enviar resposta:', error);
+    alert('Erro ao enviar resposta');
+  }
+});
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><%= userProfile.username %> - Perfil | Card no Mi</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/forum.css">
+</head>
+<body>
+    <%- include('../../partials/header') %>
+    <%- include('../../partials/navbar') %>
+
+    <main class="forum-container">
+        <!-- Profile Header -->
+        <div class="profile-header">
+            <div class="profile-header-content">
+                <div class="profile-avatar-large">
+                    <% if (userProfile.avatar) { %>
+                        <img src="<%= userProfile.avatar %>" alt="<%= userProfile.username %>">
+                    <% } else { %>
+                        <div class="avatar-placeholder"><%= userProfile.username.charAt(0).toUpperCase() %></div>
+                    <% } %>
+                    <% if (reputation.level >= 10) { %>
+                        <span class="profile-badge-overlay" title="Nível <%= reputation.level %>">⭐</span>
+                    <% } %>
+                </div>
+                
+                <div class="profile-info">
+                    <h1 class="profile-username">
+                        <%= userProfile.username %>
+                        <% if (reputation.badges && reputation.badges.length > 0) { %>
+                            <span class="user-badges">
+                                <% reputation.badges.slice(0, 3).forEach(badge => { %>
+                                    <span class="badge-icon" title="<%= badge.description %>"><%= badge.icon %></span>
+                                <% }); %>
+                            </span>
+                        <% } %>
+                    </h1>
+                    
+                    <div class="profile-stats-inline">
+                        <span class="stat-item">
+                            <strong>Nível <%= reputation.level %></strong> - <%= reputation.title %>
+                        </span>
+                        <span class="stat-divider">•</span>
+                        <span class="stat-item">
+                            <strong><%= reputation.totalPoints %></strong> pontos
+                        </span>
+                        <span class="stat-divider">•</span>
+                        <span class="stat-item">
+                            Membro desde <%= new Date(userProfile.createdAt).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) %>
+                        </span>
+                    </div>
+
+                    <% if (userProfile.bio) { %>
+                        <p class="profile-bio"><%= userProfile.bio %></p>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Progress Bar -->
+            <div class="level-progress">
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" style="width: <%= (reputation.totalPoints % 100) %>%"></div>
+                </div>
+                <span class="progress-text">
+                    <%= reputation.totalPoints % 100 %>/100 para o próximo nível
+                </span>
+            </div>
+        </div>
+
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">📝</div>
+                <div class="stat-value"><%= reputation.stats.threadsCreated || 0 %></div>
+                <div class="stat-label">Threads Criadas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">💬</div>
+                <div class="stat-value"><%= reputation.stats.postsCreated || 0 %></div>
+                <div class="stat-label">Posts</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">👍</div>
+                <div class="stat-value"><%= reputation.stats.reactionsReceived || 0 %></div>
+                <div class="stat-label">Reações Recebidas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-value"><%= reputation.stats.bestAnswers || 0 %></div>
+                <div class="stat-label">Melhores Respostas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏆</div>
+                <div class="stat-value"><%= reputation.badges ? reputation.badges.length : 0 %></div>
+                <div class="stat-label">Conquistas</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⭐</div>
+                <div class="stat-value"><%= reputation.stats.helpfulVotes || 0 %></div>
+                <div class="stat-label">Votos Úteis</div>
+            </div>
+        </div>
+
+        <!-- Badges Section -->
+        <% if (reputation.badges && reputation.badges.length > 0) { %>
+            <div class="profile-section">
+                <h2 class="section-title">🏆 Conquistas (<%= reputation.badges.length %>)</h2>
+                <div class="badges-grid">
+                    <% reputation.badges.forEach(badge => { %>
+                        <div class="badge-card">
+                            <div class="badge-icon-large"><%= badge.icon %></div>
+                            <div class="badge-name"><%= badge.name %></div>
+                            <div class="badge-description"><%= badge.description %></div>
+                            <div class="badge-date">
+                                Conquistado em <%= new Date(badge.earnedAt).toLocaleDateString('pt-BR') %>
+                            </div>
+                        </div>
+                    <% }); %>
+                </div>
+            </div>
+        <% } %>
+
+        <!-- Recent Activity -->
+        <div class="profile-section">
+            <h2 class="section-title">📋 Atividade Recente</h2>
+            
+            <div class="activity-tabs">
+                <button class="activity-tab active" data-tab="threads">Threads</button>
+                <button class="activity-tab" data-tab="posts">Posts</button>
+            </div>
+
+            <!-- Recent Threads -->
+            <div class="activity-content" id="threads-content">
+                <% if (recentThreads && recentThreads.length > 0) { %>
+                    <div class="thread-list">
+                        <% recentThreads.forEach(thread => { %>
+                            <a href="/forum/<%= thread.category.slug %>/<%= thread.slug %>" class="thread-item">
+                                <div class="thread-main">
+                                    <div class="thread-title-row">
+                                        <h3 class="thread-title">
+                                            <% if (thread.isPinned) { %>
+                                                <span class="thread-badge pinned">📌 Fixado</span>
+                                            <% } %>
+                                            <% if (thread.isLocked) { %>
+                                                <span class="thread-badge locked">🔒 Trancado</span>
+                                            <% } %>
+                                            <%= thread.title %>
+                                        </h3>
+                                    </div>
+                                    
+                                    <div class="thread-meta">
+                                        <span class="thread-category" style="color: <%= thread.category.color %>">
+                                            <%= thread.category.icon %> <%= thread.category.name %>
+                                        </span>
+                                        <span class="meta-divider">•</span>
+                                        <span><%= new Date(thread.createdAt).toLocaleDateString('pt-BR') %></span>
+                                        <% if (thread.tags && thread.tags.length > 0) { %>
+                                            <span class="meta-divider">•</span>
+                                            <% thread.tags.slice(0, 2).forEach(tag => { %>
+                                                <span class="thread-tag"><%= tag %></span>
+                                            <% }); %>
+                                        <% } %>
+                                    </div>
+                                </div>
+                                
+                                <div class="thread-stats">
+                                    <span class="stat" title="Visualizações">
+                                        👁️ <%= thread.viewCount || 0 %>
+                                    </span>
+                                    <span class="stat" title="Respostas">
+                                        💬 <%= thread.replyCount || 0 %>
+                                    </span>
+                                    <% if (thread.reactions && thread.reactions.length > 0) { %>
+                                        <span class="stat" title="Reações">
+                                            ❤️ <%= thread.reactions.length %>
+                                        </span>
+                                    <% } %>
+                                </div>
+                            </a>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <p>📝 Nenhuma thread criada ainda</p>
+                    </div>
+                <% } %>
+            </div>
+
+            <!-- Recent Posts -->
+            <div class="activity-content" id="posts-content" style="display: none;">
+                <% if (recentPosts && recentPosts.length > 0) { %>
+                    <div class="posts-list">
+                        <% recentPosts.forEach(post => { %>
+                            <div class="post-preview">
+                                <div class="post-preview-header">
+                                    <a href="/forum/<%= post.thread.category.slug %>/<%= post.thread.slug %>" class="post-thread-link">
+                                        <%= post.thread.title %>
+                                    </a>
+                                    <span class="post-date"><%= new Date(post.createdAt).toLocaleDateString('pt-BR') %></span>
+                                </div>
+                                <div class="post-preview-content">
+                                    <%= post.content.substring(0, 200) %><%= post.content.length > 200 ? '...' : '' %>
+                                </div>
+                                <div class="post-preview-footer">
+                                    <% if (post.reactions && post.reactions.length > 0) { %>
+                                        <span class="post-reactions">
+                                            <% const reactionCounts = {}; %>
+                                            <% post.reactions.forEach(r => reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1); %>
+                                            <% Object.entries(reactionCounts).slice(0, 3).forEach(([emoji, count]) => { %>
+                                                <span class="reaction-count"><%= emoji %> <%= count %></span>
+                                            <% }); %>
+                                        </span>
+                                    <% } %>
+                                    <a href="/forum/<%= post.thread.category.slug %>/<%= post.thread.slug %>#post-<%= post._id %>" class="view-post-link">
+                                        Ver post →
+                                    </a>
+                                </div>
+                            </div>
+                        <% }); %>
+                    </div>
+                <% } else { %>
+                    <div class="empty-state">
+                        <p>💬 Nenhum post criado ainda</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </main>
+
+    <%- include('../../partials/footer') %>
+
+    <script>
+        // Tab switching
+        document.querySelectorAll('.activity-tab').forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Remove active class from all tabs
+                document.querySelectorAll('.activity-tab').forEach(t => t.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Hide all content
+                document.querySelectorAll('.activity-content').forEach(c => c.style.display = 'none');
+                
+                // Show selected content
+                const tabName = this.dataset.tab;
+                document.getElementById(tabName + '-content').style.display = 'block';
+            });
+        });
+    </script>
+</body>
+</html>

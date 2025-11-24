@@ -1,0 +1,232 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<link rel="stylesheet" href="/css/forum.css">
+
+<div class="forum-container">
+  <!-- Breadcrumb -->
+  <div class="forum-breadcrumb">
+    <a href="/forum"><i class="fas fa-home"></i> Fórum</a>
+    <span class="separator">/</span>
+    <a href="/forum/<%= category.slug %>">
+      <%= category.icon %> <%= category.name %>
+    </a>
+    <span class="separator">/</span>
+    <span class="current">Novo Tópico</span>
+  </div>
+
+  <!-- Formulário de Criar Thread -->
+  <div class="create-thread-form">
+    <h1 class="form-title">
+      <i class="fas fa-plus-circle"></i>
+      Criar Novo Tópico em <%= category.name %>
+    </h1>
+
+    <form id="createThreadForm">
+      <div class="form-group">
+        <label for="title">
+          Título do Tópico <span class="required">*</span>
+        </label>
+        <input 
+          type="text" 
+          id="title" 
+          name="title" 
+          class="form-control" 
+          placeholder="Escreva um título claro e descritivo"
+          required
+          maxlength="200"
+          autocomplete="off"
+        >
+        <small class="form-text">
+          <span id="titleCounter">200</span> caracteres restantes
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="content">
+          Conteúdo <span class="required">*</span>
+        </label>
+        <textarea 
+          id="content" 
+          name="content" 
+          class="form-control" 
+          rows="12"
+          placeholder="Descreva sua dúvida, compartilhe sua ideia ou inicie uma discussão..."
+          required
+          minlength="20"
+        ></textarea>
+        <small class="form-text">
+          Mínimo de 20 caracteres. <span id="contentCounter">0</span> / 50000
+        </small>
+      </div>
+
+      <div class="form-group">
+        <label for="tags">
+          Tags (opcional)
+        </label>
+        <input 
+          type="text" 
+          id="tags" 
+          name="tags" 
+          class="form-control" 
+          placeholder="Exemplo: luffy, deck-vermelho, iniciante (separe por vírgula)"
+          autocomplete="off"
+        >
+        <small class="form-text">
+          Use tags para facilitar a busca. Separe múltiplas tags com vírgula
+        </small>
+      </div>
+
+      <!-- Preview de Tags -->
+      <div id="tagsPreview" class="tags-preview" style="display: none;">
+        <strong>Tags:</strong>
+        <div id="tagsContainer"></div>
+      </div>
+
+      <!-- Dicas de Formatação -->
+      <div class="formatting-tips">
+        <h4><i class="fas fa-lightbulb"></i> Dicas para um bom tópico:</h4>
+        <ul>
+          <li>Use um título claro e objetivo</li>
+          <li>Forneça detalhes suficientes no conteúdo</li>
+          <li>Use tags relevantes para facilitar a busca</li>
+          <li>Seja respeitoso e siga as regras da comunidade</li>
+          <li>Verifique se o tópico já não existe antes de criar</li>
+        </ul>
+      </div>
+
+      <!-- Botões de Ação -->
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <i class="fas fa-paper-plane"></i> Publicar Tópico
+        </button>
+        <a href="/forum/<%= category.slug %>" class="btn btn-secondary">
+          <i class="fas fa-times"></i> Cancelar
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+const titleInput = document.getElementById('title');
+const contentInput = document.getElementById('content');
+const tagsInput = document.getElementById('tags');
+const form = document.getElementById('createThreadForm');
+const submitBtn = document.getElementById('submitBtn');
+
+// Contador de caracteres do título
+titleInput.addEventListener('input', () => {
+  const remaining = 200 - titleInput.value.length;
+  document.getElementById('titleCounter').textContent = remaining;
+  document.getElementById('titleCounter').style.color = remaining < 20 ? '#E53935' : '';
+});
+
+// Contador de caracteres do conteúdo
+contentInput.addEventListener('input', () => {
+  const length = contentInput.value.length;
+  document.getElementById('contentCounter').textContent = length;
+  
+  const counterElement = document.getElementById('contentCounter');
+  if (length < 20) {
+    counterElement.style.color = '#E53935';
+  } else if (length > 45000) {
+    counterElement.style.color = '#FFB800';
+  } else {
+    counterElement.style.color = '#43A047';
+  }
+});
+
+// Preview de tags
+tagsInput.addEventListener('input', () => {
+  const tagsValue = tagsInput.value.trim();
+  if (tagsValue) {
+    const tags = tagsValue.split(',').map(t => t.trim()).filter(t => t);
+    if (tags.length > 0) {
+      const tagsContainer = document.getElementById('tagsContainer');
+      tagsContainer.innerHTML = tags.map(tag => 
+        `<span class="tag">#${tag}</span>`
+      ).join('');
+      document.getElementById('tagsPreview').style.display = 'block';
+    } else {
+      document.getElementById('tagsPreview').style.display = 'none';
+    }
+  } else {
+    document.getElementById('tagsPreview').style.display = 'none';
+  }
+});
+
+// Submit do formulário
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const title = titleInput.value.trim();
+  const content = contentInput.value.trim();
+  const tags = tagsInput.value.trim();
+
+  // Validações
+  if (!title || title.length < 5) {
+    alert('O título deve ter pelo menos 5 caracteres');
+    titleInput.focus();
+    return;
+  }
+
+  if (!content || content.length < 20) {
+    alert('O conteúdo deve ter pelo menos 20 caracteres');
+    contentInput.focus();
+    return;
+  }
+
+  // Desabilitar botão durante envio
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Publicando...';
+
+  try {
+    // Desativar o aviso de saída antes de enviar
+    formModified = false;
+    
+    const response = await fetch(window.location.pathname, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ title, content, tags })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      // Formulário enviado com sucesso, permitir navegação
+      window.location.href = data.threadUrl;
+    } else {
+      // Erro, reativar aviso
+      formModified = true;
+      alert(data.message || 'Erro ao criar tópico');
+      submitBtn.disabled = false;
+      submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Publicar Tópico';
+    }
+  } catch (error) {
+    // Erro, reativar aviso
+    formModified = true;
+    console.error('Erro ao criar tópico:', error);
+    alert('Erro ao criar tópico. Tente novamente.');
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-paper-plane"></i> Publicar Tópico';
+  }
+});
+
+// Prevenir perda de dados
+let formModified = false;
+form.addEventListener('input', () => {
+  formModified = true;
+});
+
+window.addEventListener('beforeunload', (e) => {
+  if (formModified && (titleInput.value.trim() || contentInput.value.trim())) {
+    e.preventDefault();
+    e.returnValue = '';
+  }
+});
+</script>
+
+<%- include('../../partials/footer') %>

@@ -23,12 +23,16 @@ async function getSellerOriginCep(sellerId) {
   return globalCepOrigem;
 }
 
-const worker = new Worker('post-payment', async (job) => {
-  const { orderId } = job.data;
-  logger.info(`[worker] Processing job for order ${orderId}`);
+// Só iniciar o worker se o Redis estiver disponível
+let worker = null;
 
-  try {
-    const order = await Order.findById(orderId).populate('user');
+if (redisConnection && redisConnection.status === 'ready') {
+  worker = new Worker('post-payment', async (job) => {
+    const { orderId } = job.data;
+    logger.info(`[worker] Processing job for order ${orderId}`);
+
+    try {
+      const order = await Order.findById(orderId).populate('user');
 
     if (!order) {
       throw new Error(`Order ${orderId} not found.`);
@@ -189,14 +193,17 @@ const worker = new Worker('post-payment', async (job) => {
     // The job will be retried automatically based on the queue's backoff strategy.
     throw error; // Re-throw error to let BullMQ know the job failed
   }
-}, { connection: redisConnection });
+  }, { connection: redisConnection });
 
-worker.on('completed', (job) => {
-  logger.info(`[worker] Job ${job.id} has completed.`);
-});
+  worker.on('completed', (job) => {
+    logger.info(`[worker] Job ${job.id} has completed.`);
+  });
 
-worker.on('failed', (job, err) => {
-  logger.error(`[worker] Job ${job.id} has failed with ${err.message}`);
-});
+  worker.on('failed', (job, err) => {
+    logger.error(`[worker] Job ${job.id} has failed with ${err.message}`);
+  });
 
-logger.info('[worker] Post-payment worker started.');
+  logger.info('[worker] Post-payment worker started.');
+} else {
+  logger.info('[worker] Redis não disponível - worker de post-payment não iniciado');
+}

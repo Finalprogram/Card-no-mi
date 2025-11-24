@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Busca: <%= query %> | Fórum Card no Mi</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="/css/forum.css">
+</head>
+<body>
+    <%- include('../../partials/header') %>
+    <%- include('../../partials/navbar') %>
+
+    <main class="forum-container">
+        <!-- Search Header -->
+        <div class="search-header">
+            <h1>🔍 Resultados da Busca</h1>
+            <form class="search-form-main" action="/forum/search" method="GET">
+                <input 
+                    type="text" 
+                    name="q" 
+                    class="search-input" 
+                    placeholder="Buscar no fórum..." 
+                    value="<%= query %>"
+                    required
+                >
+                <button type="submit" class="btn btn-primary">Buscar</button>
+            </form>
+        </div>
+
+        <!-- Search Filters -->
+        <div class="search-filters">
+            <div class="filter-group">
+                <label for="category-filter">Categoria:</label>
+                <select id="category-filter" class="filter-select">
+                    <option value="">Todas as categorias</option>
+                    <% if (categories) { %>
+                        <% categories.forEach(cat => { %>
+                            <option value="<%= cat.slug %>" <%= categoryFilter === cat.slug ? 'selected' : '' %>>
+                                <%= cat.icon %> <%= cat.name %>
+                            </option>
+                        <% }); %>
+                    <% } %>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="type-filter">Tipo:</label>
+                <select id="type-filter" class="filter-select">
+                    <option value="all" <%= typeFilter === 'all' ? 'selected' : '' %>>Tudo</option>
+                    <option value="threads" <%= typeFilter === 'threads' ? 'selected' : '' %>>Apenas Threads</option>
+                    <option value="posts" <%= typeFilter === 'posts' ? 'selected' : '' %>>Apenas Posts</option>
+                </select>
+            </div>
+
+            <div class="filter-group">
+                <label for="sort-filter">Ordenar por:</label>
+                <select id="sort-filter" class="filter-select">
+                    <option value="relevance" <%= sortBy === 'relevance' ? 'selected' : '' %>>Relevância</option>
+                    <option value="newest" <%= sortBy === 'newest' ? 'selected' : '' %>>Mais Recente</option>
+                    <option value="oldest" <%= sortBy === 'oldest' ? 'selected' : '' %>>Mais Antigo</option>
+                    <option value="popular" <%= sortBy === 'popular' ? 'selected' : '' %>>Mais Popular</option>
+                </select>
+            </div>
+
+            <button id="apply-filters" class="btn btn-secondary">Aplicar Filtros</button>
+        </div>
+
+        <!-- Results Summary -->
+        <div class="search-summary">
+            <% if (results && results.length > 0) { %>
+                <p>Encontrados <strong><%= results.length %></strong> resultado(s) para "<strong><%= query %></strong>"</p>
+            <% } else { %>
+                <p>Nenhum resultado encontrado para "<strong><%= query %></strong>"</p>
+            <% } %>
+        </div>
+
+        <!-- Search Results -->
+        <% if (results && results.length > 0) { %>
+            <div class="search-results">
+                <% results.forEach(result => { %>
+                    <div class="search-result-item">
+                        <!-- Thread Result -->
+                        <% if (result.type === 'thread' || result.title) { %>
+                            <div class="result-header">
+                                <span class="result-type thread-type">📝 Thread</span>
+                                <% if (result.category) { %>
+                                    <span class="result-category" style="color: <%= result.category.color %>">
+                                        <%= result.category.icon %> <%= result.category.name %>
+                                    </span>
+                                <% } %>
+                            </div>
+                            
+                            <h3 class="result-title">
+                                <a href="/forum/<%= result.category.slug %>/<%= result.slug %>">
+                                    <% if (result.isPinned) { %>
+                                        <span class="thread-badge pinned">📌</span>
+                                    <% } %>
+                                    <% if (result.isLocked) { %>
+                                        <span class="thread-badge locked">🔒</span>
+                                    <% } %>
+                                    <%= result.title %>
+                                </a>
+                            </h3>
+                            
+                            <p class="result-excerpt">
+                                <%= result.content.substring(0, 200) %><%= result.content.length > 200 ? '...' : '' %>
+                            </p>
+                            
+                            <div class="result-meta">
+                                <span class="result-author">
+                                    Por <strong><%= result.author.username %></strong>
+                                </span>
+                                <span class="meta-divider">•</span>
+                                <span class="result-date">
+                                    <%= new Date(result.createdAt).toLocaleDateString('pt-BR', { 
+                                        day: 'numeric', 
+                                        month: 'short', 
+                                        year: 'numeric' 
+                                    }) %>
+                                </span>
+                                <span class="meta-divider">•</span>
+                                <span class="result-stats">
+                                    👁️ <%= result.viewCount || 0 %> 
+                                    💬 <%= result.replyCount || 0 %>
+                                    <% if (result.reactions && result.reactions.length > 0) { %>
+                                        ❤️ <%= result.reactions.length %>
+                                    <% } %>
+                                </span>
+                            </div>
+                            
+                            <% if (result.tags && result.tags.length > 0) { %>
+                                <div class="result-tags">
+                                    <% result.tags.forEach(tag => { %>
+                                        <span class="thread-tag"><%= tag %></span>
+                                    <% }); %>
+                                </div>
+                            <% } %>
+                        
+                        <!-- Post Result -->
+                        <% } else if (result.type === 'post' || result.thread) { %>
+                            <div class="result-header">
+                                <span class="result-type post-type">💬 Post</span>
+                                <% if (result.thread && result.thread.category) { %>
+                                    <span class="result-category" style="color: <%= result.thread.category.color %>">
+                                        <%= result.thread.category.icon %> <%= result.thread.category.name %>
+                                    </span>
+                                <% } %>
+                            </div>
+                            
+                            <h3 class="result-title">
+                                <a href="/forum/<%= result.thread.category.slug %>/<%= result.thread.slug %>#post-<%= result._id %>">
+                                    Resposta em: <%= result.thread.title %>
+                                </a>
+                            </h3>
+                            
+                            <p class="result-excerpt">
+                                <%= result.content.substring(0, 250) %><%= result.content.length > 250 ? '...' : '' %>
+                            </p>
+                            
+                            <div class="result-meta">
+                                <span class="result-author">
+                                    Por <strong><%= result.author.username %></strong>
+                                </span>
+                                <span class="meta-divider">•</span>
+                                <span class="result-date">
+                                    <%= new Date(result.createdAt).toLocaleDateString('pt-BR', { 
+                                        day: 'numeric', 
+                                        month: 'short', 
+                                        year: 'numeric' 
+                                    }) %>
+                                </span>
+                                <% if (result.reactions && result.reactions.length > 0) { %>
+                                    <span class="meta-divider">•</span>
+                                    <span class="result-stats">
+                                        ❤️ <%= result.reactions.length %> reações
+                                    </span>
+                                <% } %>
+                            </div>
+                        <% } %>
+                    </div>
+                <% }); %>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <div class="pagination">
+                    <% if (currentPage > 1) { %>
+                        <a href="?q=<%= query %>&page=<%= currentPage - 1 %><%= categoryFilter ? '&category=' + categoryFilter : '' %><%= typeFilter ? '&type=' + typeFilter : '' %><%= sortBy ? '&sort=' + sortBy : '' %>" 
+                           class="pagination-btn">
+                            ← Anterior
+                        </a>
+                    <% } %>
+                    
+                    <% for (let i = 1; i <= totalPages; i++) { %>
+                        <% if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) { %>
+                            <a href="?q=<%= query %>&page=<%= i %><%= categoryFilter ? '&category=' + categoryFilter : '' %><%= typeFilter ? '&type=' + typeFilter : '' %><%= sortBy ? '&sort=' + sortBy : '' %>" 
+                               class="pagination-btn <%= i === currentPage ? 'active' : '' %>">
+                                <%= i %>
+                            </a>
+                        <% } else if (i === currentPage - 2 || i === currentPage + 2) { %>
+                            <span class="pagination-ellipsis">...</span>
+                        <% } %>
+                    <% } %>
+                    
+                    <% if (currentPage < totalPages) { %>
+                        <a href="?q=<%= query %>&page=<%= currentPage + 1 %><%= categoryFilter ? '&category=' + categoryFilter : '' %><%= typeFilter ? '&type=' + typeFilter : '' %><%= sortBy ? '&sort=' + sortBy : '' %>" 
+                           class="pagination-btn">
+                            Próxima →
+                        </a>
+                    <% } %>
+                </div>
+            <% } %>
+        <% } else { %>
+            <!-- Empty State -->
+            <div class="empty-state-large">
+                <div class="empty-icon">🔍</div>
+                <h2>Nenhum resultado encontrado</h2>
+                <p>Tente ajustar sua busca ou usar termos diferentes</p>
+                <div class="search-tips">
+                    <h3>Dicas de busca:</h3>
+                    <ul>
+                        <li>Use palavras-chave específicas</li>
+                        <li>Verifique a ortografia</li>
+                        <li>Tente sinônimos ou termos relacionados</li>
+                        <li>Use filtros para refinar a busca</li>
+                        <li>Tente buscar por tags ou categorias</li>
+                    </ul>
+                </div>
+            </div>
+        <% } %>
+    </main>
+
+    <%- include('../../partials/footer') %>
+
+    <script>
+        // Apply filters
+        document.getElementById('apply-filters').addEventListener('click', function() {
+            const query = document.querySelector('.search-input').value;
+            const category = document.getElementById('category-filter').value;
+            const type = document.getElementById('type-filter').value;
+            const sort = document.getElementById('sort-filter').value;
+            
+            let url = '/forum/search?q=' + encodeURIComponent(query);
+            if (category) url += '&category=' + category;
+            if (type) url += '&type=' + type;
+            if (sort) url += '&sort=' + sort;
+            
+            window.location.href = url;
+        });
+
+        // Enter key on filters
+        document.querySelectorAll('.filter-select').forEach(select => {
+            select.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    document.getElementById('apply-filters').click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

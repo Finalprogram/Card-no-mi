@@ -1,0 +1,209 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<link rel="stylesheet" href="/css/forum.css">
+
+<div class="forum-container">
+  <!-- Breadcrumb -->
+  <div class="forum-breadcrumb">
+    <a href="/forum"><i class="fas fa-home"></i> Fórum</a>
+    <span class="separator">/</span>
+    <span class="current"><%= category.icon %> <%= category.name %></span>
+  </div>
+
+  <!-- Header da Categoria -->
+  <div class="category-header" style="border-left-color: <%= category.color %>">
+    <div class="category-icon-large" style="background: <%= category.color %>20; color: <%= category.color %>">
+      <%= category.icon %>
+    </div>
+    <div class="category-header-info">
+      <h1><%= category.name %></h1>
+      <p><%= category.description %></p>
+    </div>
+    <% if (user) { %>
+      <a href="/forum/<%= category.slug %>/new" class="btn btn-primary btn-create-thread">
+        <i class="fas fa-plus"></i> Novo Tópico
+      </a>
+    <% } %>
+  </div>
+
+  <!-- Filtros e Busca -->
+  <div class="category-filters">
+    <div class="filter-group">
+      <label><i class="fas fa-sort"></i> Ordenar:</label>
+      <select id="sortSelect" class="filter-select">
+        <option value="activity" <%= sortBy === 'activity' ? 'selected' : '' %>>Última Atividade</option>
+        <option value="latest" <%= sortBy === 'latest' ? 'selected' : '' %>>Mais Recentes</option>
+        <option value="popular" <%= sortBy === 'popular' ? 'selected' : '' %>>Mais Populares</option>
+        <option value="replies" <%= sortBy === 'replies' ? 'selected' : '' %>>Mais Comentados</option>
+      </select>
+    </div>
+
+    <% if (popularTags.length > 0) { %>
+      <div class="filter-group">
+        <label><i class="fas fa-tags"></i> Tags:</label>
+        <div class="tag-filter">
+          <% if (filterTag) { %>
+            <a href="/forum/<%= category.slug %>" class="tag-clear">
+              <i class="fas fa-times"></i> Limpar
+            </a>
+          <% } %>
+          <% popularTags.slice(0, 10).forEach(tag => { %>
+            <a href="/forum/<%= category.slug %>?tag=<%= tag %>" 
+               class="tag <%= filterTag === tag ? 'active' : '' %>">
+              #<%= tag %>
+            </a>
+          <% }) %>
+        </div>
+      </div>
+    <% } %>
+  </div>
+
+  <!-- Lista de Threads -->
+  <div class="threads-list">
+    <% if (threads.length === 0) { %>
+      <div class="no-threads">
+        <i class="fas fa-inbox fa-3x"></i>
+        <h3>Nenhum tópico encontrado</h3>
+        <p>Seja o primeiro a iniciar uma discussão!</p>
+        <% if (user) { %>
+          <a href="/forum/<%= category.slug %>/new" class="btn btn-primary">
+            <i class="fas fa-plus"></i> Criar Primeiro Tópico
+          </a>
+        <% } %>
+      </div>
+    <% } else { %>
+      <% threads.forEach(thread => { %>
+        <div class="thread-item <%= thread.isPinned ? 'pinned' : '' %> <%= thread.isLocked ? 'locked' : '' %>">
+          <!-- Ícones de Status -->
+          <div class="thread-status">
+            <% if (thread.isPinned) { %>
+              <i class="fas fa-thumbtack" title="Fixado"></i>
+            <% } %>
+            <% if (thread.isLocked) { %>
+              <i class="fas fa-lock" title="Bloqueado"></i>
+            <% } %>
+          </div>
+
+          <!-- Autor Avatar -->
+          <div class="thread-avatar">
+            <a href="/forum/user/<%= thread.author.username %>">
+              <img src="<%= thread.author.avatar || '/images/default-avatar.png' %>" 
+                   alt="<%= thread.author.username %>">
+            </a>
+          </div>
+
+          <!-- Conteúdo da Thread -->
+          <div class="thread-content">
+            <h3 class="thread-title">
+              <a href="/forum/<%= category.slug %>/<%= thread.slug %>">
+                <%= thread.title %>
+              </a>
+            </h3>
+            
+            <div class="thread-meta">
+              <span class="thread-author">
+                por <a href="/forum/user/<%= thread.author.username %>"><%= thread.author.username %></a>
+              </span>
+              <span class="thread-date">
+                <i class="far fa-clock"></i>
+                <%= new Date(thread.createdAt).toLocaleString('pt-BR', { 
+                  day: 'numeric', 
+                  month: 'short', 
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </span>
+            </div>
+
+            <% if (thread.tags && thread.tags.length > 0) { %>
+              <div class="thread-tags">
+                <% thread.tags.slice(0, 5).forEach(tag => { %>
+                  <a href="/forum/<%= category.slug %>?tag=<%= tag %>" class="tag">#<%= tag %></a>
+                <% }) %>
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Estatísticas -->
+          <div class="thread-stats">
+            <div class="stat">
+              <i class="fas fa-eye"></i>
+              <span><%= thread.viewCount %></span>
+            </div>
+            <div class="stat">
+              <i class="fas fa-comments"></i>
+              <span><%= thread.postCount || 0 %></span>
+            </div>
+            <div class="stat reactions">
+              <i class="fas fa-heart"></i>
+              <span><%= thread.reactions.length %></span>
+            </div>
+          </div>
+
+          <!-- Última Atividade -->
+          <div class="thread-activity">
+            <% if (thread.lastActivityBy) { %>
+              <img src="<%= thread.lastActivityBy.avatar || '/images/default-avatar.png' %>" 
+                   alt="<%= thread.lastActivityBy.username %>"
+                   class="activity-avatar">
+              <div class="activity-info">
+                <span class="activity-user"><%= thread.lastActivityBy.username %></span>
+                <span class="activity-time">
+                  <%= new Date(thread.lastActivity).toLocaleString('pt-BR', { 
+                    day: 'numeric', 
+                    month: 'short',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }) %>
+                </span>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      <% }) %>
+    <% } %>
+  </div>
+
+  <!-- Paginação -->
+  <% if (totalPages > 1) { %>
+    <div class="pagination">
+      <% if (currentPage > 1) { %>
+        <a href="?page=<%= currentPage - 1 %>&sort=<%= sortBy %><%= filterTag ? '&tag=' + filterTag : '' %>" 
+           class="page-link">
+          <i class="fas fa-chevron-left"></i>
+        </a>
+      <% } %>
+
+      <% for (let i = 1; i <= totalPages; i++) { %>
+        <% if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) { %>
+          <a href="?page=<%= i %>&sort=<%= sortBy %><%= filterTag ? '&tag=' + filterTag : '' %>" 
+             class="page-link <%= i === currentPage ? 'active' : '' %>">
+            <%= i %>
+          </a>
+        <% } else if (i === currentPage - 3 || i === currentPage + 3) { %>
+          <span class="page-ellipsis">...</span>
+        <% } %>
+      <% } %>
+
+      <% if (currentPage < totalPages) { %>
+        <a href="?page=<%= currentPage + 1 %>&sort=<%= sortBy %><%= filterTag ? '&tag=' + filterTag : '' %>" 
+           class="page-link">
+          <i class="fas fa-chevron-right"></i>
+        </a>
+      <% } %>
+    </div>
+  <% } %>
+</div>
+
+<script>
+  // Filtro de ordenação
+  document.getElementById('sortSelect').addEventListener('change', function() {
+    const params = new URLSearchParams(window.location.search);
+    params.set('sort', this.value);
+    window.location.href = '?' + params.toString();
+  });
+</script>
+
+<%- include('../../partials/footer') %>
