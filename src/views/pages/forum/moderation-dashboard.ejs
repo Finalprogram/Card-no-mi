@@ -1,0 +1,313 @@
+<%- include('../../partials/header') %>
+
+<div class="container" style="max-width: 1400px; margin: 2rem auto; padding: 0 1rem;">
+    <!-- Header -->
+    <div class="moderation-header">
+        <div>
+            <h1><i class="fas fa-shield-alt"></i> Painel de Moderação</h1>
+            <p>Gerencie conteúdo reportado e mantenha a comunidade segura</p>
+        </div>
+        <a href="/forum" class="btn-secondary">
+            <i class="fas fa-arrow-left"></i> Voltar ao Fórum
+        </a>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="moderation-stats">
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <i class="fas fa-flag"></i>
+            </div>
+            <div class="stat-info">
+                <h3><%= stats.totalFlags %></h3>
+                <p>Total de Flags</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <i class="fas fa-comments"></i>
+            </div>
+            <div class="stat-info">
+                <h3><%= stats.totalFlaggedThreads %></h3>
+                <p>Threads Reportadas</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <i class="fas fa-comment"></i>
+            </div>
+            <div class="stat-info">
+                <h3><%= stats.totalFlaggedPosts %></h3>
+                <p>Posts Reportados</p>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);">
+                <i class="fas fa-trash-alt"></i>
+            </div>
+            <div class="stat-info">
+                <h3><%= stats.deletionsToday %></h3>
+                <p>Deleções Hoje</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="moderation-tabs">
+        <button class="tab-btn active" onclick="switchTab('threads')">
+            <i class="fas fa-comments"></i> Threads (<%= flaggedThreads.length %>)
+        </button>
+        <button class="tab-btn" onclick="switchTab('posts')">
+            <i class="fas fa-comment"></i> Posts (<%= flaggedPosts.length %>)
+        </button>
+    </div>
+
+    <!-- Tab Content: Threads -->
+    <div id="tab-threads" class="tab-content active">
+        <% if (flaggedThreads.length === 0) { %>
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <h3>Nenhuma thread reportada</h3>
+                <p>Tudo limpo por aqui! 🎉</p>
+            </div>
+        <% } else { %>
+            <div class="flagged-items">
+                <% flaggedThreads.forEach(thread => { %>
+                    <div class="flagged-item" data-id="<%= thread._id %>">
+                        <div class="flagged-header">
+                            <div class="flagged-title">
+                                <i class="fas fa-comments"></i>
+                                <a href="/forum/<%= thread.category.slug %>/<%= thread.slug %>" target="_blank">
+                                    <%= thread.title %>
+                                </a>
+                                <% if (thread.isPinned) { %>
+                                    <span class="badge badge-pinned"><i class="fas fa-thumbtack"></i> Fixada</span>
+                                <% } %>
+                                <% if (thread.isLocked) { %>
+                                    <span class="badge badge-locked"><i class="fas fa-lock"></i> Trancada</span>
+                                <% } %>
+                            </div>
+                            <div class="flagged-meta">
+                                Por <strong><%= thread.author.username %></strong>
+                                <% if (thread.author.role === 'admin') { %>
+                                    <span class="user-badge admin-badge"><i class="fas fa-crown"></i></span>
+                                <% } else if (thread.author.role === 'moderator') { %>
+                                    <span class="user-badge mod-badge"><i class="fas fa-shield-alt"></i></span>
+                                <% } %>
+                                • <%= new Date(thread.createdAt).toLocaleDateString('pt-BR') %>
+                            </div>
+                        </div>
+
+                        <div class="flagged-content">
+                            <%= thread.content.substring(0, 200) %><%= thread.content.length > 200 ? '...' : '' %>
+                        </div>
+
+                        <div class="flag-details">
+                            <span class="flag-count">
+                                <i class="fas fa-flag"></i> <%= thread.moderationFlags.length %> 
+                                <%= thread.moderationFlags.length === 1 ? 'report' : 'reports' %>
+                            </span>
+                            <div class="flag-reasons">
+                                <% thread.moderationFlags.slice(0, 3).forEach(flag => { %>
+                                    <span class="flag-reason" title="<%= flag.reason %>">
+                                        "<%= flag.reason.substring(0, 50) %><%= flag.reason.length > 50 ? '...' : '' %>"
+                                    </span>
+                                <% }) %>
+                            </div>
+                        </div>
+
+                        <div class="flagged-actions">
+                            <a href="/forum/<%= thread.category.slug %>/<%= thread.slug %>" 
+                               class="btn-mod btn-mod-view" target="_blank">
+                                <i class="fas fa-eye"></i> Ver Thread
+                            </a>
+                            <button class="btn-mod <%= thread.isLocked ? 'btn-mod-unlock' : 'btn-mod-lock' %>" 
+                                    onclick="lockThread('<%= thread._id %>', <%= !thread.isLocked %>)">
+                                <i class="fas fa-<%= thread.isLocked ? 'unlock' : 'lock' %>"></i> 
+                                <%= thread.isLocked ? 'Destrancar' : 'Trancar' %>
+                            </button>
+                            <button class="btn-mod btn-mod-delete" 
+                                    onclick="deleteThread('<%= thread._id %>')">
+                                <i class="fas fa-trash-alt"></i> Deletar
+                            </button>
+                            <button class="btn-mod btn-mod-dismiss" 
+                                    onclick="dismissFlags('<%= thread._id %>', 'thread')">
+                                <i class="fas fa-check"></i> Ignorar Flags
+                            </button>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+
+    <!-- Tab Content: Posts -->
+    <div id="tab-posts" class="tab-content">
+        <% if (flaggedPosts.length === 0) { %>
+            <div class="empty-state">
+                <i class="fas fa-check-circle"></i>
+                <h3>Nenhum post reportado</h3>
+                <p>Tudo limpo por aqui! 🎉</p>
+            </div>
+        <% } else { %>
+            <div class="flagged-items">
+                <% flaggedPosts.forEach(post => { %>
+                    <div class="flagged-item" data-id="<%= post._id %>">
+                        <div class="flagged-header">
+                            <div class="flagged-title">
+                                <i class="fas fa-comment"></i>
+                                <span>Post em: <a href="/forum/<%= post.thread.slug %>" target="_blank">
+                                    <%= post.thread.title %>
+                                </a></span>
+                            </div>
+                            <div class="flagged-meta">
+                                Por <strong><%= post.author.username %></strong>
+                                <% if (post.author.role === 'admin') { %>
+                                    <span class="user-badge admin-badge"><i class="fas fa-crown"></i></span>
+                                <% } else if (post.author.role === 'moderator') { %>
+                                    <span class="user-badge mod-badge"><i class="fas fa-shield-alt"></i></span>
+                                <% } %>
+                                • <%= new Date(post.createdAt).toLocaleDateString('pt-BR') %>
+                            </div>
+                        </div>
+
+                        <div class="flagged-content">
+                            <%= post.content.substring(0, 200) %><%= post.content.length > 200 ? '...' : '' %>
+                        </div>
+
+                        <div class="flag-details">
+                            <span class="flag-count">
+                                <i class="fas fa-flag"></i> <%= post.moderationFlags.length %> 
+                                <%= post.moderationFlags.length === 1 ? 'report' : 'reports' %>
+                            </span>
+                            <div class="flag-reasons">
+                                <% post.moderationFlags.slice(0, 3).forEach(flag => { %>
+                                    <span class="flag-reason" title="<%= flag.reason %>">
+                                        "<%= flag.reason.substring(0, 50) %><%= flag.reason.length > 50 ? '...' : '' %>"
+                                    </span>
+                                <% }) %>
+                            </div>
+                        </div>
+
+                        <div class="flagged-actions">
+                            <button class="btn-mod btn-mod-delete" 
+                                    onclick="deletePost('<%= post._id %>')">
+                                <i class="fas fa-trash-alt"></i> Deletar Post
+                            </button>
+                            <button class="btn-mod btn-mod-dismiss" 
+                                    onclick="dismissFlags('<%= post._id %>', 'post')">
+                                <i class="fas fa-check"></i> Ignorar Flags
+                            </button>
+                        </div>
+                    </div>
+                <% }) %>
+            </div>
+        <% } %>
+    </div>
+</div>
+
+<script>
+function switchTab(tab) {
+    // Remove active de todos
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+    
+    // Ativa o selecionado
+    document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById(`tab-${tab}`).classList.add('active');
+}
+
+async function lockThread(threadId, shouldLock) {
+    if (!confirm(`Tem certeza que deseja ${shouldLock ? 'trancar' : 'destrancar'} esta thread?`)) return;
+    
+    try {
+        const response = await fetch(`/forum/moderation/thread/${threadId}/lock`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lock: shouldLock })
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('Thread atualizada com sucesso!');
+            location.reload();
+        } else {
+            alert(data.message || 'Erro ao atualizar thread');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao atualizar thread');
+    }
+}
+
+async function deleteThread(threadId) {
+    if (!confirm('Tem certeza que deseja DELETAR esta thread? Esta ação não pode ser desfeita.')) return;
+    
+    try {
+        const response = await fetch(`/forum/moderation/thread/${threadId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('Thread deletada com sucesso!');
+            location.reload();
+        } else {
+            alert(data.message || 'Erro ao deletar thread');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao deletar thread');
+    }
+}
+
+async function deletePost(postId) {
+    if (!confirm('Tem certeza que deseja DELETAR este post? Esta ação não pode ser desfeita.')) return;
+    
+    try {
+        const response = await fetch(`/forum/moderation/post/${postId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('Post deletado com sucesso!');
+            location.reload();
+        } else {
+            alert(data.message || 'Erro ao deletar post');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao deletar post');
+    }
+}
+
+async function dismissFlags(itemId, type) {
+    if (!confirm('Tem certeza que deseja ignorar todos os reports deste item?')) return;
+    
+    try {
+        const response = await fetch(`/forum/moderation/${type}/${itemId}/dismiss-flags`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('Flags removidas com sucesso!');
+            location.reload();
+        } else {
+            alert(data.message || 'Erro ao remover flags');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('Erro ao remover flags');
+    }
+}
+</script>
+
+<%- include('../../partials/footer') %>

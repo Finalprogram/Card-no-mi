@@ -54,6 +54,11 @@
         <div class="author-details">
           <a href="/forum/user/<%= thread.author.username %>" class="author-name">
             <%= thread.author.username %>
+            <% if (thread.author.role === 'admin') { %>
+              <span class="user-badge admin-badge" title="Administrador"><i class="fas fa-crown"></i> Admin</span>
+            <% } else if (thread.author.role === 'moderator') { %>
+              <span class="user-badge mod-badge" title="Moderador"><i class="fas fa-shield-alt"></i> Mod</span>
+            <% } %>
           </a>
           <% if (thread.author.reputation) { %>
             <div class="author-reputation">
@@ -333,6 +338,68 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
   } catch (error) {
     console.error('Erro ao enviar resposta:', error);
     alert('Erro ao enviar resposta');
+  }
+});
+
+// Funções de Moderação nos Posts
+function toggleModMenu(postId) {
+  const menu = document.getElementById('mod-menu-' + postId);
+  // Fecha todos os outros menus
+  document.querySelectorAll('.mod-dropdown').forEach(m => {
+    if (m.id !== 'mod-menu-' + postId) m.style.display = 'none';
+  });
+  menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+async function deletePostMod(postId) {
+  if (!confirm('Tem certeza que deseja deletar este post?')) return;
+  
+  try {
+    const response = await fetch(`/forum/moderation/post/${postId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('Post deletado com sucesso!');
+      location.reload();
+    } else {
+      alert(data.message || 'Erro ao deletar post');
+    }
+  } catch (error) {
+    console.error('Erro ao deletar post:', error);
+    alert('Erro ao deletar post');
+  }
+}
+
+async function flagPostMod(postId) {
+  const reason = prompt('Por que você está reportando este post?');
+  if (!reason) return;
+  
+  try {
+    const response = await fetch(`/forum/moderation/post/${postId}/flag`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('Post reportado com sucesso!');
+    } else {
+      alert(data.message || 'Erro ao reportar post');
+    }
+  } catch (error) {
+    console.error('Erro ao reportar post:', error);
+    alert('Erro ao reportar post');
+  }
+}
+
+// Fechar menu ao clicar fora
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.comment-mod-menu')) {
+    document.querySelectorAll('.mod-dropdown').forEach(m => m.style.display = 'none');
   }
 });
 </script>

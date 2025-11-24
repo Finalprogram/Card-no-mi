@@ -9,6 +9,9 @@ const forumController = require('../controllers/forumController');
 // Index do fórum (todas as categorias)
 router.get('/', forumController.getForumIndex);
 
+// Painel de moderação (apenas para moderadores/admins) - deve vir antes da rota dinâmica de categoria
+router.get('/moderation', forumController.getModerationEntry);
+
 // Busca
 router.get('/search', forumController.searchForum);
 
@@ -46,25 +49,31 @@ router.post('/post/:postId/vote', forumController.votePost);
 router.post('/thread/:threadId/react', forumController.reactToThread);
 
 // ============================================================================
-// ROTAS DE MODERAÇÃO (Futuro)
+// ROTAS DE MODERAÇÃO
 // ============================================================================
 
-// Editar thread
-// router.put('/thread/:threadId', forumController.editThread);
-
-// Deletar thread
-// router.delete('/thread/:threadId', forumController.deleteThread);
-
 // Fixar/Desfixar thread
-// router.post('/thread/:threadId/pin', forumController.pinThread);
+router.post('/moderation/thread/:threadId/pin', forumController.pinThread);
 
 // Bloquear/Desbloquear thread
-// router.post('/thread/:threadId/lock', forumController.lockThread);
+router.post('/moderation/thread/:threadId/lock', forumController.lockThread);
 
-// Editar post
-// router.put('/post/:postId', forumController.editPost);
+// Deletar thread
+router.delete('/moderation/thread/:threadId', forumController.deleteThread);
 
 // Deletar post
-// router.delete('/post/:postId', forumController.deletePost);
+router.delete('/moderation/post/:postId', forumController.deletePost);
+
+// Flag thread
+router.post('/moderation/thread/:threadId/flag', forumController.flagThread);
+
+// Flag post
+router.post('/moderation/post/:postId/flag', forumController.flagPost);
+
+// Dismiss flags thread
+router.post('/moderation/thread/:threadId/dismiss-flags', forumController.dismissThreadFlags);
+
+// Dismiss flags post
+router.post('/moderation/post/:postId/dismiss-flags', forumController.dismissPostFlags);
 
 module.exports = router;

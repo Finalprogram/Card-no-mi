@@ -139,7 +139,27 @@ app.use(flash());
 const visitorTracker = require('./src/middleware/visitorTracker');
 app.use(visitorTracker);
 
-app.use((req, res, next) => {
+app.use(async (req, res, next) => {
+  // Se há usuário na sessão, buscar dados atualizados do banco
+  if (req.session.user && req.session.user.id) {
+    try {
+      const User = require('./src/models/User');
+      const updatedUser = await User.findById(req.session.user.id).select('username email avatar role').lean();
+      if (updatedUser) {
+        // Atualizar sessão com dados mais recentes
+        req.session.user = {
+          id: updatedUser._id,
+          username: updatedUser.username,
+          email: updatedUser.email,
+          avatar: updatedUser.avatar,
+          role: updatedUser.role
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao atualizar dados do usuário:', error);
+    }
+  }
+  
   res.locals.user = req.session.user || null;
   res.locals.success_msg = req.flash('success_msg');
   res.locals.error_msg = req.flash('error_msg');

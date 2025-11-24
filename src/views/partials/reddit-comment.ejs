@@ -53,6 +53,11 @@
              class="comment-avatar">
         <%= post.author.username %>
       </a>
+      <% if (post.author.role === 'admin') { %>
+        <span class="user-badge admin-badge" title="Administrador"><i class="fas fa-crown"></i> Admin</span>
+      <% } else if (post.author.role === 'moderator') { %>
+        <span class="user-badge mod-badge" title="Moderador"><i class="fas fa-shield-alt"></i> Mod</span>
+      <% } %>
       <% if (post.author.reputation) { %>
         <span class="comment-rep-level">Nível <%= post.author.reputation.level %></span>
       <% } %>
@@ -92,6 +97,29 @@
         <% if (isPostAuthor) { %>
           <button class="comment-action-btn">
             <i class="fas fa-edit"></i> Editar
+          </button>
+        <% } %>
+        
+        <!-- Opções de Moderação -->
+        <% if (user.role === 'moderator' || user.role === 'admin') { %>
+          <div class="comment-mod-menu">
+            <button class="comment-action-btn mod-btn" onclick="toggleModMenu('<%= post._id %>')">
+              <i class="fas fa-shield-alt"></i> Moderação
+            </button>
+            <div class="mod-dropdown" id="mod-menu-<%= post._id %>" style="display: none;">
+              <button class="mod-dropdown-item" onclick="deletePostMod('<%= post._id %>')">
+                <i class="fas fa-trash"></i> Deletar Post
+              </button>
+              <% if (!isPostAuthor) { %>
+              <button class="mod-dropdown-item" onclick="flagPostMod('<%= post._id %>')">
+                <i class="fas fa-flag"></i> Reportar
+              </button>
+              <% } %>
+            </div>
+          </div>
+        <% } else if (!isPostAuthor) { %>
+          <button class="comment-action-btn" onclick="flagPostMod('<%= post._id %>')">
+            <i class="fas fa-flag"></i> Reportar
           </button>
         <% } %>
       <% } %>

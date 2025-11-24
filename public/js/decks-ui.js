@@ -251,6 +251,12 @@ try {
             const deckId = card.dataset.deckId;
             const deckName = card.querySelector('.deck-card-title').textContent;
 
+            // Se clicar no card mas não em nenhum botão, ir para estatísticas
+            if (!target.closest('.deck-card-actions') && !target.closest('button')) {
+                window.location.href = `/decks/analytics/${deckId}`;
+                return;
+            }
+
             // View (Quick Preview)
             if (target.closest('.view-btn')) {
                 try {

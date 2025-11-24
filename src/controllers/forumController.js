@@ -39,7 +39,7 @@ exports.getForumIndex = async (req, res) => {
                 isDeleted: false 
             })
                 .sort({ lastActivity: -1 })
-                .populate('author', 'username avatar')
+                .populate('author', 'username avatar role')
                 .populate('lastActivityBy', 'username')
                 .lean();
 
@@ -107,7 +107,7 @@ exports.getCategoryThreads = async (req, res) => {
         }
 
         const threads = await ForumThread.find(query)
-            .populate('author', 'username avatar')
+            .populate('author', 'username avatar role')
             .populate('lastActivityBy', 'username')
             .sort(sortOption)
             .skip(skip)
@@ -165,7 +165,7 @@ exports.getThread = async (req, res) => {
         const skip = (page - 1) * limit;
 
         const thread = await ForumThread.findOne({ slug: threadSlug, isDeleted: false })
-            .populate('author', 'username avatar createdAt')
+            .populate('author', 'username avatar createdAt role')
             .populate('category')
             .lean();
 
@@ -181,7 +181,7 @@ exports.getThread = async (req, res) => {
             thread: thread._id,
             isDeleted: false 
         })
-            .populate('author', 'username avatar createdAt')
+            .populate('author', 'username avatar createdAt role')
             .populate('parentPost')
             .populate('quotedPost')
             .sort({ path: 1, createdAt: 1 })
@@ -593,10 +593,18 @@ exports.searchForum = async (req, res) => {
         const limit = 20;
         const skip = (page - 1) * limit;
 
+        // Buscar todas as categorias para o filtro
+        const categories = await ForumCategory.find().sort({ name: 1 }).lean();
+
         if (!q) {
             return res.render('pages/forum/search', {
                 results: [],
                 query: '',
+                categories,
+                categoryFilter: category || '',
+                authorFilter: author || '',
+                sortFilter: sort,
+                typeFilter: 'all',
                 user: req.session.user || null,
                 pageTitle: 'Buscar no Fórum'
             });
@@ -630,7 +638,7 @@ exports.searchForum = async (req, res) => {
         }
 
         const threads = await ForumThread.find(searchQuery, searchQuery.score ? { score: { $meta: 'textScore' } } : {})
-            .populate('author', 'username avatar')
+            .populate('author', 'username avatar role')
             .populate('category', 'name slug')
             .sort(sortOption)
             .skip(skip)
@@ -643,6 +651,11 @@ exports.searchForum = async (req, res) => {
         res.render('pages/forum/search', {
             results: threads,
             query: q,
+            categories,
+            categoryFilter: category || '',
+            authorFilter: author || '',
+            sortFilter: sort,
+            typeFilter: 'all', // Por enquanto só threads, mas preparado para posts também
             currentPage: page,
             totalPages,
             totalResults,
@@ -651,6 +664,311 @@ exports.searchForum = async (req, res) => {
         });
     } catch (error) {
         logger.error('Erro ao buscar no fórum:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
+};
+
+// ============================================================================
+// MODERAÇÃO
+// ============================================================================
+
+// @desc    Pin/Unpin thread
+// @route   POST /forum/moderation/thread/:threadId/pin
+// @access  Moderator/Admin
+exports.pinThread = async (req, res) => {
+    try {
+        const { threadId } = req.params;
+        const thread = await ForumThread.findById(threadId);
+
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+        }
+
+        thread.isPinned = !thread.isPinned;
+        await thread.save();
+
+        res.json({ 
+            success: true, 
+            message: thread.isPinned ? 'Thread fixada com sucesso' : 'Thread desafixada com sucesso',
+            isPinned: thread.isPinned
+        });
+    } catch (error) {
+        logger.error('Erro ao fixar thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao fixar thread' });
+    }
+};
+
+// @desc    Lock/Unlock thread
+// @route   POST /forum/moderation/thread/:threadId/lock
+// @access  Moderator/Admin
+exports.lockThread = async (req, res) => {
+    try {
+        const { threadId } = req.params;
+        const thread = await ForumThread.findById(threadId);
+
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+        }
+
+        thread.isLocked = !thread.isLocked;
+        await thread.save();
+
+        res.json({ 
+            success: true, 
+            message: thread.isLocked ? 'Thread bloqueada com sucesso' : 'Thread desbloqueada com sucesso',
+            isLocked: thread.isLocked
+        });
+    } catch (error) {
+        logger.error('Erro ao bloquear thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao bloquear thread' });
+    }
+};
+
+// @desc    Delete thread (soft delete)
+// @route   DELETE /forum/moderation/thread/:threadId
+// @access  Moderator/Admin
+exports.deleteThread = async (req, res) => {
+    try {
+        const { threadId } = req.params;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        const thread = await ForumThread.findById(threadId);
+
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+        }
+
+        thread.isDeleted = true;
+        thread.deletedAt = new Date();
+        thread.deletedBy = userId;
+        await thread.save();
+
+        res.json({ success: true, message: 'Thread deletada com sucesso' });
+    } catch (error) {
+        logger.error('Erro ao deletar thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao deletar thread' });
+    }
+};
+
+// @desc    Delete post (soft delete)
+// @route   DELETE /forum/moderation/post/:postId
+// @access  Moderator/Admin or Author
+exports.deletePost = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        const post = await ForumPost.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+        }
+
+        // Se não for moderador, verificar se é o autor
+        if (req.userRole !== 'moderator' && req.userRole !== 'admin') {
+            const postAuthorId = post.author._id || post.author;
+            if (postAuthorId.toString() !== userId.toString()) {
+                return res.status(403).json({ success: false, message: 'Você não pode deletar este post' });
+            }
+        }
+
+        post.isDeleted = true;
+        post.deletedAt = new Date();
+        post.deletedBy = userId;
+        await post.save();
+
+        res.json({ success: true, message: 'Post deletado com sucesso' });
+    } catch (error) {
+        logger.error('Erro ao deletar post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao deletar post' });
+    }
+};
+
+// @desc    Edit post
+// @route   PUT /forum/moderation/post/:postId
+// @access  Moderator/Admin or Author
+exports.editPost = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const { content } = req.body;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        if (!content || content.trim().length < 10) {
+            return res.status(400).json({ success: false, message: 'Conteúdo deve ter no mínimo 10 caracteres' });
+        }
+
+        const post = await ForumPost.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+        }
+
+        // Se não for moderador, verificar se é o autor
+        if (req.userRole !== 'moderator' && req.userRole !== 'admin') {
+            const postAuthorId = post.author._id || post.author;
+            if (postAuthorId.toString() !== userId.toString()) {
+                return res.status(403).json({ success: false, message: 'Você não pode editar este post' });
+            }
+        }
+
+        // Salvar histórico de edição
+        post.editHistory.push({
+            editedBy: userId,
+            editedAt: new Date(),
+            previousContent: post.content
+        });
+
+        post.content = content;
+        post.isEdited = true;
+        post.editedAt = new Date();
+        await post.save();
+
+        res.json({ success: true, message: 'Post editado com sucesso', content: post.content });
+    } catch (error) {
+        logger.error('Erro ao editar post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao editar post' });
+    }
+};
+
+// @desc    Flag thread
+// @route   POST /forum/moderation/thread/:threadId/flag
+// @access  Private
+exports.flagThread = async (req, res) => {
+    try {
+        const { threadId } = req.params;
+        const { reason } = req.body;
+        const userId = req.session.user._id || req.session.user.id;
+
+        if (!reason || reason.trim().length < 5) {
+            return res.status(400).json({ success: false, message: 'Motivo deve ter no mínimo 5 caracteres' });
+        }
+
+        const thread = await ForumThread.findById(threadId);
+
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+        }
+
+        // Verificar se usuário já denunciou
+        const alreadyFlagged = thread.moderationFlags.some(
+            flag => flag.user.toString() === userId.toString()
+        );
+
+        if (alreadyFlagged) {
+            return res.status(400).json({ success: false, message: 'Você já denunciou esta thread' });
+        }
+
+        thread.moderationFlags.push({
+            user: userId,
+            reason: reason,
+            createdAt: new Date()
+        });
+
+        await thread.save();
+
+        res.json({ success: true, message: 'Thread denunciada com sucesso' });
+    } catch (error) {
+        logger.error('Erro ao denunciar thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao denunciar thread' });
+    }
+};
+
+// @desc    Flag post
+// @route   POST /forum/moderation/post/:postId/flag
+// @access  Private
+exports.flagPost = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const { reason } = req.body;
+        const userId = req.session.user._id || req.session.user.id;
+
+        if (!reason || reason.trim().length < 5) {
+            return res.status(400).json({ success: false, message: 'Motivo deve ter no mínimo 5 caracteres' });
+        }
+
+        const post = await ForumPost.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+        }
+
+        // Verificar se usuário já denunciou
+        const alreadyFlagged = post.moderationFlags.some(
+            flag => flag.user.toString() === userId.toString()
+        );
+
+        if (alreadyFlagged) {
+            return res.status(400).json({ success: false, message: 'Você já denunciou este post' });
+        }
+
+        post.moderationFlags.push({
+            user: userId,
+            reason: reason,
+            createdAt: new Date()
+        });
+
+        await post.save();
+
+        res.json({ success: true, message: 'Post denunciado com sucesso' });
+    } catch (error) {
+        logger.error('Erro ao denunciar post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao denunciar post' });
+    }
+};
+
+// @desc    Get moderation dashboard
+// @route   GET /forum/moderation
+// @access  Moderator/Admin
+exports.getModerationDashboard = async (req, res) => {
+    try {
+        // Threads com flags
+        const flaggedThreads = await ForumThread.find({
+            'moderationFlags.0': { $exists: true },
+            isDeleted: false
+        })
+            .populate('author', 'username avatar role')
+            .populate('category', 'name slug')
+            .populate('moderationFlags.user', 'username')
+            .sort({ 'moderationFlags.createdAt': -1 })
+            .limit(50)
+            .lean();
+
+        // Posts com flags
+        const flaggedPosts = await ForumPost.find({
+            'moderationFlags.0': { $exists: true },
+            isDeleted: false
+        })
+            .populate('author', 'username avatar role')
+            .populate('thread', 'title slug')
+            .populate('moderationFlags.user', 'username')
+            .sort({ 'moderationFlags.createdAt': -1 })
+            .limit(50)
+            .lean();
+
+        // Estatísticas
+        const stats = {
+            totalFlags: flaggedThreads.length + flaggedPosts.length,
+            flaggedThreadsCount: flaggedThreads.length,
+            flaggedPostsCount: flaggedPosts.length,
+            deletedThreadsToday: await ForumThread.countDocuments({
+                isDeleted: true,
+                deletedAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+            }),
+            deletedPostsToday: await ForumPost.countDocuments({
+                isDeleted: true,
+                deletedAt: { $gte: new Date(new Date().setHours(0, 0, 0, 0)) }
+            })
+        };
+
+        res.render('pages/forum/moderation-dashboard', {
+            flaggedThreads,
+            flaggedPosts,
+            stats,
+            user: req.session.user,
+            pageTitle: 'Painel de Moderação'
+        });
+    } catch (error) {
+        logger.error('Erro ao carregar dashboard de moderação:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };

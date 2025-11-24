@@ -531,6 +531,33 @@ const getAvailableCards = async (req, res) => {
   }
 };
 
+/**
+ * Obtém detalhes de uma carta específica por ID (para API)
+ * @route GET /api/cards/:id
+ */
+const getCardById = async (req, res) => {
+  try {
+    const cardId = req.params.id;
+
+    // Validação do ID
+    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+      return res.status(400).json({ error: 'ID de carta inválido' });
+    }
+
+    const card = await Card.findById(cardId).lean();
+
+    if (!card) {
+      return res.status(404).json({ error: 'Carta não encontrada' });
+    }
+
+    // Retornar dados da carta em JSON
+    res.json(card);
+  } catch (error) {
+    console.error("Erro ao buscar carta por ID:", error);
+    res.status(500).json({ error: 'Erro ao buscar carta' });
+  }
+};
+
 module.exports = {
   showCardsPage,
   showCardDetailPage,
@@ -540,5 +567,6 @@ module.exports = {
   searchForDeckBuilder,
   debugCardSearch,
   getLeaders,
-  getAvailableCards, // Nova função
+  getAvailableCards,
+  getCardById, // Nova função
 };

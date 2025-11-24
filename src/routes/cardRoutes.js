@@ -27,6 +27,15 @@ router.get('/cards', cardController.showCardsPage);
 router.get('/card/:id', cardController.showCardDetailPage);
 
 /**
+ * Rota da API para obter detalhes de uma carta por ID.
+ * @name GET /api/cards/:id
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
+router.get('/api/cards/:id', cardController.getCardById);
+
+/**
  * Rota da API para buscar cartas para venda.
  * @name GET /api/cards/search
  * @function

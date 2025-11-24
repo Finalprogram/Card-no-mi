@@ -9,7 +9,7 @@
             <h2>Lista de Cartas</h2>
             <div class="card-list-grid">
                 <% if (deck.leader && deck.leader.card) { %>
-                    <a href="/card/<%= deck.leader.card._id %>" class="card-item">
+                    <div class="card-item" data-card-id="<%= deck.leader.card._id %>" onclick="openCardModal(this)">
                         <div class="card-item-image">
                             <img src="<%= deck.leader.card.images.small %>" alt="<%= deck.leader.card.name %>">
                             <div class="card-hover-overlay">Clique para detalhes</div>
@@ -19,11 +19,11 @@
                             <div class="card-item-name"><%= deck.leader.card.name %></div>
                             <div class="card-item-type">Líder</div>
                         </div>
-                    </a>
+                    </div>
                 <% } %>
                 <% deck.main.forEach(item => { %>
                     <% if (item.card) { %>
-                        <a href="/card/<%= item.card._id %>" class="card-item">
+                        <div class="card-item" data-card-id="<%= item.card._id %>" onclick="openCardModal(this)">
                             <div class="card-item-image">
                                 <img src="<%= item.card.images.small %>" alt="<%= item.card.name %>">
                                 <div class="card-hover-overlay">Clique para detalhes</div>
@@ -33,7 +33,7 @@
                                 <div class="card-item-name"><%= item.card.name %></div>
                                 <div class="card-item-type"><%= item.card.type || 'Carta' %></div>
                             </div>
-                        </a>
+                        </div>
                     <% } %>
                 <% }); %>
             </div>
@@ -41,9 +41,123 @@
     </main>
 </div>
 
+<!-- Modal de Detalhes da Carta -->
+<div id="cardDetailsModal" class="card-details-modal modal-hidden">
+    <div class="modal-content card-modal">
+        <button class="modal-close" onclick="closeCardModal()">&times;</button>
+        <div id="cardModalContent" class="card-modal-body">
+            <div class="loading-spinner">Carregando...</div>
+        </div>
+    </div>
+</div>
+
 <%- include('../partials/footer') %>
 <link rel="stylesheet" href="/css/stats.css?v=<%= Date.now() %>">
 <script>
     const deckStats = <%- JSON.stringify(stats) %>;
+    
+    // Funções para o modal de detalhes da carta
+    async function openCardModal(element) {
+        console.log('openCardModal chamado', element);
+        const cardId = element.getAttribute('data-card-id');
+        console.log('Card ID:', cardId);
+        
+        const modal = document.getElementById('cardDetailsModal');
+        const modalContent = document.getElementById('cardModalContent');
+        
+        if (!modal) {
+            console.error('Modal não encontrado!');
+            return;
+        }
+        
+        if (!modalContent) {
+            console.error('Modal content não encontrado!');
+            return;
+        }
+        
+        console.log('Abrindo modal...');
+        modal.classList.remove('modal-hidden');
+        console.log('Modal classes após remover hidden:', modal.className);
+        console.log('Modal display:', window.getComputedStyle(modal).display);
+        console.log('Modal z-index:', window.getComputedStyle(modal).zIndex);
+        console.log('Modal visibility:', window.getComputedStyle(modal).visibility);
+        modalContent.innerHTML = '<div class="loading-spinner"><i class="fas fa-spinner fa-spin"></i> Carregando...</div>';
+        
+        try {
+            const response = await fetch(`/api/cards/${cardId}`);
+            if (!response.ok) throw new Error('Erro ao buscar carta');
+            
+            const card = await response.json();
+            
+            modalContent.innerHTML = `
+                <div class="card-modal-layout">
+                    <div class="card-modal-top">
+                        <div class="card-modal-image">
+                            <img src="${card.images?.large || card.images?.small || card.image_url}" alt="${card.name}">
+                        </div>
+                        
+                        ${card.ability ? `
+                        <div class="card-modal-ability">
+                            <h2>${card.name}</h2>
+                            <h3>Habilidade</h3>
+                            <div class="ability-text">${card.ability}</div>
+                            ${card.trigger ? `
+                            <div class="trigger-text">
+                                <strong>Trigger:</strong> ${card.trigger}
+                            </div>
+                            ` : ''}
+                        </div>
+                        ` : `
+                        <div class="card-modal-ability">
+                            <h2>${card.name}</h2>
+                        </div>
+                        `}
+                    </div>
+                    
+                    <div class="card-modal-bottom">
+                        <div class="card-modal-stats">
+                            <div class="card-detail-row">
+                                <span class="detail-label">Custo:</span>
+                                <span class="detail-value">${card.cost !== undefined && card.cost !== null ? card.cost : 'N/A'}</span>
+                            </div>
+                            <div class="card-detail-row">
+                                <span class="detail-label">Poder:</span>
+                                <span class="detail-value">${card.power !== undefined && card.power !== null ? card.power : 'N/A'}</span>
+                            </div>
+                            ${card.counter !== undefined && card.counter !== null && card.counter !== '-' ? `
+                            <div class="card-detail-row">
+                                <span class="detail-label">Counter:</span>
+                                <span class="detail-value">${card.counter}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        <a href="/card/${card._id}" class="btn btn-primary">Ver Completa</a>
+                    </div>
+                </div>
+            `;
+        } catch (error) {
+            console.error('Erro ao carregar detalhes da carta:', error);
+            modalContent.innerHTML = '<p class="error-message">Erro ao carregar os detalhes da carta.</p>';
+        }
+    }
+    
+    function closeCardModal() {
+        const modal = document.getElementById('cardDetailsModal');
+        modal.classList.add('modal-hidden');
+    }
+    
+    // Fechar modal ao clicar fora
+    document.getElementById('cardDetailsModal')?.addEventListener('click', (e) => {
+        if (e.target.id === 'cardDetailsModal') {
+            closeCardModal();
+        }
+    });
+    
+    // Fechar modal com ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeCardModal();
+        }
+    });
 </script>
 <script src="/js/stats.js?v=<%= Date.now() %>"></script>

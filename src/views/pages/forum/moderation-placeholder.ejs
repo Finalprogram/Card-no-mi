@@ -1,0 +1,14 @@
+<%- include('../../partials/header') %>
+
+<div class="container">
+  <h1>Painel de Moderação</h1>
+  <p>Olá <strong><%= user.username %></strong>, este é o painel de moderação.</p>
+  <p>Se você está vendo esta página, sua conta tem permissão. Atualmente o painel completo pode não estar implementado nesta instalação.</p>
+  <ul>
+    <li><a href="/forum">Voltar ao Fórum</a></li>
+    <li><a href="/forum">Ver categorias</a></li>
+  </ul>
+  <p>Se quiser que eu ative o painel completo de moderação nesta instância, posso implementar a visualização de flags e ações (fixar, bloquear, deletar) — quer que eu prossiga?</p>
+</div>
+
+<%- include('../../partials/footer') %>
