@@ -1058,7 +1058,7 @@
 }
 
 .entry-card {
-  background: var(--forum-surface);
+  background: #1a1a2e;
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: var(--mod-shadow-sm);
