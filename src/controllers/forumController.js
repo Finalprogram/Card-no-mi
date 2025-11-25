@@ -378,6 +378,17 @@ exports.createThread = async (req, res) => {
         // Processar tags
         const tagsArray = tags ? tags.split(',').map(t => t.trim().toLowerCase()).filter(t => t) : [];
 
+        // Processar imagens
+        const images = [];
+        if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+                images.push({
+                    url: `/uploads/forum/${file.filename}`,
+                    filename: file.filename
+                });
+            });
+        }
+
         const thread = new ForumThread({
             title,
             slug,
@@ -385,6 +396,7 @@ exports.createThread = async (req, res) => {
             category: category._id,
             author: userId,
             tags: tagsArray,
+            images: images,
             lastActivityBy: userId,
             isActive: true  // Garantir que novas threads sejam ativas
         });
@@ -454,6 +466,17 @@ exports.createPost = async (req, res) => {
             }
         }
 
+        // Processar imagens
+        const images = [];
+        if (req.files && req.files.length > 0) {
+            req.files.forEach(file => {
+                images.push({
+                    url: `/uploads/forum/${file.filename}`,
+                    filename: file.filename
+                });
+            });
+        }
+
         const post = new ForumPost({
             thread: thread._id,
             author: userId,
@@ -461,6 +484,7 @@ exports.createPost = async (req, res) => {
             parentPost: parentPostId || null,
             depth,
             path,
+            images: images,
             isActive: true  // Garantir que novos posts sejam ativos
         });
 

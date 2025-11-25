@@ -83,6 +83,25 @@
         <div id="tagsContainer"></div>
       </div>
 
+      <!-- Upload de Imagens -->
+      <div class="form-group">
+        <label for="images">
+          <i class="fas fa-image"></i> Imagens (opcional)
+        </label>
+        <input 
+          type="file" 
+          id="images" 
+          name="images" 
+          class="form-control" 
+          accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+          multiple
+        >
+        <small class="form-text">
+          Máximo de 5 imagens, até 5MB cada. Formatos: JPEG, PNG, GIF, WEBP
+        </small>
+        <div id="imagePreview" class="image-preview-container"></div>
+      </div>
+
       <!-- Dicas de Formatação -->
       <div class="formatting-tips">
         <h4><i class="fas fa-lightbulb"></i> Dicas para um bom tópico:</h4>
@@ -107,6 +126,51 @@
     </form>
   </div>
 </div>
+
+<style>
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid #e0e0e0;
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(255, 0, 0, 0.8);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s;
+}
+
+.remove-image:hover {
+  background: rgba(255, 0, 0, 1);
+}
+</style>
 
 <script>
 const titleInput = document.getElementById('title');
@@ -156,6 +220,54 @@ tagsInput.addEventListener('input', () => {
   }
 });
 
+// Preview de imagens
+const imagesInput = document.getElementById('images');
+const imagePreview = document.getElementById('imagePreview');
+
+imagesInput.addEventListener('change', () => {
+  imagePreview.innerHTML = '';
+  const files = Array.from(imagesInput.files);
+  
+  if (files.length > 5) {
+    alert('Máximo de 5 imagens permitidas');
+    imagesInput.value = '';
+    return;
+  }
+  
+  files.forEach((file, index) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`Imagem "${file.name}" excede 5MB`);
+      imagesInput.value = '';
+      imagePreview.innerHTML = '';
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'image-preview-item';
+      previewItem.innerHTML = `
+        <img src="${e.target.result}" alt="Preview ${index + 1}">
+        <button type="button" class="remove-image" onclick="removeImage(${index})">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      imagePreview.appendChild(previewItem);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function removeImage(index) {
+  const files = Array.from(imagesInput.files);
+  const dt = new DataTransfer();
+  files.forEach((file, i) => {
+    if (i !== index) dt.items.add(file);
+  });
+  imagesInput.files = dt.files;
+  imagesInput.dispatchEvent(new Event('change'));
+}
+
 // Submit do formulário
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
@@ -185,12 +297,21 @@ form.addEventListener('submit', async (e) => {
     // Desativar o aviso de saída antes de enviar
     formModified = false;
     
+    // Usar FormData para enviar imagens
+    const formData = new FormData();
+    formData.append('title', title);
+    formData.append('content', content);
+    formData.append('tags', tags);
+    
+    // Adicionar imagens
+    const files = imagesInput.files;
+    for (let i = 0; i < files.length; i++) {
+      formData.append('images', files[i]);
+    }
+    
     const response = await fetch(window.location.pathname, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({ title, content, tags })
+      body: formData
     });
 
     const data = await response.json();

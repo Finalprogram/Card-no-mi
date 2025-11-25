@@ -27,6 +27,15 @@ const forumThreadSchema = new mongoose.Schema({
     required: true,
     maxlength: 50000
   },
+  // Imagens anexadas
+  images: [{
+    url: String,
+    filename: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   tags: [{
     type: String,
     trim: true,

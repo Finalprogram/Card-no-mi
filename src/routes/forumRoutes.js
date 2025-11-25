@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const forumController = require('../controllers/forumController');
+const forumUpload = require('../middleware/forumUpload');
 
 // ============================================================================
 // ROTAS PÚBLICAS
@@ -29,8 +30,8 @@ router.get('/user/:username', forumController.getUserProfile);
 // Mostrar formulário de criar thread
 router.get('/:categorySlug/new', forumController.showCreateThreadForm);
 
-// Criar nova thread
-router.post('/:categorySlug/new', forumController.createThread);
+// Criar nova thread (com upload de imagens)
+router.post('/:categorySlug/new', forumUpload.array('images', 5), forumController.createThread);
 
 // ============================================================================
 // ROTAS PÚBLICAS (com parâmetros dinâmicos)
@@ -42,8 +43,8 @@ router.get('/:categorySlug', forumController.getCategoryThreads);
 // Visualizar thread específica
 router.get('/:categorySlug/:threadSlug', forumController.getThread);
 
-// Criar post/resposta
-router.post('/:categorySlug/:threadSlug/reply', forumController.createPost);
+// Criar post/resposta (com upload de imagens)
+router.post('/:categorySlug/:threadSlug/reply', forumUpload.array('images', 5), forumController.createPost);
 
 // Votar em post (upvote/downvote estilo Reddit)
 router.post('/post/:postId/vote', forumController.votePost);

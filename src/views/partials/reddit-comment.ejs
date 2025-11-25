@@ -82,6 +82,17 @@
       <%- post.content.replace(/\n/g, '<br>') %>
     </div>
 
+    <!-- Imagens do Post -->
+    <% if (post.images && post.images.length > 0) { %>
+      <div class="post-images-gallery">
+        <% post.images.forEach((image, index) => { %>
+          <a href="<%= image.url %>" target="_blank" class="gallery-image">
+            <img src="<%= image.url %>" alt="Imagem <%= index + 1 %>">
+          </a>
+        <% }) %>
+      </div>
+    <% } %>
+
     <div class="comment-actions">
       <% if (user) { %>
         <button class="comment-action-btn" onclick="showReplyForm('<%= post._id %>', '<%= post.author.username %>')">

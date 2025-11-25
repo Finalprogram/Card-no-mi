@@ -16,6 +16,15 @@ const forumPostSchema = new mongoose.Schema({
     required: true,
     maxlength: 50000
   },
+  // Imagens anexadas
+  images: [{
+    url: String,
+    filename: String,
+    uploadedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   // Estrutura hierárquica estilo Reddit
   parentPost: {
     type: mongoose.Schema.Types.ObjectId,

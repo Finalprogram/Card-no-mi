@@ -3057,3 +3057,106 @@
     font-size: 0.9rem;
   }
 }
+
+/* ==========================================================================
+   IMAGE GALLERY - Posts and Threads
+   ========================================================================== */
+
+.post-images-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+
+.gallery-image {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: 8px;
+  aspect-ratio: 1;
+  background: var(--forum-surface-hover);
+  border: 1px solid var(--forum-border);
+  transition: all 0.3s ease;
+}
+
+.gallery-image:hover {
+  transform: scale(1.02);
+  border-color: var(--forum-accent);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+.gallery-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.gallery-image:hover img {
+  transform: scale(1.05);
+}
+
+/* Preview de imagens antes de enviar */
+.image-preview-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.image-preview-item {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 2px solid var(--forum-border);
+  background: var(--forum-surface-hover);
+}
+
+.image-preview-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.remove-image,
+.remove-reply-image {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: rgba(239, 68, 68, 0.9);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.remove-image:hover,
+.remove-reply-image:hover {
+  background: rgba(239, 68, 68, 1);
+  transform: scale(1.1);
+}
+
+/* Gallery responsiva */
+@media (max-width: 768px) {
+  .post-images-gallery {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+  }
+  
+  .image-preview-item {
+    width: 100px;
+    height: 100px;
+  }
+}

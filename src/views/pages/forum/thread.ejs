@@ -99,6 +99,17 @@
           <%- thread.content.replace(/\n/g, '<br>') %>
         </div>
 
+        <!-- Imagens da Thread -->
+        <% if (thread.images && thread.images.length > 0) { %>
+          <div class="post-images-gallery">
+            <% thread.images.forEach((image, index) => { %>
+              <a href="<%= image.url %>" target="_blank" class="gallery-image">
+                <img src="<%= image.url %>" alt="Imagem <%= index + 1 %>">
+              </a>
+            <% }) %>
+          </div>
+        <% } %>
+
         <!-- Reações da Thread -->
         <div class="post-reactions">
           <div class="reactions-display">
@@ -267,6 +278,25 @@
 
         <textarea id="postContent" name="content" rows="6" placeholder="Digite sua resposta..." required></textarea>
         
+        <!-- Upload de Imagens na Resposta -->
+        <div class="form-group" style="margin-top: 15px;">
+          <label for="replyImages">
+            <i class="fas fa-image"></i> Adicionar imagens (opcional)
+          </label>
+          <input 
+            type="file" 
+            id="replyImages" 
+            name="images" 
+            class="form-control" 
+            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+            multiple
+          >
+          <small class="form-text">
+            Máximo de 5 imagens, até 5MB cada
+          </small>
+          <div id="replyImagePreview" class="image-preview-container"></div>
+        </div>
+        
         <div class="form-actions">
           <button type="submit" class="btn btn-primary">
             <i class="fas fa-paper-plane"></i> Enviar Resposta
@@ -379,6 +409,54 @@ async function reactToPost(postId, reactionType) {
   }
 }
 
+// Preview de imagens nas respostas
+const replyImagesInput = document.getElementById('replyImages');
+const replyImagePreview = document.getElementById('replyImagePreview');
+
+replyImagesInput.addEventListener('change', () => {
+  replyImagePreview.innerHTML = '';
+  const files = Array.from(replyImagesInput.files);
+  
+  if (files.length > 5) {
+    alert('Máximo de 5 imagens permitidas');
+    replyImagesInput.value = '';
+    return;
+  }
+  
+  files.forEach((file, index) => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`Imagem "${file.name}" excede 5MB`);
+      replyImagesInput.value = '';
+      replyImagePreview.innerHTML = '';
+      return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const previewItem = document.createElement('div');
+      previewItem.className = 'image-preview-item';
+      previewItem.innerHTML = `
+        <img src="${e.target.result}" alt="Preview ${index + 1}">
+        <button type="button" class="remove-reply-image" onclick="removeReplyImage(${index})">
+          <i class="fas fa-times"></i>
+        </button>
+      `;
+      replyImagePreview.appendChild(previewItem);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function removeReplyImage(index) {
+  const files = Array.from(replyImagesInput.files);
+  const dt = new DataTransfer();
+  files.forEach((file, i) => {
+    if (i !== index) dt.items.add(file);
+  });
+  replyImagesInput.files = dt.files;
+  replyImagesInput.dispatchEvent(new Event('change'));
+}
+
 document.getElementById('postForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
@@ -387,10 +465,21 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
   const quotedPostId = document.getElementById('quotedPostId').value;
 
   try {
+    // Usar FormData para enviar imagens
+    const formData = new FormData();
+    formData.append('content', content);
+    if (parentPostId) formData.append('parentPostId', parentPostId);
+    if (quotedPostId) formData.append('quotedPostId', quotedPostId);
+    
+    // Adicionar imagens
+    const files = replyImagesInput.files;
+    for (let i = 0; i < files.length; i++) {
+      formData.append('images', files[i]);
+    }
+    
     const response = await fetch(window.location.pathname + '/reply', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content, parentPostId, quotedPostId })
+      body: formData
     });
     
     const data = await response.json();
@@ -652,5 +741,29 @@ function showNotification(message, type) {
   }, 3000);
 }
 </script>
+
+<style>
+@keyframes slideIn {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOut {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+}
+</style>
 
 <%- include('../../partials/footer') %>
