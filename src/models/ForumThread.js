@@ -40,6 +40,15 @@ const forumThreadSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  inactivatedAt: Date,
+  inactivatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   isDeleted: {
     type: Boolean,
     default: false

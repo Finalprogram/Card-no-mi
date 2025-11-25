@@ -6,7 +6,7 @@
   const indentWidth = 20; // pixels por nível
 %>
 
-<div class="reddit-comment" 
+<div class="reddit-comment <%= !post.isActive && user && user.role === 'admin' ? 'comment-inactive' : '' %>" 
      id="post-<%= post._id %>" 
      style="margin-left: <%= actualDepth * indentWidth %>px;"
      data-depth="<%= actualDepth %>">
@@ -100,25 +100,30 @@
           </button>
         <% } %>
         
-        <!-- Opções de Moderação -->
+        <!-- Opções de Moderação e Report -->
         <% if (user.role === 'moderator' || user.role === 'admin') { %>
           <div class="comment-mod-menu">
             <button class="comment-action-btn mod-btn" onclick="toggleModMenu('<%= post._id %>')">
               <i class="fas fa-shield-alt"></i> Moderação
             </button>
             <div class="mod-dropdown" id="mod-menu-<%= post._id %>" style="display: none;">
+              <% if (user.role === 'admin') { %>
+              <button class="mod-dropdown-item" onclick="togglePostActive('<%= post._id %>')">
+                <i class="fas fa-eye-slash"></i> <%= post.isActive ? 'Inativar' : 'Ativar' %> Post
+              </button>
+              <% } %>
               <button class="mod-dropdown-item" onclick="deletePostMod('<%= post._id %>')">
                 <i class="fas fa-trash"></i> Deletar Post
               </button>
               <% if (!isPostAuthor) { %>
-              <button class="mod-dropdown-item" onclick="flagPostMod('<%= post._id %>')">
+              <button class="mod-dropdown-item" onclick="reportPost('<%= post._id %>')">
                 <i class="fas fa-flag"></i> Reportar
               </button>
               <% } %>
             </div>
           </div>
         <% } else if (!isPostAuthor) { %>
-          <button class="comment-action-btn" onclick="flagPostMod('<%= post._id %>')">
+          <button class="comment-action-btn btn-report-post" onclick="reportPost('<%= post._id %>')">
             <i class="fas fa-flag"></i> Reportar
           </button>
         <% } %>

@@ -29,6 +29,11 @@
           <i class="fas fa-lock"></i> Bloqueado
         </span>
       <% } %>
+      <% if (!thread.isActive && user && user.role === 'admin') { %>
+        <span class="badge badge-inactive">
+          <i class="fas fa-eye-slash"></i> Inativo (visível apenas para admins)
+        </span>
+      <% } %>
     </div>
 
     <!-- Título -->
@@ -144,11 +149,35 @@
             const userId = user ? (user._id || user.id) : null;
             const authorId = thread.author._id || thread.author.id;
             const isAuthor = userId && authorId && userId.toString() === authorId.toString();
+            const isModerator = user && (user.role === 'moderator' || user.role === 'admin');
           %>
           <% if (isAuthor) { %>
             <button class="btn-action">
               <i class="fas fa-edit"></i> Editar
             </button>
+          <% } %>
+          <% if (user && !isAuthor) { %>
+            <button class="btn-action btn-report" onclick="reportThread('<%= thread._id %>')">
+              <i class="fas fa-flag"></i> Reportar
+            </button>
+          <% } %>
+          <% if (isModerator) { %>
+            <div class="mod-actions-inline">
+              <button class="btn-action btn-mod" onclick="toggleThreadPin('<%= thread._id %>')">
+                <i class="fas fa-thumbtack"></i> <%= thread.isPinned ? 'Desafixar' : 'Fixar' %>
+              </button>
+              <button class="btn-action btn-mod" onclick="toggleThreadLock('<%= thread._id %>')">
+                <i class="fas fa-lock"></i> <%= thread.isLocked ? 'Desbloquear' : 'Bloquear' %>
+              </button>
+              <% if (user.role === 'admin') { %>
+                <button class="btn-action btn-mod-warning" onclick="toggleThreadActive('<%= thread._id %>')">
+                  <i class="fas fa-eye-slash"></i> <%= thread.isActive ? 'Inativar' : 'Ativar' %>
+                </button>
+              <% } %>
+              <button class="btn-action btn-mod-danger" onclick="deleteThread('<%= thread._id %>')">
+                <i class="fas fa-trash"></i> Deletar Thread
+              </button>
+            </div>
           <% } %>
         </div>
       </div>
@@ -179,6 +208,41 @@
         <%- include('../../partials/reddit-comment', { post, depth: 0, user }) %>
       <% }) %>
     <% } %>
+  </div>
+
+  <!-- Modal de Report -->
+  <div id="reportModal" class="report-modal" style="display: none;">
+    <div class="report-modal-content">
+      <div class="report-modal-header">
+        <h3><i class="fas fa-flag"></i> Reportar Conteúdo</h3>
+        <button class="report-modal-close" onclick="closeReportModal()">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="report-modal-body">
+        <p>Por que você está reportando este conteúdo?</p>
+        <select id="reportReasonSelect" class="report-select">
+          <option value="">Selecione um motivo...</option>
+          <option value="Conteúdo ofensivo">Conteúdo ofensivo</option>
+          <option value="Spam ou propaganda">Spam ou propaganda</option>
+          <option value="Discurso de ódio">Discurso de ódio</option>
+          <option value="Informação falsa">Informação falsa</option>
+          <option value="Assédio ou bullying">Assédio ou bullying</option>
+          <option value="Conteúdo sexual inapropriado">Conteúdo sexual inapropriado</option>
+          <option value="Violação das regras">Violação das regras</option>
+          <option value="Outro">Outro motivo</option>
+        </select>
+        <textarea id="reportReasonText" class="report-textarea" placeholder="Descreva o problema (opcional, mas recomendado)..." rows="4"></textarea>
+        <input type="hidden" id="reportTargetId">
+        <input type="hidden" id="reportTargetType">
+      </div>
+      <div class="report-modal-footer">
+        <button class="btn-cancel" onclick="closeReportModal()">Cancelar</button>
+        <button class="btn-submit-report" onclick="submitReport()">
+          <i class="fas fa-paper-plane"></i> Enviar Report
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- Formulário de Resposta -->
@@ -373,26 +437,23 @@ async function deletePostMod(postId) {
   }
 }
 
-async function flagPostMod(postId) {
-  const reason = prompt('Por que você está reportando este post?');
-  if (!reason) return;
-  
+async function togglePostActive(postId) {
   try {
-    const response = await fetch(`/forum/moderation/post/${postId}/flag`, {
+    const response = await fetch(`/forum/moderation/post/${postId}/toggle-active`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ reason })
+      headers: { 'Content-Type': 'application/json' }
     });
     
     const data = await response.json();
     if (data.success) {
-      alert('Post reportado com sucesso!');
+      alert(data.message);
+      location.reload();
     } else {
-      alert(data.message || 'Erro ao reportar post');
+      alert(data.message || 'Erro ao inativar/ativar post');
     }
   } catch (error) {
-    console.error('Erro ao reportar post:', error);
-    alert('Erro ao reportar post');
+    console.error('Erro ao inativar/ativar post:', error);
+    alert('Erro ao inativar/ativar post');
   }
 }
 
@@ -402,6 +463,194 @@ document.addEventListener('click', function(event) {
     document.querySelectorAll('.mod-dropdown').forEach(m => m.style.display = 'none');
   }
 });
+
+// Fechar modal ao clicar fora
+document.getElementById('reportModal')?.addEventListener('click', function(event) {
+  if (event.target === this) {
+    closeReportModal();
+  }
+});
+
+// Fechar modal com tecla ESC
+document.addEventListener('keydown', function(event) {
+  if (event.key === 'Escape') {
+    closeReportModal();
+  }
+});
+
+// Funções de Moderação da Thread
+async function toggleThreadPin(threadId) {
+  try {
+    const response = await fetch(`/forum/moderation/thread/${threadId}/pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert(data.message || 'Erro ao fixar/desafixar thread');
+    }
+  } catch (error) {
+    console.error('Erro ao fixar/desafixar thread:', error);
+    alert('Erro ao fixar/desafixar thread');
+  }
+}
+
+async function toggleThreadLock(threadId) {
+  try {
+    const response = await fetch(`/forum/moderation/thread/${threadId}/lock`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert(data.message || 'Erro ao bloquear/desbloquear thread');
+    }
+  } catch (error) {
+    console.error('Erro ao bloquear/desbloquear thread:', error);
+    alert('Erro ao bloquear/desbloquear thread');
+  }
+}
+
+async function deleteThread(threadId) {
+  if (!confirm('Tem certeza que deseja deletar esta thread? Esta ação não pode ser desfeita.')) {
+    return;
+  }
+  
+  try {
+    const response = await fetch(`/forum/moderation/thread/${threadId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert('Thread deletada com sucesso!');
+      window.location.href = '/forum';
+    } else {
+      alert(data.message || 'Erro ao deletar thread');
+    }
+  } catch (error) {
+    console.error('Erro ao deletar thread:', error);
+    alert('Erro ao deletar thread');
+  }
+}
+
+async function toggleThreadActive(threadId) {
+  try {
+    const response = await fetch(`/forum/moderation/thread/${threadId}/toggle-active`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' }
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert(data.message || 'Erro ao inativar/ativar thread');
+    }
+  } catch (error) {
+    console.error('Erro ao inativar/ativar thread:', error);
+    alert('Erro ao inativar/ativar thread');
+  }
+}
+
+function reportThread(threadId) {
+  document.getElementById('reportTargetId').value = threadId;
+  document.getElementById('reportTargetType').value = 'thread';
+  document.getElementById('reportReasonSelect').value = '';
+  document.getElementById('reportReasonText').value = '';
+  document.getElementById('reportModal').style.display = 'flex';
+}
+
+function reportPost(postId) {
+  document.getElementById('reportTargetId').value = postId;
+  document.getElementById('reportTargetType').value = 'post';
+  document.getElementById('reportReasonSelect').value = '';
+  document.getElementById('reportReasonText').value = '';
+  document.getElementById('reportModal').style.display = 'flex';
+}
+
+function closeReportModal() {
+  document.getElementById('reportModal').style.display = 'none';
+}
+
+async function submitReport() {
+  const targetId = document.getElementById('reportTargetId').value;
+  const targetType = document.getElementById('reportTargetType').value;
+  const reasonSelect = document.getElementById('reportReasonSelect').value;
+  const reasonText = document.getElementById('reportReasonText').value;
+  
+  if (!reasonSelect) {
+    alert('Por favor, selecione um motivo para o report.');
+    return;
+  }
+  
+  let fullReason = reasonSelect;
+  if (reasonText.trim()) {
+    fullReason += ': ' + reasonText.trim();
+  }
+  
+  if (fullReason.length < 5) {
+    alert('Por favor, forneça mais detalhes sobre o motivo do report.');
+    return;
+  }
+  
+  try {
+    const url = targetType === 'thread' 
+      ? `/forum/moderation/thread/${targetId}/flag`
+      : `/forum/moderation/post/${targetId}/flag`;
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: fullReason })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      closeReportModal();
+      showNotification('✅ Report enviado com sucesso! Nossa equipe de moderação irá analisar.', 'success');
+    } else {
+      alert(data.message || 'Erro ao enviar report');
+    }
+  } catch (error) {
+    console.error('Erro ao enviar report:', error);
+    alert('Erro ao enviar report. Por favor, tente novamente.');
+  }
+}
+
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `notification notification-${type}`;
+  notification.innerHTML = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    background: ${type === 'success' ? '#10b981' : '#ef4444'};
+    color: white;
+    padding: 1rem 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
 </script>
 
 <%- include('../../partials/footer') %>

@@ -3,6 +3,7 @@ const ForumThread = require('../models/ForumThread');
 const ForumPost = require('../models/ForumPost');
 const UserReputation = require('../models/UserReputation');
 const User = require('../models/User');
+const ModerationLog = require('../models/ModerationLog');
 const logger = require('../config/logger');
 
 // ============================================================================
@@ -25,14 +26,24 @@ exports.getForumIndex = async (req, res) => {
                 isDeleted: false 
             });
             
-            const postCount = await ForumPost.countDocuments({
+            // Contagem de posts - usuários normais veem apenas ativos
+            let postCountQuery = {
                 thread: { 
                     $in: await ForumThread.find({ 
                         category: category._id,
                         isDeleted: false 
                     }).select('_id')
-                }
-            });
+                },
+                isDeleted: false
+            };
+            
+            // Verificar se é admin
+            const isAdminIndex = req.session.user && req.session.user.role === 'admin';
+            if (!isAdminIndex) {
+                postCountQuery.isActive = true;
+            }
+            
+            const postCount = await ForumPost.countDocuments(postCountQuery);
 
             const lastThread = await ForumThread.findOne({ 
                 category: category._id,
@@ -80,16 +91,37 @@ exports.getCategoryThreads = async (req, res) => {
             return res.status(404).send('Categoria não encontrada');
         }
 
+        // Verificar se é admin
+        const isAdmin = req.session.user && req.session.user.role === 'admin';
+
         let query = { 
             category: category._id,
             isDeleted: false 
         };
+        
+        // Usuários normais só veem threads ativas
+        if (!isAdmin) {
+            query.isActive = true;
+        }
 
         if (filterTag) {
             query.tags = filterTag;
         }
 
-        // Definir ordenação
+        // Buscar threads fixadas separadamente (sempre no topo)
+        const pinnedThreads = await ForumThread.find({
+            ...query,
+            isPinned: true
+        })
+            .populate('author', 'username avatar role')
+            .populate('lastActivityBy', 'username')
+            .sort({ lastActivity: -1 })
+            .lean();
+
+        // Buscar threads não-fixadas com paginação
+        const unpinnedQuery = { ...query, isPinned: { $ne: true } };
+        
+        // Definir ordenação para threads não-fixadas
         let sortOption = {};
         switch (sortBy) {
             case 'latest':
@@ -103,10 +135,10 @@ exports.getCategoryThreads = async (req, res) => {
                 break;
             case 'activity':
             default:
-                sortOption = { isPinned: -1, lastActivity: -1 };
+                sortOption = { lastActivity: -1 };
         }
 
-        const threads = await ForumThread.find(query)
+        const unpinnedThreads = await ForumThread.find(unpinnedQuery)
             .populate('author', 'username avatar role')
             .populate('lastActivityBy', 'username')
             .sort(sortOption)
@@ -114,15 +146,26 @@ exports.getCategoryThreads = async (req, res) => {
             .limit(limit)
             .lean();
 
+        // Combinar: fixadas primeiro, depois as outras
+        const threads = [...pinnedThreads, ...unpinnedThreads];
+
         // Buscar contagem de posts para cada thread
         for (const thread of threads) {
-            thread.postCount = await ForumPost.countDocuments({ 
+            let postCountQuery = { 
                 thread: thread._id,
                 isDeleted: false 
-            });
+            };
+            
+            // Usuários normais só veem posts ativos
+            if (!isAdmin) {
+                postCountQuery.isActive = true;
+            }
+            
+            thread.postCount = await ForumPost.countDocuments(postCountQuery);
         }
 
-        const totalThreads = await ForumThread.countDocuments(query);
+        // Contar apenas threads não-fixadas para paginação
+        const totalThreads = await ForumThread.countDocuments(unpinnedQuery);
         const totalPages = Math.ceil(totalThreads / limit);
 
         // Buscar todas as tags da categoria
@@ -164,7 +207,17 @@ exports.getThread = async (req, res) => {
         const limit = 20;
         const skip = (page - 1) * limit;
 
-        const thread = await ForumThread.findOne({ slug: threadSlug, isDeleted: false })
+        // Verificar se é admin
+        const isAdmin = req.session.user && req.session.user.role === 'admin';
+
+        let threadQuery = { slug: threadSlug, isDeleted: false };
+        
+        // Usuários normais só veem threads ativas
+        if (!isAdmin) {
+            threadQuery.isActive = true;
+        }
+
+        const thread = await ForumThread.findOne(threadQuery)
             .populate('author', 'username avatar createdAt role')
             .populate('category')
             .lean();
@@ -177,10 +230,17 @@ exports.getThread = async (req, res) => {
         ForumThread.findByIdAndUpdate(thread._id, { $inc: { viewCount: 1 } }).exec();
 
         // Buscar todos os posts (sem paginação para estrutura hierárquica)
-        const posts = await ForumPost.find({ 
+        let postQuery = { 
             thread: thread._id,
             isDeleted: false 
-        })
+        };
+        
+        // Usuários normais só veem posts ativos
+        if (!isAdmin) {
+            postQuery.isActive = true;
+        }
+        
+        const posts = await ForumPost.find(postQuery)
             .populate('author', 'username avatar createdAt role')
             .populate('parentPost')
             .populate('quotedPost')
@@ -224,10 +284,17 @@ exports.getThread = async (req, res) => {
             post.author.reputation = reputationMap[post.author._id.toString()] || null;
         });
 
-        const totalPosts = await ForumPost.countDocuments({ 
+        let totalPostsQuery = { 
             thread: thread._id,
             isDeleted: false 
-        });
+        };
+        
+        // Usuários normais só veem posts ativos
+        if (!isAdmin) {
+            totalPostsQuery.isActive = true;
+        }
+        
+        const totalPosts = await ForumPost.countDocuments(totalPostsQuery);
 
         res.render('pages/forum/thread', {
             thread,
@@ -318,7 +385,8 @@ exports.createThread = async (req, res) => {
             category: category._id,
             author: userId,
             tags: tagsArray,
-            lastActivityBy: userId
+            lastActivityBy: userId,
+            isActive: true  // Garantir que novas threads sejam ativas
         });
 
         await thread.save();
@@ -392,7 +460,8 @@ exports.createPost = async (req, res) => {
             content,
             parentPost: parentPostId || null,
             depth,
-            path
+            path,
+            isActive: true  // Garantir que novos posts sejam ativos
         });
 
         // Se está citando outro post
@@ -547,19 +616,32 @@ exports.getUserProfile = async (req, res) => {
             badges: []
         };
 
-        const recentThreads = await ForumThread.find({ 
+        // Verificar se é admin
+        const isAdmin = req.session.user && req.session.user.role === 'admin';
+
+        let threadQuery = { 
             author: user._id,
             isDeleted: false 
-        })
+        };
+        
+        let postQuery = { 
+            author: user._id,
+            isDeleted: false 
+        };
+        
+        // Usuários normais só veem conteúdo ativo
+        if (!isAdmin) {
+            threadQuery.isActive = true;
+            postQuery.isActive = true;
+        }
+
+        const recentThreads = await ForumThread.find(threadQuery)
             .populate('category', 'name slug')
             .sort({ createdAt: -1 })
             .limit(10)
             .lean();
 
-        const recentPosts = await ForumPost.find({ 
-            author: user._id,
-            isDeleted: false 
-        })
+        const recentPosts = await ForumPost.find(postQuery)
             .populate('thread', 'title slug')
             .sort({ createdAt: -1 })
             .limit(10)
@@ -610,10 +692,18 @@ exports.searchForum = async (req, res) => {
             });
         }
 
+        // Verificar se é admin
+        const isAdmin = req.session.user && req.session.user.role === 'admin';
+
         let searchQuery = {
             $text: { $search: q },
             isDeleted: false
         };
+        
+        // Usuários normais só veem threads ativas
+        if (!isAdmin) {
+            searchQuery.isActive = true;
+        }
 
         if (category) {
             const cat = await ForumCategory.findOne({ slug: category });
@@ -684,8 +774,28 @@ exports.pinThread = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Thread não encontrada' });
         }
 
+        const wasPinned = thread.isPinned;
         thread.isPinned = !thread.isPinned;
         await thread.save();
+
+        // Registrar no histórico
+        const userId = req.session.user._id || req.session.user.id;
+        const moderator = await User.findById(userId).select('username');
+        const threadAuthor = await User.findById(thread.author).select('username');
+        await ModerationLog.create({
+            actionType: thread.isPinned ? 'thread_pinned' : 'thread_unpinned',
+            targetType: 'thread',
+            targetId: thread._id,
+            targetModel: 'ForumThread',
+            targetTitle: thread.title,
+            targetContent: thread.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: thread.author,
+            targetUsername: threadAuthor ? threadAuthor.username : 'Desconhecido',
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
 
         res.json({ 
             success: true, 
@@ -710,8 +820,28 @@ exports.lockThread = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Thread não encontrada' });
         }
 
+        const wasLocked = thread.isLocked;
         thread.isLocked = !thread.isLocked;
         await thread.save();
+
+        // Registrar no histórico
+        const userId = req.session.user._id || req.session.user.id;
+        const moderator = await User.findById(userId).select('username');
+        const threadAuthor = await User.findById(thread.author).select('username');
+        await ModerationLog.create({
+            actionType: thread.isLocked ? 'thread_locked' : 'thread_unlocked',
+            targetType: 'thread',
+            targetId: thread._id,
+            targetModel: 'ForumThread',
+            targetTitle: thread.title,
+            targetContent: thread.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: thread.author,
+            targetUsername: threadAuthor ? threadAuthor.username : 'Desconhecido',
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
 
         res.json({ 
             success: true, 
@@ -738,10 +868,31 @@ exports.deleteThread = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Thread não encontrada' });
         }
 
+        // Arquivar flags se existirem
+        const archivedFlags = thread.moderationFlags || [];
+
         thread.isDeleted = true;
         thread.deletedAt = new Date();
         thread.deletedBy = userId;
         await thread.save();
+
+        // Registrar no histórico
+        const moderator = await User.findById(userId).select('username');
+        const threadAuthor = await User.findById(thread.author).select('username');
+        await ModerationLog.create({
+            actionType: 'thread_deleted',
+            targetType: 'thread',
+            targetId: thread._id,
+            targetModel: 'ForumThread',
+            targetTitle: thread.title,
+            targetContent: thread.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: thread.author,
+            targetUsername: threadAuthor ? threadAuthor.username : 'Desconhecido',
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
 
         res.json({ success: true, message: 'Thread deletada com sucesso' });
     } catch (error) {
@@ -772,10 +923,30 @@ exports.deletePost = async (req, res) => {
             }
         }
 
+        // Arquivar flags se existirem
+        const archivedFlags = post.moderationFlags || [];
+
         post.isDeleted = true;
         post.deletedAt = new Date();
         post.deletedBy = userId;
         await post.save();
+
+        // Registrar no histórico
+        const moderator = await User.findById(userId).select('username');
+        const postAuthor = await User.findById(post.author).select('username');
+        await ModerationLog.create({
+            actionType: 'post_deleted',
+            targetType: 'post',
+            targetId: post._id,
+            targetModel: 'ForumPost',
+            targetContent: post.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: post.author,
+            targetUsername: postAuthor ? postAuthor.username : 'Desconhecido',
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
 
         res.json({ success: true, message: 'Post deletado com sucesso' });
     } catch (error) {
@@ -866,6 +1037,25 @@ exports.flagThread = async (req, res) => {
 
         await thread.save();
 
+        // Registrar no histórico
+        const reporter = await User.findById(userId).select('username');
+        const threadAuthor = await User.findById(thread.author).select('username');
+        await ModerationLog.create({
+            actionType: 'thread_flagged',
+            targetType: 'thread',
+            targetId: thread._id,
+            targetModel: 'ForumThread',
+            targetTitle: thread.title,
+            targetContent: thread.content.substring(0, 200),
+            reporter: userId,
+            reporterUsername: reporter ? reporter.username : 'Desconhecido',
+            targetUser: thread.author,
+            targetUsername: threadAuthor ? threadAuthor.username : 'Desconhecido',
+            reportReason: reason,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
         res.json({ success: true, message: 'Thread denunciada com sucesso' });
     } catch (error) {
         logger.error('Erro ao denunciar thread:', error);
@@ -908,6 +1098,24 @@ exports.flagPost = async (req, res) => {
         });
 
         await post.save();
+
+        // Registrar no histórico
+        const reporter = await User.findById(userId).select('username');
+        const postAuthor = await User.findById(post.author).select('username');
+        await ModerationLog.create({
+            actionType: 'post_flagged',
+            targetType: 'post',
+            targetId: post._id,
+            targetModel: 'ForumPost',
+            targetContent: post.content.substring(0, 200),
+            reporter: userId,
+            reporterUsername: reporter ? reporter.username : 'Desconhecido',
+            targetUser: post.author,
+            targetUsername: postAuthor ? postAuthor.username : 'Desconhecido',
+            reportReason: reason,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
 
         res.json({ success: true, message: 'Post denunciado com sucesso' });
     } catch (error) {
@@ -969,6 +1177,288 @@ exports.getModerationDashboard = async (req, res) => {
         });
     } catch (error) {
         logger.error('Erro ao carregar dashboard de moderação:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
+};
+
+// @desc    Dismiss flags from thread
+// @route   POST /forum/moderation/thread/:threadId/dismiss-flags
+// @access  Moderator/Admin
+exports.dismissThreadFlags = async (req, res) => {
+    try {
+        const { threadId } = req.params;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        const thread = await ForumThread.findById(threadId).populate('author', 'username');
+
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+        }
+
+        // Arquivar flags antes de limpar
+        const archivedFlags = thread.moderationFlags.map(flag => ({
+            user: flag.user,
+            reason: flag.reason,
+            createdAt: flag.createdAt
+        }));
+
+        // Buscar usernames dos reporters
+        const reporterIds = thread.moderationFlags.map(f => f.user);
+        const reporters = await User.find({ _id: { $in: reporterIds } }).select('_id username');
+        const reporterMap = reporters.reduce((acc, r) => {
+            acc[r._id.toString()] = r.username;
+            return acc;
+        }, {});
+
+        const archivedFlagsWithUsernames = archivedFlags.map(flag => ({
+            ...flag,
+            username: reporterMap[flag.user.toString()] || 'Desconhecido'
+        }));
+
+        thread.moderationFlags = [];
+        await thread.save();
+
+        // Registrar no histórico
+        const moderator = await User.findById(userId).select('username');
+        await ModerationLog.create({
+            actionType: 'thread_flags_dismissed',
+            targetType: 'thread',
+            targetId: thread._id,
+            targetModel: 'ForumThread',
+            targetTitle: thread.title,
+            targetContent: thread.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: thread.author._id || thread.author,
+            targetUsername: thread.author.username || 'Desconhecido',
+            archivedFlags: archivedFlagsWithUsernames,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        res.json({ success: true, message: 'Denúncias da thread descartadas com sucesso' });
+    } catch (error) {
+        logger.error('Erro ao descartar denúncias da thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao descartar denúncias' });
+    }
+};
+
+// @desc    Dismiss flags from post
+// @route   POST /forum/moderation/post/:postId/dismiss-flags
+// @access  Moderator/Admin
+exports.dismissPostFlags = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        const post = await ForumPost.findById(postId).populate('author', 'username');
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+        }
+
+        // Arquivar flags antes de limpar
+        const archivedFlags = post.moderationFlags.map(flag => ({
+            user: flag.user,
+            reason: flag.reason,
+            createdAt: flag.createdAt
+        }));
+
+        // Buscar usernames dos reporters
+        const reporterIds = post.moderationFlags.map(f => f.user);
+        const reporters = await User.find({ _id: { $in: reporterIds } }).select('_id username');
+        const reporterMap = reporters.reduce((acc, r) => {
+            acc[r._id.toString()] = r.username;
+            return acc;
+        }, {});
+
+        const archivedFlagsWithUsernames = archivedFlags.map(flag => ({
+            ...flag,
+            username: reporterMap[flag.user.toString()] || 'Desconhecido'
+        }));
+
+        post.moderationFlags = [];
+        await post.save();
+
+        // Registrar no histórico
+        const moderator = await User.findById(userId).select('username');
+        await ModerationLog.create({
+            actionType: 'post_flags_dismissed',
+            targetType: 'post',
+            targetId: post._id,
+            targetModel: 'ForumPost',
+            targetContent: post.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: post.author._id || post.author,
+            targetUsername: post.author.username || 'Desconhecido',
+            archivedFlags: archivedFlagsWithUsernames,
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        res.json({ success: true, message: 'Denúncias do post descartadas com sucesso' });
+    } catch (error) {
+        logger.error('Erro ao descartar denúncias do post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao descartar denúncias' });
+    }
+};
+
+// @desc    Toggle thread active status (hide/show)
+// @route   POST /forum/moderation/thread/:threadId/toggle-active
+// @access  Admin
+exports.toggleThreadActive = async (req, res) => {
+    try {
+        const { threadId } = req.params;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        const thread = await ForumThread.findById(threadId);
+
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+        }
+
+        const wasActive = thread.isActive;
+        thread.isActive = !thread.isActive;
+        
+        if (!thread.isActive) {
+            thread.inactivatedAt = new Date();
+            thread.inactivatedBy = userId;
+        } else {
+            thread.inactivatedAt = null;
+            thread.inactivatedBy = null;
+        }
+        
+        await thread.save();
+
+        // Registrar no histórico
+        const moderator = await User.findById(userId).select('username');
+        const threadAuthor = await User.findById(thread.author).select('username');
+        await ModerationLog.create({
+            actionType: thread.isActive ? 'thread_activated' : 'thread_inactivated',
+            targetType: 'thread',
+            targetId: thread._id,
+            targetModel: 'ForumThread',
+            targetTitle: thread.title,
+            targetContent: thread.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: thread.author,
+            targetUsername: threadAuthor ? threadAuthor.username : 'Desconhecido',
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        res.json({ 
+            success: true, 
+            message: thread.isActive ? 'Thread ativada com sucesso' : 'Thread inativada com sucesso',
+            isActive: thread.isActive
+        });
+    } catch (error) {
+        logger.error('Erro ao inativar/ativar thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao inativar/ativar thread' });
+    }
+};
+
+// @desc    Toggle post active status (hide/show)
+// @route   POST /forum/moderation/post/:postId/toggle-active
+// @access  Admin
+exports.togglePostActive = async (req, res) => {
+    try {
+        const { postId } = req.params;
+        const userId = req.session.user._id || req.session.user.id;
+        
+        const post = await ForumPost.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+        }
+
+        const wasActive = post.isActive;
+        post.isActive = !post.isActive;
+        
+        if (!post.isActive) {
+            post.inactivatedAt = new Date();
+            post.inactivatedBy = userId;
+        } else {
+            post.inactivatedAt = null;
+            post.inactivatedBy = null;
+        }
+        
+        await post.save();
+
+        // Registrar no histórico
+        const moderator = await User.findById(userId).select('username');
+        const postAuthor = await User.findById(post.author).select('username');
+        await ModerationLog.create({
+            actionType: post.isActive ? 'post_activated' : 'post_inactivated',
+            targetType: 'post',
+            targetId: post._id,
+            targetModel: 'ForumPost',
+            targetContent: post.content.substring(0, 200),
+            moderator: userId,
+            moderatorUsername: moderator ? moderator.username : 'Desconhecido',
+            targetUser: post.author,
+            targetUsername: postAuthor ? postAuthor.username : 'Desconhecido',
+            ipAddress: req.ip,
+            userAgent: req.get('user-agent')
+        });
+
+        res.json({ 
+            success: true, 
+            message: post.isActive ? 'Post ativado com sucesso' : 'Post inativado com sucesso',
+            isActive: post.isActive
+        });
+    } catch (error) {
+        logger.error('Erro ao inativar/ativar post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao inativar/ativar post' });
+    }
+};
+
+// @desc    Get moderation history
+// @route   GET /forum/moderation/history
+// @access  Moderator/Admin
+exports.getModerationHistory = async (req, res) => {
+    try {
+        const page = parseInt(req.query.page) || 1;
+        const limit = 50;
+        const skip = (page - 1) * limit;
+
+        const filter = req.query.action ? { actionType: req.query.action } : {};
+        if (req.query.moderator) {
+            filter.moderator = req.query.moderator;
+        }
+        if (req.query.targetUser) {
+            filter.targetUser = req.query.targetUser;
+        }
+
+        const totalLogs = await ModerationLog.countDocuments(filter);
+        const logs = await ModerationLog.find(filter)
+            .populate('moderator', 'username avatar')
+            .populate('targetUser', 'username avatar')
+            .populate('reporter', 'username')
+            .sort({ createdAt: -1 })
+            .limit(limit)
+            .skip(skip)
+            .lean();
+
+        const totalPages = Math.ceil(totalLogs / limit);
+
+        res.render('pages/forum/moderation-history', {
+            logs,
+            currentPage: page,
+            totalPages,
+            totalLogs,
+            filters: {
+                action: req.query.action || '',
+                moderator: req.query.moderator || '',
+                targetUser: req.query.targetUser || ''
+            },
+            user: req.session.user,
+            pageTitle: 'Histórico de Moderação'
+        });
+    } catch (error) {
+        logger.error('Erro ao carregar histórico de moderação:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };

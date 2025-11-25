@@ -10,7 +10,10 @@ const forumController = require('../controllers/forumController');
 router.get('/', forumController.getForumIndex);
 
 // Painel de moderação (apenas para moderadores/admins) - deve vir antes da rota dinâmica de categoria
-router.get('/moderation', forumController.getModerationEntry);
+router.get('/moderation', forumController.getModerationDashboard);
+
+// Histórico de moderação
+router.get('/moderation/history', forumController.getModerationHistory);
 
 // Busca
 router.get('/search', forumController.searchForum);
@@ -75,5 +78,11 @@ router.post('/moderation/thread/:threadId/dismiss-flags', forumController.dismis
 
 // Dismiss flags post
 router.post('/moderation/post/:postId/dismiss-flags', forumController.dismissPostFlags);
+
+// Toggle thread active status
+router.post('/moderation/thread/:threadId/toggle-active', forumController.toggleThreadActive);
+
+// Toggle post active status
+router.post('/moderation/post/:postId/toggle-active', forumController.togglePostActive);
 
 module.exports = router;

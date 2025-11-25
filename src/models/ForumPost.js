@@ -55,6 +55,15 @@ const forumPostSchema = new mongoose.Schema({
     default: 0
   },
   // Status
+  isActive: {
+    type: Boolean,
+    default: true
+  },
+  inactivatedAt: Date,
+  inactivatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
   isDeleted: {
     type: Boolean,
     default: false

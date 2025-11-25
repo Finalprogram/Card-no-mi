@@ -1,0 +1,262 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<link rel="stylesheet" href="/css/moderation-dashboard.css">
+
+<div class="moderation-container">
+    <!-- Hero Header -->
+    <div class="mod-hero">
+        <div class="mod-hero-content">
+            <div class="mod-hero-icon">
+                <i class="fas fa-history"></i>
+            </div>
+            <div>
+                <h1 class="mod-hero-title">Histórico de Moderação</h1>
+                <p class="mod-hero-subtitle">Registro completo de todas as ações de moderação</p>
+            </div>
+        </div>
+        <div class="mod-hero-actions">
+            <a href="/forum/moderation" class="action-btn btn-primary">
+                <i class="fas fa-arrow-left"></i>
+                <span>Voltar ao Painel</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filtros -->
+    <div class="history-filters">
+        <form method="GET" action="/forum/moderation/history" class="filters-form">
+            <div class="filter-group">
+                <label for="action">
+                    <i class="fas fa-filter"></i>
+                    Tipo de Ação
+                </label>
+                <select name="action" id="action" class="filter-select">
+                    <option value="">Todas as ações</option>
+                    <option value="thread_flagged" <%= filters.action === 'thread_flagged' ? 'selected' : '' %>>Thread Denunciada</option>
+                    <option value="post_flagged" <%= filters.action === 'post_flagged' ? 'selected' : '' %>>Post Denunciado</option>
+                    <option value="thread_flags_dismissed" <%= filters.action === 'thread_flags_dismissed' ? 'selected' : '' %>>Denúncias de Thread Ignoradas</option>
+                    <option value="post_flags_dismissed" <%= filters.action === 'post_flags_dismissed' ? 'selected' : '' %>>Denúncias de Post Ignoradas</option>
+                    <option value="thread_deleted" <%= filters.action === 'thread_deleted' ? 'selected' : '' %>>Thread Deletada</option>
+                    <option value="post_deleted" <%= filters.action === 'post_deleted' ? 'selected' : '' %>>Post Deletado</option>
+                    <option value="thread_locked" <%= filters.action === 'thread_locked' ? 'selected' : '' %>>Thread Bloqueada</option>
+                    <option value="thread_unlocked" <%= filters.action === 'thread_unlocked' ? 'selected' : '' %>>Thread Desbloqueada</option>
+                    <option value="thread_pinned" <%= filters.action === 'thread_pinned' ? 'selected' : '' %>>Thread Fixada</option>
+                    <option value="thread_unpinned" <%= filters.action === 'thread_unpinned' ? 'selected' : '' %>>Thread Desafixada</option>
+                    <option value="thread_inactivated" <%= filters.action === 'thread_inactivated' ? 'selected' : '' %>>Thread Inativada</option>
+                    <option value="thread_activated" <%= filters.action === 'thread_activated' ? 'selected' : '' %>>Thread Ativada</option>
+                    <option value="post_inactivated" <%= filters.action === 'post_inactivated' ? 'selected' : '' %>>Post Inativado</option>
+                    <option value="post_activated" <%= filters.action === 'post_activated' ? 'selected' : '' %>>Post Ativado</option>
+                </select>
+            </div>
+            <button type="submit" class="filter-btn">
+                <i class="fas fa-search"></i>
+                Filtrar
+            </button>
+            <% if (filters.action) { %>
+                <a href="/forum/moderation/history" class="filter-btn clear-btn">
+                    <i class="fas fa-times"></i>
+                    Limpar
+                </a>
+            <% } %>
+        </form>
+        <div class="total-logs">
+            <i class="fas fa-database"></i>
+            <span><%= totalLogs %> registros encontrados</span>
+        </div>
+    </div>
+
+    <!-- Timeline de Logs -->
+    <div class="history-timeline">
+        <% if (logs.length === 0) { %>
+            <div class="empty-state-modern">
+                <div class="empty-icon">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h3>Nenhum registro encontrado</h3>
+                <p>Não há histórico de moderação com os filtros selecionados.</p>
+            </div>
+        <% } else { %>
+            <% logs.forEach((log, index) => { %>
+                <div class="history-entry" style="animation-delay: <%= index * 0.03 %>s;">
+                    <!-- Timeline dot -->
+                    <div class="timeline-dot <%= log.actionType.includes('delete') ? 'danger' : log.actionType.includes('flag') ? 'warning' : 'success' %>"></div>
+                    
+                    <div class="entry-card">
+                        <!-- Header -->
+                        <div class="entry-header">
+                            <div class="entry-action">
+                                <i class="fas fa-<%= getActionIcon(log.actionType) %> action-icon"></i>
+                                <span class="action-label"><%= getActionLabel(log.actionType) %></span>
+                            </div>
+                            <div class="entry-time">
+                                <%= new Date(log.createdAt).toLocaleString('pt-BR', {
+                                    day: '2-digit',
+                                    month: 'short',
+                                    year: 'numeric',
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                }) %>
+                            </div>
+                        </div>
+
+                        <!-- Moderator/Reporter -->
+                        <div class="entry-actor">
+                            <% if (log.moderator) { %>
+                                <div class="actor-info">
+                                    <img src="<%= log.moderator.avatar || '/images/default-avatar.png' %>" 
+                                         alt="<%= log.moderatorUsername %>" 
+                                         class="actor-avatar">
+                                    <div>
+                                        <span class="actor-label">Moderador:</span>
+                                        <span class="actor-name"><%= log.moderatorUsername %></span>
+                                    </div>
+                                </div>
+                            <% } %>
+                            <% if (log.reporter) { %>
+                                <div class="actor-info">
+                                    <img src="<%= log.reporter.avatar || '/images/default-avatar.png' %>" 
+                                         alt="<%= log.reporterUsername %>" 
+                                         class="actor-avatar">
+                                    <div>
+                                        <span class="actor-label">Denunciante:</span>
+                                        <span class="actor-name"><%= log.reporterUsername %></span>
+                                    </div>
+                                </div>
+                            <% } %>
+                        </div>
+
+                        <!-- Target -->
+                        <div class="entry-target">
+                            <% if (log.targetTitle) { %>
+                                <h4 class="target-title">
+                                    <i class="fas fa-comments"></i>
+                                    <%= log.targetTitle %>
+                                </h4>
+                            <% } %>
+                            <% if (log.targetContent) { %>
+                                <p class="target-content"><%= log.targetContent %></p>
+                            <% } %>
+                            <div class="target-user">
+                                <% if (log.targetUser) { %>
+                                    <img src="<%= log.targetUser.avatar || '/images/default-avatar.png' %>" 
+                                         alt="<%= log.targetUsername %>" 
+                                         class="target-avatar">
+                                    <span>Autor: <strong><%= log.targetUsername %></strong></span>
+                                <% } %>
+                            </div>
+                        </div>
+
+                        <!-- Detalhes da denúncia -->
+                        <% if (log.reportReason) { %>
+                            <div class="entry-reason">
+                                <strong>Motivo da denúncia:</strong>
+                                <p><%= log.reportReason %></p>
+                            </div>
+                        <% } %>
+
+                        <!-- Flags arquivadas -->
+                        <% if (log.archivedFlags && log.archivedFlags.length > 0) { %>
+                            <div class="entry-archived">
+                                <div class="archived-header">
+                                    <i class="fas fa-archive"></i>
+                                    <strong>Denúncias Arquivadas (<%= log.archivedFlags.length %>)</strong>
+                                </div>
+                                <div class="archived-list">
+                                    <% log.archivedFlags.forEach(flag => { %>
+                                        <div class="archived-flag">
+                                            <div class="flag-user">
+                                                <i class="fas fa-user-circle"></i>
+                                                <span><%= flag.username || 'Desconhecido' %></span>
+                                                <span class="flag-date">
+                                                    <%= new Date(flag.createdAt).toLocaleDateString('pt-BR') %>
+                                                </span>
+                                            </div>
+                                            <div class="flag-reason">
+                                                <%= flag.reason %>
+                                            </div>
+                                        </div>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        <% } %>
+                    </div>
+                </div>
+            <% }) %>
+        <% } %>
+    </div>
+
+    <!-- Paginação -->
+    <% if (totalPages > 1) { %>
+        <div class="pagination">
+            <% if (currentPage > 1) { %>
+                <a href="?page=<%= currentPage - 1 %><%= filters.action ? '&action=' + filters.action : '' %>" 
+                   class="page-btn">
+                    <i class="fas fa-chevron-left"></i>
+                    Anterior
+                </a>
+            <% } %>
+            
+            <div class="page-numbers">
+                <% for (let i = Math.max(1, currentPage - 2); i <= Math.min(totalPages, currentPage + 2); i++) { %>
+                    <a href="?page=<%= i %><%= filters.action ? '&action=' + filters.action : '' %>" 
+                       class="page-num <%= i === currentPage ? 'active' : '' %>">
+                        <%= i %>
+                    </a>
+                <% } %>
+            </div>
+            
+            <% if (currentPage < totalPages) { %>
+                <a href="?page=<%= currentPage + 1 %><%= filters.action ? '&action=' + filters.action : '' %>" 
+                   class="page-btn">
+                    Próxima
+                    <i class="fas fa-chevron-right"></i>
+                </a>
+            <% } %>
+        </div>
+    <% } %>
+</div>
+
+<%
+function getActionIcon(actionType) {
+    const icons = {
+        'thread_flagged': 'flag',
+        'post_flagged': 'flag',
+        'thread_flags_dismissed': 'check-circle',
+        'post_flags_dismissed': 'check-circle',
+        'thread_deleted': 'trash',
+        'post_deleted': 'trash',
+        'thread_locked': 'lock',
+        'thread_unlocked': 'unlock',
+        'thread_pinned': 'thumbtack',
+        'thread_unpinned': 'times',
+        'thread_inactivated': 'eye-slash',
+        'thread_activated': 'eye',
+        'post_inactivated': 'eye-slash',
+        'post_activated': 'eye'
+    };
+    return icons[actionType] || 'circle';
+}
+
+function getActionLabel(actionType) {
+    const labels = {
+        'thread_flagged': 'Thread Denunciada',
+        'post_flagged': 'Post Denunciado',
+        'thread_flags_dismissed': 'Denúncias Ignoradas',
+        'post_flags_dismissed': 'Denúncias Ignoradas',
+        'thread_deleted': 'Thread Deletada',
+        'post_deleted': 'Post Deletado',
+        'thread_locked': 'Thread Bloqueada',
+        'thread_unlocked': 'Thread Desbloqueada',
+        'thread_pinned': 'Thread Fixada',
+        'thread_unpinned': 'Thread Desafixada',
+        'thread_inactivated': 'Thread Inativada',
+        'thread_activated': 'Thread Ativada',
+        'post_inactivated': 'Post Inativado',
+        'post_activated': 'Post Ativado'
+    };
+    return labels[actionType] || actionType;
+}
+%>
+
+<%- include('../../partials/footer') %>

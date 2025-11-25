@@ -31,7 +31,14 @@
     </li>
     <li><a href="/about">Sobre</a></li>
     <% if (user && (user.role === 'moderator' || user.role === 'admin')) { %>
-    <li><a href="/forum/moderation" class="moderation-link">🛡️ Moderação</a></li>
+    <li>
+      <a href="/forum/moderation" class="moderation-link">
+        🛡️ Moderação
+        <% if (user.pendingReportsCount && user.pendingReportsCount > 0) { %>
+          <span class="report-badge"><%= user.pendingReportsCount %></span>
+        <% } %>
+      </a>
+    </li>
     <% } %>
 </ul>
 
