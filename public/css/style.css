@@ -114,7 +114,9 @@
   align-items: center; /* Alinha verticalmente todos os itens (logo, links, botões) ao centro */
   width: 100%;
 }
-
+.navbar-logo-link{
+  position: absolute;
+}
 .navbar-brand {
   /* Esta classe é o contêiner do logo. 
      O display flex garante que o logo se comporte bem dentro do link. */
@@ -135,7 +137,7 @@
 }
 
 .navbar-logo-img {
-  height: 50px;
+  height: 180px;
   width: auto;
 }
 
@@ -145,6 +147,7 @@
   margin: 0;
   padding: 0;
   gap: 1.5rem;
+  margin-left: 300px;
 }
 
 .navbar-menu a {
