@@ -109,8 +109,8 @@
   transition: all 0.2s ease;
   border: 2px solid transparent;
   text-decoration: none;
-  background: white;
-  color: var(--mod-primary);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
@@ -607,10 +607,10 @@
   flex-direction: column;
   gap: 0.5rem;
   padding: 0.875rem;
-  background: white;
+  background: rgba(0, 0, 0, 0.2);
   border-radius: 6px;
   font-size: 0.875rem;
-  color: #000000;
+  color: var(--mod-text);
   line-height: 1.5;
   border-left: 3px solid var(--mod-primary);
 }
@@ -1058,7 +1058,7 @@
 }
 
 .entry-card {
-  background: white;
+  background: var(--forum-surface);
   padding: 1.5rem;
   border-radius: 12px;
   box-shadow: var(--mod-shadow-sm);
@@ -1222,7 +1222,7 @@
 }
 
 .archived-flag {
-  background: white;
+  background: rgba(0, 0, 0, 0.2);
   padding: 0.75rem;
   border-radius: 6px;
 }
@@ -1258,7 +1258,7 @@
   gap: 1rem;
   margin-top: 3rem;
   padding: 1.5rem;
-  background: white;
+  background: var(--forum-surface);
   border-radius: 12px;
   box-shadow: var(--mod-shadow-sm);
 }
