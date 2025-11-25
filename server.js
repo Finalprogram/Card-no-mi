@@ -70,6 +70,8 @@ const couponRoutes = require('./src/routes/couponRoutes');
 const deckRoutes = require('./src/routes/deckRoutes');
 const deckPagesRoutes = require('./src/routes/deckPagesRoutes');
 const forumRoutes = require('./src/routes/forumRoutes');
+const profileRoutes = require('./src/routes/profileRoutes');
+const notificationRoutes = require('./src/routes/notificationRoutes');
 const reportCounter = require('./src/middleware/reportCounter');
 const Card = require('./src/models/Card'); // Import the Card model
 
@@ -193,6 +195,8 @@ app.use('/checkout', checkoutRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/', reviewRoutes);
 app.use('/forum', reportCounter, forumRoutes);
+app.use('/forum', profileRoutes);
+app.use('/forum', notificationRoutes);
 app.use('/admin', adminRoutes);
 app.use('/welcome', welcomeRoutes);
 

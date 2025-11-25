@@ -1,0 +1,239 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<link rel="stylesheet" href="/css/forum.css">
+
+<div class="forum-container">
+  <!-- Breadcrumb -->
+  <div class="forum-breadcrumb">
+    <a href="/forum"><i class="fas fa-home"></i> Fórum</a>
+    <span class="separator">/</span>
+    <span class="current">Notificações</span>
+  </div>
+
+  <!-- Header -->
+  <div class="notifications-header">
+    <h1><i class="fas fa-bell"></i> Notificações</h1>
+    <% if (notifications && notifications.length > 0) { %>
+      <button class="btn btn-secondary" onclick="markAllAsRead()">
+        <i class="fas fa-check-double"></i> Marcar todas como lidas
+      </button>
+    <% } %>
+  </div>
+
+  <!-- Notificações -->
+  <div class="notifications-list">
+    <% if (notifications && notifications.length > 0) { %>
+      <% notifications.forEach(notification => { %>
+        <div class="notification-item <%= notification.isRead ? 'read' : 'unread' %>" 
+             data-id="<%= notification._id %>">
+          <div class="notification-icon" style="color: <%= notification.color %>">
+            <i class="fas <%= notification.icon %>"></i>
+          </div>
+          
+          <div class="notification-content">
+            <div class="notification-header">
+              <% if (notification.sender) { %>
+                <a href="/forum/user/<%= notification.sender.username %>" class="notification-sender">
+                  <img src="<%= notification.sender.avatar || '/images/default-avatar.png' %>" 
+                       alt="<%= notification.sender.username %>"
+                       class="notification-avatar">
+                  <%= notification.sender.username %>
+                </a>
+              <% } %>
+              <span class="notification-time">
+                <%= new Date(notification.createdAt).toLocaleDateString('pt-BR', {
+                  day: 'numeric',
+                  month: 'short',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                }) %>
+              </span>
+            </div>
+            
+            <h3 class="notification-title"><%= notification.title %></h3>
+            <p class="notification-message"><%= notification.message %></p>
+            
+            <div class="notification-actions">
+              <a href="<%= notification.link %>" class="btn-notification-link" onclick="markAsRead('<%= notification._id %>')">
+                <i class="fas fa-external-link-alt"></i> Ver
+              </a>
+              <% if (!notification.isRead) { %>
+                <button class="btn-notification-mark" onclick="markAsRead('<%= notification._id %>')">
+                  <i class="fas fa-check"></i> Marcar como lida
+                </button>
+              <% } %>
+              <button class="btn-notification-delete" onclick="deleteNotification('<%= notification._id %>')">
+                <i class="fas fa-trash"></i>
+              </button>
+            </div>
+          </div>
+          
+          <% if (!notification.isRead) { %>
+            <div class="unread-indicator"></div>
+          <% } %>
+        </div>
+      <% }) %>
+      
+      <!-- Paginação -->
+      <% if (totalPages > 1) { %>
+        <div class="forum-pagination">
+          <% if (currentPage > 1) { %>
+            <a href="/forum/notifications?page=<%= currentPage - 1 %>" class="pagination-btn">
+              <i class="fas fa-chevron-left"></i> Anterior
+            </a>
+          <% } %>
+          
+          <span class="pagination-info">
+            Página <%= currentPage %> de <%= totalPages %>
+          </span>
+          
+          <% if (currentPage < totalPages) { %>
+            <a href="/forum/notifications?page=<%= currentPage + 1 %>" class="pagination-btn">
+              Próxima <i class="fas fa-chevron-right"></i>
+            </a>
+          <% } %>
+        </div>
+      <% } %>
+      
+    <% } else { %>
+      <div class="empty-state">
+        <i class="fas fa-bell-slash empty-icon"></i>
+        <h3>Nenhuma notificação</h3>
+        <p>Você não tem notificações no momento.</p>
+        <a href="/forum" class="btn btn-primary">
+          <i class="fas fa-arrow-left"></i> Voltar ao Fórum
+        </a>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<%- include('../../partials/footer') %>
+
+<script>
+async function markAsRead(notificationId) {
+  try {
+    const response = await fetch(`/forum/api/notifications/${notificationId}/read`, {
+      method: 'POST'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const notificationEl = document.querySelector(`[data-id="${notificationId}"]`);
+      if (notificationEl) {
+        notificationEl.classList.remove('unread');
+        notificationEl.classList.add('read');
+        const indicator = notificationEl.querySelector('.unread-indicator');
+        if (indicator) indicator.remove();
+        const markBtn = notificationEl.querySelector('.btn-notification-mark');
+        if (markBtn) markBtn.remove();
+      }
+      updateNotificationBadge();
+    }
+  } catch (error) {
+    console.error('Erro ao marcar notificação:', error);
+  }
+}
+
+async function markAllAsRead() {
+  try {
+    const response = await fetch('/forum/api/notifications/read-all', {
+      method: 'POST'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      document.querySelectorAll('.notification-item.unread').forEach(el => {
+        el.classList.remove('unread');
+        el.classList.add('read');
+        const indicator = el.querySelector('.unread-indicator');
+        if (indicator) indicator.remove();
+        const markBtn = el.querySelector('.btn-notification-mark');
+        if (markBtn) markBtn.remove();
+      });
+      updateNotificationBadge();
+      showNotification('Todas as notificações foram marcadas como lidas', 'success');
+    }
+  } catch (error) {
+    console.error('Erro ao marcar todas:', error);
+  }
+}
+
+async function deleteNotification(notificationId) {
+  if (!confirm('Deseja realmente deletar esta notificação?')) return;
+  
+  try {
+    const response = await fetch(`/forum/api/notifications/${notificationId}`, {
+      method: 'DELETE'
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      const notificationEl = document.querySelector(`[data-id="${notificationId}"]`);
+      if (notificationEl) {
+        notificationEl.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => notificationEl.remove(), 300);
+      }
+      updateNotificationBadge();
+    }
+  } catch (error) {
+    console.error('Erro ao deletar notificação:', error);
+  }
+}
+
+async function updateNotificationBadge() {
+  try {
+    const response = await fetch('/forum/api/notifications/unread-count');
+    const data = await response.json();
+    const badge = document.querySelector('.notification-badge');
+    if (badge) {
+      if (data.count > 0) {
+        badge.textContent = data.count > 99 ? '99+' : data.count;
+        badge.style.display = 'block';
+      } else {
+        badge.style.display = 'none';
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao atualizar badge:', error);
+  }
+}
+
+function showNotification(message, type) {
+  const notification = document.createElement('div');
+  notification.className = `toast-notification toast-${type}`;
+  notification.textContent = message;
+  notification.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    background: ${type === 'success' ? '#10b981' : '#ef4444'};
+    color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 10000;
+    animation: slideIn 0.3s ease;
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.style.animation = 'slideOut 0.3s ease';
+    setTimeout(() => notification.remove(), 300);
+  }, 3000);
+}
+</script>
+
+<style>
+@keyframes slideOut {
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+</style>

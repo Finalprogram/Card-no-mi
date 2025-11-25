@@ -2,6 +2,7 @@
 <%- include('../../partials/navbar') %>
 
 <link rel="stylesheet" href="/css/forum.css">
+<link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 
 <div class="forum-container thread-page">
   <!-- Breadcrumb -->
@@ -96,7 +97,7 @@
         </div>
 
         <div class="post-content">
-          <%- thread.content.replace(/\n/g, '<br>') %>
+          <%- thread.content %>
         </div>
 
         <!-- Imagens da Thread -->
@@ -150,10 +151,10 @@
         </div>
 
         <div class="post-actions">
-          <button class="btn-action" onclick="showReplyForm(null, '<%= thread.author.username %>')">
+          <button class="btn-action btn-reply" onclick="showReplyForm(null, '<%= thread.author.username %>')">
             <i class="fas fa-reply"></i> Responder
           </button>
-          <button class="btn-action" onclick="quotePost(null, `<%= thread.content.substring(0, 200).replace(/'/g, "\\'") %>`)">
+          <button class="btn-action btn-quote" onclick="quotePost(null, `<%- thread.content.replace(/'/g, "\\'") %>`)">
             <i class="fas fa-quote-left"></i> Citar
           </button>
           <% 
@@ -263,6 +264,19 @@
         <i class="fas fa-reply"></i>
         Responder à Thread
       </h3>
+      
+      <!-- Dica de como citar -->
+      <div class="reply-hint" id="quoteHint" style="display: none;">
+        <div class="hint-icon">💡</div>
+        <div class="hint-content">
+          <strong>Como citar um post?</strong>
+          <p>Clique no botão <span class="hint-button"><i class="fas fa-quote-left"></i> Citar</span> em qualquer post para inserir uma citação no editor. A citação aparecerá automaticamente e você pode adicionar sua resposta logo abaixo!</p>
+        </div>
+        <button type="button" class="hint-close" onclick="document.getElementById('quoteHint').style.display='none'">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      
       <form id="postForm">
         <input type="hidden" id="parentPostId" name="parentPostId">
         <input type="hidden" id="quotedPostId" name="quotedPostId">
@@ -276,7 +290,35 @@
 
         <div id="quotedContent" class="quoted-preview" style="display: none;"></div>
 
-        <textarea id="postContent" name="content" rows="6" placeholder="Digite sua resposta..." required></textarea>
+        <div class="editor-toolbar-wrapper" style="margin-bottom: 15px;">
+          <div id="replyToolbar">
+            <span class="ql-formats">
+              <button class="ql-bold" title="Negrito"></button>
+              <button class="ql-italic" title="Itálico"></button>
+              <button class="ql-underline" title="Sublinhado"></button>
+              <button class="ql-strike" title="Tachado"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-header" value="2" title="Título 2"></button>
+              <button class="ql-header" value="3" title="Título 3"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-list" value="ordered" title="Lista Numerada"></button>
+              <button class="ql-list" value="bullet" title="Lista com Marcadores"></button>
+              <button class="ql-blockquote" title="Citação"></button>
+              <button class="ql-code-block" title="Bloco de Código"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-link" title="Inserir Link"></button>
+              <button class="ql-image" title="Inserir Imagem URL"></button>
+            </span>
+            <span class="ql-formats">
+              <button class="ql-clean" title="Limpar Formatação"></button>
+            </span>
+          </div>
+          <div id="replyEditor" style="min-height: 150px; background: white; color: #1a1a1a;"></div>
+          <input type="hidden" id="postContent" name="content">
+        </div>
         
         <!-- Upload de Imagens na Resposta -->
         <div class="form-group" style="margin-top: 15px;">
@@ -321,16 +363,37 @@
 
 </div>
 
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
 let currentReplyTo = null;
 let currentQuotedPost = null;
+
+// Inicializar Quill Editor para respostas
+const replyQuill = new Quill('#replyEditor', {
+  theme: 'snow',
+  modules: {
+    toolbar: '#replyToolbar'
+  },
+  placeholder: 'Digite sua resposta...'
+});
+
+// Mostrar hint de citação na primeira visita
+if (!localStorage.getItem('quoteHintSeen')) {
+  setTimeout(() => {
+    const hint = document.getElementById('quoteHint');
+    if (hint) {
+      hint.style.display = 'flex';
+      localStorage.setItem('quoteHintSeen', 'true');
+    }
+  }, 1500);
+}
 
 function showReplyForm(postId, username) {
   currentReplyTo = postId;
   document.getElementById('parentPostId').value = postId || '';
   document.getElementById('replyingToUser').textContent = username;
   document.getElementById('replyingTo').style.display = 'flex';
-  document.getElementById('postContent').focus();
+  replyQuill.focus();
   document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth' });
 }
 
@@ -371,10 +434,23 @@ async function votePost(postId, voteType) {
 function quotePost(postId, content) {
   currentQuotedPost = postId;
   document.getElementById('quotedPostId').value = postId || '';
-  document.getElementById('quotedContent').innerHTML = '<i class="fas fa-quote-left"></i> ' + content;
+  
+  // Limpar HTML tags e mostrar apenas o texto
+  const tempDiv = document.createElement('div');
+  tempDiv.innerHTML = content;
+  const plainText = tempDiv.textContent || tempDiv.innerText || '';
+  
+  // Mostrar preview da citação
+  const quotedText = plainText.substring(0, 200) + (plainText.length > 200 ? '...' : '');
+  document.getElementById('quotedContent').innerHTML = 
+    '<i class="fas fa-quote-left"></i> ' + quotedText;
   document.getElementById('quotedContent').style.display = 'block';
-  document.getElementById('postContent').focus();
-  document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth' });
+  
+  // Não inserir no editor, apenas mostrar o preview
+  // O usuário digita sua resposta normalmente
+  
+  replyQuill.focus();
+  document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function reactToThread(threadId, reactionType) {
@@ -460,9 +536,20 @@ function removeReplyImage(index) {
 document.getElementById('postForm').addEventListener('submit', async (e) => {
   e.preventDefault();
   
-  const content = document.getElementById('postContent').value;
+  const content = replyQuill.root.innerHTML.trim();
+  const contentText = replyQuill.getText().trim();
   const parentPostId = document.getElementById('parentPostId').value;
   const quotedPostId = document.getElementById('quotedPostId').value;
+  
+  // Salvar conteúdo no input hidden
+  document.getElementById('postContent').value = content;
+  
+  // Validação
+  if (!contentText || contentText.length < 5) {
+    alert('A resposta deve ter pelo menos 5 caracteres');
+    replyQuill.focus();
+    return;
+  }
 
   try {
     // Usar FormData para enviar imagens
@@ -472,9 +559,11 @@ document.getElementById('postForm').addEventListener('submit', async (e) => {
     if (quotedPostId) formData.append('quotedPostId', quotedPostId);
     
     // Adicionar imagens
-    const files = replyImagesInput.files;
-    for (let i = 0; i < files.length; i++) {
-      formData.append('images', files[i]);
+    const replyImages = document.getElementById('replyImages');
+    if (replyImages && replyImages.files) {
+      for (let i = 0; i < replyImages.files.length; i++) {
+        formData.append('images', replyImages.files[i]);
+      }
     }
     
     const response = await fetch(window.location.pathname + '/reply', {

@@ -152,7 +152,10 @@
                         <% } else { %>
                             <a href="/dashboard-vendedor" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Acessar Dashboard</a>
                         <% } %>
-                        <button type="button" id="show-address-section-btn" class="btn btn-secondary" style="margin-top: 1rem; width: 100%;">Meus Dados</button>
+                        <a href="/forum/user/<%= profileUser.username || user.username %>" class="btn btn-secondary" style="margin-top: 0.5rem; width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                            <i class="fas fa-comments"></i> Perfil do Fórum
+                        </a>
+                        <button type="button" id="show-address-section-btn" class="btn btn-secondary" style="margin-top: 0.5rem; width: 100%;">Meus Dados</button>
                     <% } %>
                 </div>
             </div>

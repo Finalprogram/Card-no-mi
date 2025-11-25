@@ -27,6 +27,38 @@
     <% } %>
   </div>
 
+  <!-- Subfóruns -->
+  <% if (subforums && subforums.length > 0) { %>
+    <div class="subforums-section">
+      <h3 class="subforums-section-title">
+        <i class="fas fa-sitemap"></i> Subfóruns
+      </h3>
+      <div class="subforums-grid">
+        <% subforums.forEach(subforum => { %>
+          <a href="/forum/<%= subforum.slug %>" class="subforum-card" style="border-left-color: <%= subforum.color || category.color %>">
+            <div class="subforum-icon" style="background: <%= subforum.color || category.color %>20; color: <%= subforum.color || category.color %>">
+              <%= subforum.icon %>
+            </div>
+            <div class="subforum-info">
+              <h4 class="subforum-name"><%= subforum.name %></h4>
+              <p class="subforum-description"><%= subforum.description %></p>
+            </div>
+            <div class="subforum-stats">
+              <span class="subforum-stat">
+                <i class="fas fa-comments"></i>
+                <%= subforum.threadCount || 0 %>
+              </span>
+              <span class="subforum-stat">
+                <i class="fas fa-comment-dots"></i>
+                <%= subforum.postCount || 0 %>
+              </span>
+            </div>
+          </a>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
+
   <!-- Filtros e Busca -->
   <div class="category-filters">
     <div class="filter-group">

@@ -41,6 +41,22 @@
             <a href="/forum/<%= category.slug %>"><%= category.name %></a>
           </h2>
           <p class="category-description"><%= category.description %></p>
+          
+          <!-- Subfóruns -->
+          <% if (category.subforums && category.subforums.length > 0) { %>
+            <div class="subforums-list">
+              <span class="subforums-label"><i class="fas fa-sitemap"></i> Subfóruns:</span>
+              <% category.subforums.forEach((subforum, index) => { %>
+                <a href="/forum/<%= subforum.slug %>" class="subforum-link" style="color: <%= subforum.color || category.color %>">
+                  <%= subforum.icon %> <%= subforum.name %>
+                  <span class="subforum-count">(<%= subforum.threadCount || 0 %>)</span>
+                </a>
+                <% if (index < category.subforums.length - 1) { %>
+                  <span class="subforum-separator">•</span>
+                <% } %>
+              <% }) %>
+            </div>
+          <% } %>
         </div>
 
         <div class="category-stats">

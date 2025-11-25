@@ -4,6 +4,7 @@ const ForumPost = require('../models/ForumPost');
 const UserReputation = require('../models/UserReputation');
 const User = require('../models/User');
 const ModerationLog = require('../models/ModerationLog');
+const notificationService = require('../services/notificationService');
 const logger = require('../config/logger');
 
 // ============================================================================
@@ -15,12 +16,47 @@ const logger = require('../config/logger');
 // @access  Public
 exports.getForumIndex = async (req, res) => {
     try {
-        const categories = await ForumCategory.find({ isActive: true })
+        // Buscar apenas categorias principais (sem parent ou com parent null/undefined)
+        const categories = await ForumCategory.find({ 
+            isActive: true,
+            $or: [
+                { parentCategory: null },
+                { parentCategory: { $exists: false } }
+            ]
+        })
             .sort({ order: 1 })
             .lean();
 
-        // Buscar estatísticas para cada categoria
+        // Buscar estatísticas e subcategorias para cada categoria
         for (const category of categories) {
+            // Buscar subcategorias/subfóruns desta categoria
+            const subforums = await ForumCategory.find({
+                parentCategory: category._id,
+                isActive: true,
+                isSubforum: true
+            })
+                .sort({ order: 1 })
+                .lean();
+            
+            category.subforums = subforums;
+            
+            // Buscar estatísticas para cada subcategoria
+            for (const subforum of subforums) {
+                subforum.threadCount = await ForumThread.countDocuments({ 
+                    category: subforum._id,
+                    isDeleted: false 
+                });
+                
+                // Última atividade do subfórum
+                subforum.lastThread = await ForumThread.findOne({ 
+                    category: subforum._id,
+                    isDeleted: false 
+                })
+                    .sort({ lastActivity: -1 })
+                    .select('title slug lastActivity')
+                    .lean();
+            }
+            
             const threadCount = await ForumThread.countDocuments({ 
                 category: category._id,
                 isDeleted: false 
@@ -89,6 +125,33 @@ exports.getCategoryThreads = async (req, res) => {
         const category = await ForumCategory.findOne({ slug: categorySlug });
         if (!category) {
             return res.status(404).send('Categoria não encontrada');
+        }
+
+        // Buscar subfóruns desta categoria
+        const subforums = await ForumCategory.find({
+            parentCategory: category._id,
+            isActive: true,
+            isSubforum: true
+        })
+            .sort({ order: 1 })
+            .lean();
+        
+        // Buscar estatísticas para cada subfórum
+        for (const subforum of subforums) {
+            subforum.threadCount = await ForumThread.countDocuments({ 
+                category: subforum._id,
+                isDeleted: false 
+            });
+            
+            subforum.postCount = await ForumPost.countDocuments({ 
+                thread: { 
+                    $in: await ForumThread.find({ 
+                        category: subforum._id,
+                        isDeleted: false 
+                    }).select('_id')
+                },
+                isDeleted: false 
+            });
         }
 
         // Verificar se é admin
@@ -182,6 +245,7 @@ exports.getCategoryThreads = async (req, res) => {
 
         res.render('pages/forum/category', {
             category,
+            subforums,
             threads,
             currentPage: page,
             totalPages,
@@ -522,6 +586,27 @@ exports.createPost = async (req, res) => {
         await reputation.addPoints(5, 'Criou um post', thread._id, post._id);
         await reputation.checkAndAwardBadges();
 
+        // Carregar dados necessários para notificações
+        const threadWithCategory = await ForumThread.findById(thread._id)
+            .populate('category', 'slug')
+            .populate('author');
+        const postAuthor = await User.findById(userId);
+
+        // Criar notificações
+        // 1. Notificar autor da thread sobre nova resposta
+        await notificationService.notifyThreadReply(threadWithCategory, post, postAuthor);
+
+        // 2. Notificar usuários mencionados
+        await notificationService.notifyMention(content, threadWithCategory, post, postAuthor);
+
+        // 3. Se citou alguém, notificar
+        if (quotedPostId) {
+            const quotedPost = await ForumPost.findById(quotedPostId).populate('author');
+            if (quotedPost) {
+                await notificationService.notifyQuote(quotedPost, post, postAuthor);
+            }
+        }
+
         res.json({ success: true });
     } catch (error) {
         logger.error('Erro ao criar post:', error);
@@ -666,16 +751,53 @@ exports.getUserProfile = async (req, res) => {
             .lean();
 
         const recentPosts = await ForumPost.find(postQuery)
-            .populate('thread', 'title slug')
+            .populate({
+                path: 'thread',
+                select: 'title slug category',
+                populate: {
+                    path: 'category',
+                    select: 'slug'
+                }
+            })
             .sort({ createdAt: -1 })
             .limit(10)
             .lean();
 
-        res.render('pages/forum/user-profile', {
+        // Calcular estatísticas
+        const threadCount = await ForumThread.countDocuments({
+            author: user._id,
+            isDeleted: false
+        });
+        
+        const postCount = await ForumPost.countDocuments({
+            author: user._id,
+            isDeleted: false
+        });
+        
+        // Reputação
+        const reputationScore = reputation.totalPoints || 0;
+        const reputationLevel = reputation.title || 'Novato';
+        
+        // Data de registro formatada
+        const memberSince = new Date(user.createdAt).toLocaleDateString('pt-BR', {
+            year: 'numeric',
+            month: 'long'
+        });
+        
+        // Verificar se é o próprio usuário
+        const isOwnProfile = req.session.user && req.session.user.username === req.params.username;
+
+        res.render('pages/forum/profile', {
             profileUser: user,
             reputation,
             recentThreads,
             recentPosts,
+            threadCount,
+            postCount,
+            reputationScore,
+            reputationLevel,
+            memberSince,
+            isOwnProfile,
             user: req.session.user || null,
             pageTitle: `Perfil de ${user.username}`
         });

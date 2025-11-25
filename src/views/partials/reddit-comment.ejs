@@ -79,7 +79,7 @@
     <% } %>
 
     <div class="comment-content">
-      <%- post.content.replace(/\n/g, '<br>') %>
+      <%- post.content %>
     </div>
 
     <!-- Imagens do Post -->
@@ -93,12 +93,20 @@
       </div>
     <% } %>
 
+    <!-- Assinatura do Usuário -->
+    <% if (post.author.signature && post.author.signature.trim()) { %>
+      <div class="user-signature">
+        <div class="signature-divider"></div>
+        <div class="signature-content"><%= post.author.signature %></div>
+      </div>
+    <% } %>
+
     <div class="comment-actions">
       <% if (user) { %>
-        <button class="comment-action-btn" onclick="showReplyForm('<%= post._id %>', '<%= post.author.username %>')">
+        <button class="comment-action-btn btn-reply" onclick="showReplyForm('<%= post._id %>', '<%= post.author.username %>')">
           <i class="fas fa-reply"></i> Responder
         </button>
-        <button class="comment-action-btn" onclick="quotePost('<%= post._id %>', `<%= post.content.substring(0, 200).replace(/'/g, "\\'").replace(/\n/g, ' ') %>`)">
+        <button class="comment-action-btn btn-quote" onclick="quotePost('<%= post._id %>', `<%- post.content.replace(/'/g, "\\'") %>`)">
           <i class="fas fa-quote-left"></i> Citar
         </button>
         <% 

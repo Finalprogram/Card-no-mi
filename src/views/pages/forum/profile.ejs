@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><%= userProfile.username %> - Perfil | Card no Mi</title>
-    <link rel="stylesheet" href="/css/main.css">
+    <title><%= profileUser.username %> - Perfil | Card no Mi</title>
     <link rel="stylesheet" href="/css/forum.css">
 </head>
 <body>
@@ -12,60 +11,101 @@
     <%- include('../../partials/navbar') %>
 
     <main class="forum-container">
+        <!-- Breadcrumb -->
+        <div class="forum-breadcrumb">
+            <a href="/forum"><i class="fas fa-home"></i> Fórum</a>
+            <span class="separator">/</span>
+            <span class="current">Perfil de <%= profileUser.username %></span>
+        </div>
+
         <!-- Profile Header -->
         <div class="profile-header">
             <div class="profile-header-content">
                 <div class="profile-avatar-large">
-                    <% if (userProfile.avatar) { %>
-                        <img src="<%= userProfile.avatar %>" alt="<%= userProfile.username %>">
-                    <% } else { %>
-                        <div class="avatar-placeholder"><%= userProfile.username.charAt(0).toUpperCase() %></div>
-                    <% } %>
-                    <% if (reputation.level >= 10) { %>
-                        <span class="profile-badge-overlay" title="Nível <%= reputation.level %>">⭐</span>
+                    <img src="<%= profileUser.avatar || '/images/default-avatar.png' %>" 
+                         alt="<%= profileUser.username %>"
+                         onerror="this.src='/images/default-avatar.png'">
+                    <% if (reputationLevel !== 'Novato') { %>
+                        <span class="profile-badge-overlay" title="<%= reputationLevel %>">⭐</span>
                     <% } %>
                 </div>
                 
                 <div class="profile-info">
                     <h1 class="profile-username">
-                        <%= userProfile.username %>
-                        <% if (reputation.badges && reputation.badges.length > 0) { %>
-                            <span class="user-badges">
-                                <% reputation.badges.slice(0, 3).forEach(badge => { %>
-                                    <span class="badge-icon" title="<%= badge.description %>"><%= badge.icon %></span>
-                                <% }); %>
-                            </span>
+                        <%= profileUser.username %>
+                        <% if (profileUser.role === 'admin') { %>
+                            <span class="user-role-badge admin">👑 Admin</span>
+                        <% } else if (profileUser.accountType === 'shop') { %>
+                            <span class="user-role-badge seller">🏪 Loja</span>
                         <% } %>
                     </h1>
                     
+                    <% if (profileUser.forumTitle) { %>
+                        <div class="profile-custom-title"><%= profileUser.forumTitle %></div>
+                    <% } %>
+                    
                     <div class="profile-stats-inline">
                         <span class="stat-item">
-                            <strong>Nível <%= reputation.level %></strong> - <%= reputation.title %>
+                            <i class="fas fa-star"></i> <strong><%= reputationScore %></strong> pontos de reputação
                         </span>
                         <span class="stat-divider">•</span>
                         <span class="stat-item">
-                            <strong><%= reputation.totalPoints %></strong> pontos
+                            <i class="fas fa-calendar"></i> Membro desde <%= memberSince %>
                         </span>
-                        <span class="stat-divider">•</span>
-                        <span class="stat-item">
-                            Membro desde <%= new Date(userProfile.createdAt).toLocaleDateString('pt-BR', { month: 'short', year: 'numeric' }) %>
-                        </span>
+                        <% if (profileUser.location) { %>
+                            <span class="stat-divider">•</span>
+                            <span class="stat-item">
+                                <i class="fas fa-map-marker-alt"></i> <%= profileUser.location %>
+                            </span>
+                        <% } %>
                     </div>
 
-                    <% if (userProfile.bio) { %>
-                        <p class="profile-bio"><%= userProfile.bio %></p>
+                    <% if (profileUser.bio) { %>
+                        <p class="profile-bio"><%= profileUser.bio %></p>
+                    <% } %>
+                    
+                    <!-- Social Links -->
+                    <% if (profileUser.socialLinks && (profileUser.socialLinks.twitter || profileUser.socialLinks.instagram || profileUser.socialLinks.youtube || profileUser.socialLinks.twitch || profileUser.website)) { %>
+                        <div class="profile-social-links">
+                            <% if (profileUser.website) { %>
+                                <a href="<%= profileUser.website %>" target="_blank" rel="noopener noreferrer" class="social-link">
+                                    <i class="fas fa-globe"></i>
+                                </a>
+                            <% } %>
+                            <% if (profileUser.socialLinks.twitter) { %>
+                                <a href="https://twitter.com/<%= profileUser.socialLinks.twitter %>" target="_blank" rel="noopener noreferrer" class="social-link">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                            <% } %>
+                            <% if (profileUser.socialLinks.instagram) { %>
+                                <a href="https://instagram.com/<%= profileUser.socialLinks.instagram %>" target="_blank" rel="noopener noreferrer" class="social-link">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                            <% } %>
+                            <% if (profileUser.socialLinks.youtube) { %>
+                                <a href="https://youtube.com/@<%= profileUser.socialLinks.youtube %>" target="_blank" rel="noopener noreferrer" class="social-link">
+                                    <i class="fab fa-youtube"></i>
+                                </a>
+                            <% } %>
+                            <% if (profileUser.socialLinks.twitch) { %>
+                                <a href="https://twitch.tv/<%= profileUser.socialLinks.twitch %>" target="_blank" rel="noopener noreferrer" class="social-link">
+                                    <i class="fab fa-twitch"></i>
+                                </a>
+                            <% } %>
+                        </div>
+                    <% } %>
+                    
+                    <% if (isOwnProfile) { %>
+                        <div class="profile-actions">
+                            <a href="/forum/profile/edit" class="btn btn-primary">
+                                <i class="fas fa-edit"></i> Editar Perfil
+                            </a>
+                            <a href="/perfil/<%= user._id || user.id %>" class="btn btn-secondary">
+                                <i class="fas fa-store"></i> Perfil Marketplace
+                            </a>
+                        </div>
                     <% } %>
                 </div>
-            </div>
-
-            <!-- Progress Bar -->
-            <div class="level-progress">
-                <div class="progress-bar-container">
-                    <div class="progress-bar-fill" style="width: <%= (reputation.totalPoints % 100) %>%"></div>
-                </div>
-                <span class="progress-text">
-                    <%= reputation.totalPoints % 100 %>/100 para o próximo nível
-                </span>
             </div>
         </div>
 
@@ -73,54 +113,25 @@
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-icon">📝</div>
-                <div class="stat-value"><%= reputation.stats.threadsCreated || 0 %></div>
+                <div class="stat-value"><%= threadCount %></div>
                 <div class="stat-label">Threads Criadas</div>
             </div>
             <div class="stat-card">
                 <div class="stat-icon">💬</div>
-                <div class="stat-value"><%= reputation.stats.postsCreated || 0 %></div>
+                <div class="stat-value"><%= postCount %></div>
                 <div class="stat-label">Posts</div>
             </div>
             <div class="stat-card">
-                <div class="stat-icon">👍</div>
-                <div class="stat-value"><%= reputation.stats.reactionsReceived || 0 %></div>
-                <div class="stat-label">Reações Recebidas</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">✅</div>
-                <div class="stat-value"><%= reputation.stats.bestAnswers || 0 %></div>
-                <div class="stat-label">Melhores Respostas</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🏆</div>
-                <div class="stat-value"><%= reputation.badges ? reputation.badges.length : 0 %></div>
-                <div class="stat-label">Conquistas</div>
-            </div>
-            <div class="stat-card">
                 <div class="stat-icon">⭐</div>
-                <div class="stat-value"><%= reputation.stats.helpfulVotes || 0 %></div>
-                <div class="stat-label">Votos Úteis</div>
+                <div class="stat-value"><%= reputationScore %></div>
+                <div class="stat-label">Reputação</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">🏅</div>
+                <div class="stat-value"><%= reputationLevel %></div>
+                <div class="stat-label">Nível</div>
             </div>
         </div>
-
-        <!-- Badges Section -->
-        <% if (reputation.badges && reputation.badges.length > 0) { %>
-            <div class="profile-section">
-                <h2 class="section-title">🏆 Conquistas (<%= reputation.badges.length %>)</h2>
-                <div class="badges-grid">
-                    <% reputation.badges.forEach(badge => { %>
-                        <div class="badge-card">
-                            <div class="badge-icon-large"><%= badge.icon %></div>
-                            <div class="badge-name"><%= badge.name %></div>
-                            <div class="badge-description"><%= badge.description %></div>
-                            <div class="badge-date">
-                                Conquistado em <%= new Date(badge.earnedAt).toLocaleDateString('pt-BR') %>
-                            </div>
-                        </div>
-                    <% }); %>
-                </div>
-            </div>
-        <% } %>
 
         <!-- Recent Activity -->
         <div class="profile-section">
@@ -167,16 +178,11 @@
                                 
                                 <div class="thread-stats">
                                     <span class="stat" title="Visualizações">
-                                        👁️ <%= thread.viewCount || 0 %>
+                                        <i class="fas fa-eye"></i> <%= thread.viewCount || 0 %>
                                     </span>
                                     <span class="stat" title="Respostas">
-                                        💬 <%= thread.replyCount || 0 %>
+                                        <i class="fas fa-comments"></i> <%= thread.postCount || 0 %>
                                     </span>
-                                    <% if (thread.reactions && thread.reactions.length > 0) { %>
-                                        <span class="stat" title="Reações">
-                                            ❤️ <%= thread.reactions.length %>
-                                        </span>
-                                    <% } %>
                                 </div>
                             </a>
                         <% }); %>
@@ -204,15 +210,6 @@
                                     <%= post.content.substring(0, 200) %><%= post.content.length > 200 ? '...' : '' %>
                                 </div>
                                 <div class="post-preview-footer">
-                                    <% if (post.reactions && post.reactions.length > 0) { %>
-                                        <span class="post-reactions">
-                                            <% const reactionCounts = {}; %>
-                                            <% post.reactions.forEach(r => reactionCounts[r.emoji] = (reactionCounts[r.emoji] || 0) + 1); %>
-                                            <% Object.entries(reactionCounts).slice(0, 3).forEach(([emoji, count]) => { %>
-                                                <span class="reaction-count"><%= emoji %> <%= count %></span>
-                                            <% }); %>
-                                        </span>
-                                    <% } %>
                                     <a href="/forum/<%= post.thread.category.slug %>/<%= post.thread.slug %>#post-<%= post._id %>" class="view-post-link">
                                         Ver post →
                                     </a>

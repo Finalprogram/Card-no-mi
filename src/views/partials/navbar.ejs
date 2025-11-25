@@ -44,6 +44,12 @@
 
       <div class="navbar-actions">
           <% if (user) { %>
+              <!-- Notificações -->
+              <a href="/forum/notifications" class="notification-bell">
+                  <i class="fas fa-bell"></i>
+                  <span class="notification-badge" style="display: none;">0</span>
+              </a>
+              
               <a href="/vender" class="btn-primary btn-sell-now-navbar">Vender Agora</a>
               <div class="user-dropdown">
                   <div class="dropdown-toggle">
@@ -52,6 +58,13 @@
                       <span class="dropdown-arrow">▼</span>
                   </div>
                   <div class="dropdown-menu">
+                      <a href="/forum/user/<%= user.username %>" class="dropdown-item">
+                          <i class="fas fa-user"></i> Perfil do Fórum
+                      </a>
+                      <a href="/forum/notifications" class="dropdown-item">
+                          <i class="fas fa-bell"></i> Notificações
+                      </a>
+                      <div class="dropdown-divider"></div>
                       <a href="/perfil/<%= user.id %>" class="dropdown-item">Meu Perfil</a>
                       <a href="/meus-anuncios" class="dropdown-item">Meus Anúncios</a>
                       <a href="/meus-pedidos" class="dropdown-item">Minhas Compras</a>
@@ -61,6 +74,33 @@
                       <a href="/auth/logout" class="dropdown-item logout-btn">Sair</a>
                   </div>
               </div>
+              
+              <!-- Script para atualizar notificações -->
+              <script>
+                async function updateNotificationCount() {
+                  try {
+                    const response = await fetch('/forum/api/notifications/unread-count');
+                    const data = await response.json();
+                    const badge = document.querySelector('.notification-badge');
+                    if (badge && data.count !== undefined) {
+                      if (data.count > 0) {
+                        badge.textContent = data.count > 99 ? '99+' : data.count;
+                        badge.style.display = 'block';
+                      } else {
+                        badge.style.display = 'none';
+                      }
+                    }
+                  } catch (error) {
+                    console.error('Erro ao buscar notificações:', error);
+                  }
+                }
+                
+                // Atualizar ao carregar a página
+                updateNotificationCount();
+                
+                // Atualizar a cada 30 segundos
+                setInterval(updateNotificationCount, 30000);
+              </script>
           <% } else { %>
               <a href="/auth/login" class="btn-secondary">Entrar</a>
               <a href="/auth/register" class="btn-primary">Cadastrar</a>

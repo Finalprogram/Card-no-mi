@@ -12,6 +12,19 @@ const UserSchema = new mongoose.Schema({
   verificationToken: { type: String },
   verificationTokenExpires: { type: Date },
   
+  // Perfil do Fórum
+  bio: { type: String, maxlength: 500, default: '' },
+  signature: { type: String, maxlength: 200, default: '' },
+  forumTitle: { type: String, maxlength: 50, default: '' }, // Ex: "Jogador Veterano", "Colecionador"
+  website: { type: String },
+  location: { type: String },
+  socialLinks: {
+    twitter: { type: String },
+    instagram: { type: String },
+    youtube: { type: String },
+    twitch: { type: String }
+  },
+  
   accountType: {
     type: String,
     // Adicionamos o tipo 'admin'
