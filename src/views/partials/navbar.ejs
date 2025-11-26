@@ -109,36 +109,27 @@
                 // Função para atualizar o contador de notificações
                 async function updateNotificationCount() {
                   try {
-                    console.log('🔔 Buscando contagem de notificações...');
                     const response = await fetch('/forum/api/notifications/unread-count');
-                    console.log('📡 Response status:', response.status);
                     const data = await response.json();
-                    console.log('📊 Dados recebidos:', data);
                     const badge = document.querySelector('.notification-badge');
-                    console.log('🎯 Badge element:', badge);
                     if (badge && data.count !== undefined) {
                       if (data.count > 0) {
                         badge.textContent = data.count > 99 ? '99+' : data.count;
                         badge.style.display = 'block';
-                        console.log('✅ Badge atualizado com count:', data.count);
                       } else {
                         badge.style.display = 'none';
-                        console.log('ℹ️ Sem notificações não lidas');
                       }
                     }
                   } catch (error) {
-                    console.error('❌ Erro ao buscar notificações:', error);
+                    console.error('Erro ao buscar notificações:', error);
                   }
                 }
                 
                 // Função para carregar notificações recentes
                 async function loadRecentNotifications() {
                   try {
-                    console.log('📥 Carregando notificações recentes...');
                     const response = await fetch('/forum/api/notifications/recent');
-                    console.log('📡 Response status:', response.status);
                     const data = await response.json();
-                    console.log('📋 Notificações recebidas:', data);
                     
                     if (data.notifications && data.notifications.length > 0) {
                       notificationList.innerHTML = data.notifications.map(notif => {

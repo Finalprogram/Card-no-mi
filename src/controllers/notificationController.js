@@ -45,17 +45,11 @@ exports.getNotifications = async (req, res) => {
 // @access  Private
 exports.getUnreadCount = async (req, res) => {
   try {
-    console.log('🔔 getUnreadCount chamado');
-    console.log('👤 req.session.user:', req.session.user);
-    
     if (!req.session.user) {
-      console.log('❌ Sem usuário na sessão');
       return res.json({ count: 0 });
     }
     
-    console.log('🆔 User ID:', req.session.user.id);
     const count = await Notification.getUnreadCount(req.session.user.id);
-    console.log('📊 Count retornado:', count);
     res.json({ count });
     
   } catch (error) {
@@ -69,21 +63,15 @@ exports.getUnreadCount = async (req, res) => {
 // @access  Private
 exports.getRecentNotifications = async (req, res) => {
   try {
-    console.log('📥 getRecentNotifications chamado');
-    console.log('👤 req.session.user:', req.session.user);
-    
     if (!req.session.user) {
-      console.log('❌ Sem usuário na sessão');
       return res.json({ notifications: [] });
     }
     
-    console.log('🆔 User ID:', req.session.user.id);
     const notifications = await Notification.getUserNotifications(
       req.session.user.id,
       5,
       0
     );
-    console.log('📋 Notificações encontradas:', notifications.length);
     
     res.json({ notifications });
     
