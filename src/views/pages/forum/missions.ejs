@@ -1,0 +1,128 @@
+<%- include('../../partials/header') %>
+<link rel="stylesheet" href="/css/achievements.css">
+
+<div class="missions-container">
+    <!-- Header -->
+    <div class="missions-header">
+        <h2>⚔️ Missões Diárias</h2>
+        <p>Complete missões diárias para ganhar pontos de facção</p>
+        <% if (progress && progress.missions && progress.missions.length > 0) { %>
+        <small style="opacity: 0.9;">Última atualização: <%= new Date(progress.lastUpdate).toLocaleString('pt-BR') %></small>
+        <% } %>
+    </div>
+
+    <!-- Missões -->
+    <% if (progress && progress.missions && progress.missions.length > 0) { %>
+        <% progress.missions.forEach(mission => { %>
+        <div class="mission-card <%= mission.isCompleted ? 'completed' : '' %>">
+            <div class="mission-content">
+                <div class="mission-icon-large">
+                    <%= mission.icon %>
+                </div>
+                <div class="mission-info">
+                    <div class="mission-title">
+                        <%= mission.name %>
+                        <% if (mission.isCompleted) { %>
+                        <span class="mission-status-badge">✓ Completa</span>
+                        <% } %>
+                    </div>
+                    <p class="mission-description"><%= mission.description %></p>
+                    <div class="mission-progress-bar">
+                        <div class="mission-progress-fill <%= mission.isCompleted ? 'completed' : '' %>" 
+                             style="width: <%= mission.progressPercentage %>%;">
+                            <%= mission.currentProgress %> / <%= mission.targetCount %>
+                        </div>
+                    </div>
+                    <% if (!mission.isCompleted) { %>
+                    <p class="mission-progress-text">
+                        <%= mission.progressPercentage %>% concluída
+                    </p>
+                    <% } %>
+                </div>
+                <div class="mission-reward">
+                    <div class="mission-reward-badge">
+                        🏴‍☠️ +<%= mission.rewardPoints %> Pontos
+                    </div>
+                    <% if (mission.isCompleted) { %>
+                    <small class="mission-completion-time">
+                        Completada em <%= new Date(mission.completedAt).toLocaleTimeString('pt-BR') %>
+                    </small>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+        <% }); %>
+    <% } else { %>
+        <div class="alert-info">
+            <h5>📋 Nenhuma missão disponível hoje</h5>
+            <p>As missões são redefinidas diariamente. Volte amanhã!</p>
+        </div>
+    <% } %>
+
+    <!-- Resumo -->
+    <% if (progress && progress.missions && progress.missions.length > 0) { %>
+    <div class="missions-summary">
+        <div class="summary-grid">
+            <div class="summary-item complete">
+                <h3><%= progress.missions.filter(m => m.isCompleted).length %></h3>
+                <p>Missões Completas</p>
+            </div>
+            <div class="summary-item progress">
+                <h3><%= progress.missions.length - progress.missions.filter(m => m.isCompleted).length %></h3>
+                <p>Em Progresso</p>
+            </div>
+            <div class="summary-item points">
+                <h3><%= progress.missions.filter(m => m.isCompleted).reduce((sum, m) => sum + m.rewardPoints, 0) %></h3>
+                <p>Pontos Ganhos Hoje</p>
+            </div>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Info adicional -->
+    <div class="info-box">
+        <h5>ℹ️ Como funcionam as missões?</h5>
+        <ul>
+            <li>
+                <strong>Reiniciam diariamente:</strong>
+                Novas missões aparecem todo dia às 00:00
+            </li>
+            <li>
+                <strong>Ganhe pontos de facção:</strong>
+                Complete missões para fortalecer sua facção
+            </li>
+            <li>
+                <strong>Progresso em tempo real:</strong>
+                Seu progresso é atualizado automaticamente
+            </li>
+            <li>
+                <strong>Recompensas instantâneas:</strong>
+                Os pontos são creditados assim que você completa a missão
+            </li>
+        </ul>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="/forum" class="btn-action btn-secondary">Voltar ao Fórum</a>
+        <a href="/forum/achievements" class="btn-action btn-primary">Ver Conquistas</a>
+    </div>
+</div>
+
+<script>
+// Auto-atualizar progresso a cada 30 segundos
+setInterval(async () => {
+    try {
+        const response = await fetch('/forum/api/missions/today');
+        const data = await response.json();
+        if (data.success) {
+            // Recarregar página se houver mudanças significativas
+            location.reload();
+        }
+    } catch (error) {
+        console.error('Erro ao atualizar missões:', error);
+    }
+}, 30000);
+</script>
+
+<%- include('../../partials/footer') %>

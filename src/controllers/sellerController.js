@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Setting = require('../models/Setting');
 const melhorEnvioClient = require('../services/melhorEnvioClient'); // Importar o cliente do Melhor Envio
 const emailService = require('../services/emailService'); // Importar o serviço de e-mail
+const notificationService = require('../services/notificationService');
 
 const getSalesData = async (sellerId, period) => {
   let startDate;
@@ -264,6 +265,9 @@ const markAsShipped = async (req, res) => {
     order.status = 'Shipped';
     order.trackingCode = trackingCode;
     await order.save();
+
+    // Notificar comprador que pedido foi enviado
+    await notificationService.notifyOrderStatus(order.user, order._id, 'Shipped');
 
     res.status(200).json({ message: 'Pedido marcado como enviado com sucesso.' });
 

@@ -81,13 +81,15 @@
                   <%= category.lastThread.title.substring(0, 60) %><%= category.lastThread.title.length > 60 ? '...' : '' %>
                 </a>
                 <div class="activity-meta">
-                  <img src="<%= category.lastThread.author.avatar || '/images/default-avatar.png' %>" 
-                       alt="<%= category.lastThread.author.username %>" 
-                       class="activity-avatar">
-                  <% if (category.lastThread.author.faction) { %>
-                    <span style="font-size: 2.6em;">
-                      <%= category.lastThread.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
-                    </span>
+                  <% if (category.lastThread.author) { %>
+                    <img src="<%= category.lastThread.author.avatar || '/images/default-avatar.png' %>" 
+                         alt="<%= category.lastThread.author.username %>" 
+                         class="activity-avatar">
+                    <% if (category.lastThread.author.faction) { %>
+                      <span style="font-size: 2.6em;">
+                        <%= category.lastThread.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+                      </span>
+                    <% } %>
                   <% } %>
                   <span class="activity-time">
                     <i class="far fa-clock"></i>

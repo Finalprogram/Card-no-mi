@@ -27,6 +27,10 @@
       <div class="dropdown-menu-navbar">
         <a href="/comunidade" class="dropdown-item-navbar">Página da Comunidade</a>
         <a href="/forum" class="dropdown-item-navbar">Fórum</a>
+        <% if (user) { %>
+        <a href="/forum/achievements" class="dropdown-item-navbar">🏆 Conquistas</a>
+        <a href="/forum/missions" class="dropdown-item-navbar">⚔️ Missões Diárias</a>
+        <% } %>
       </div>
     </li>
     <li><a href="/about">Sobre</a></li>
@@ -175,10 +179,17 @@
                   const icons = {
                     'thread_reply': '<i class="fas fa-reply"></i>',
                     'post_reply': '<i class="fas fa-comment"></i>',
+                    'reply': '<i class="fas fa-comment"></i>',
                     'mention': '<i class="fas fa-at"></i>',
+                    'quote': '<i class="fas fa-quote-left"></i>',
                     'upvote': '<i class="fas fa-arrow-up"></i>',
                     'thread_pinned': '<i class="fas fa-thumbtack"></i>',
+                    'thread_moved': '<i class="fas fa-exchange-alt"></i>',
+                    'thread_locked': '<i class="fas fa-lock"></i>',
                     'rank_up': '<i class="fas fa-level-up-alt"></i>',
+                    'reputation': '<i class="fas fa-star"></i>',
+                    'sale': '<i class="fas fa-shopping-cart"></i>',
+                    'order_status': '<i class="fas fa-box"></i>',
                     'system': '<i class="fas fa-info-circle"></i>'
                   };
                   return icons[type] || '<i class="fas fa-bell"></i>';

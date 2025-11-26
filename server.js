@@ -194,9 +194,11 @@ app.use('/cart', cartRoutes);
 app.use('/checkout', checkoutRoutes);
 app.use('/payment', paymentRoutes);
 app.use('/', reviewRoutes);
-app.use('/forum', reportCounter, forumRoutes);
+app.use('/forum', require('./src/routes/achievementRoutes'));
+app.use('/forum', require('./src/routes/reactionRoutes'));
 app.use('/forum', profileRoutes);
 app.use('/forum', notificationRoutes);
+app.use('/forum', reportCounter, forumRoutes);
 app.use('/admin', adminRoutes);
 app.use('/welcome', welcomeRoutes);
 

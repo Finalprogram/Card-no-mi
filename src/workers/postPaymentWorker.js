@@ -9,6 +9,7 @@ const { addItemToCart, purchaseShipments, generateLabels, printLabels } = requir
 const { estimatePackageDims } = require('../services/packaging');
 const { sendEmail } = require('../services/emailService');
 const { updateSellerBalancesForOrder } = require('../services/balanceService');
+const notificationService = require('../services/notificationService');
 
 // Helper function to get seller's origin CEP (copied from paymentController)
 async function getSellerOriginCep(sellerId) {
@@ -182,6 +183,28 @@ if (redisConnection && redisConnection.status === 'ready') {
     // Update seller balances (add to pending)
     await updateSellerBalancesForOrder(orderId);
     logger.info(`[worker] Seller balances updated for order ${orderId}`);
+
+    // Notify buyer that order was confirmed
+    await notificationService.notifyOrderStatus(order.user._id, orderId, 'Paid');
+    
+    // Notify each seller about their sales
+    const buyerUsername = order.user.username || order.user.fullName;
+    for (const item of order.items) {
+      const listing = await Listing.findById(item.listing).populate('card');
+      if (listing) {
+        const cardName = listing.card?.name || 'Carta';
+        const totalPrice = item.price * item.quantity;
+        await notificationService.notifySale(
+          item.seller,
+          buyerUsername,
+          cardName,
+          item.quantity,
+          totalPrice,
+          orderId
+        );
+      }
+    }
+    logger.info(`[worker] Notifications sent for order ${orderId}`);
 
   } catch (error) {
     logger.error(`[worker] Error processing order ${orderId}:`, error);

@@ -64,8 +64,18 @@ router.get('/api/cards/all', cardController.getAllCards);
 router.get('/api/cards/available', cardController.getAvailableCards);
 
 /**
+ * Rota da API para buscar cartas Líder.
+ * IMPORTANTE: Esta rota DEVE vir antes de /api/cards/:id para não ser confundida com um ID.
+ * @name GET /api/cards/leaders
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
+router.get('/api/cards/leaders', cardController.getLeaders);
+
+/**
  * Rota da API para obter detalhes de uma carta por ID.
- * IMPORTANTE: Esta rota DEVE vir após rotas específicas (/available, /all, /search, etc).
+ * IMPORTANTE: Esta rota DEVE vir após rotas específicas (/available, /leaders, /all, /search, etc).
  * @name GET /api/cards/:id
  * @function
  * @memberof module:routes/cardRoutes
@@ -81,15 +91,6 @@ router.get('/api/cards/:id', cardController.getCardById);
  * @inner
  */
 router.get('/api/decks/search-cards', cardController.searchForDeckBuilder);
-
-/**
- * Rota da API para buscar cartas Líder.
- * @name GET /api/cards/leaders
- * @function
- * @memberof module:routes/cardRoutes
- * @inner
- */
-router.get('/api/cards/leaders', cardController.getLeaders);
 
 /**
  * Rota de debug para buscar uma carta pelo nome e logar seus detalhes.

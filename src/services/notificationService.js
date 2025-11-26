@@ -235,6 +235,112 @@ class NotificationService {
       logger.error('Erro ao criar notificação de reputação:', error);
     }
   }
+
+  /**
+   * Notifica o vendedor quando uma venda é concluída
+   */
+  async notifySale(sellerId, buyerUsername, cardName, quantity, price, orderId) {
+    try {
+      await Notification.createNotification({
+        recipient: sellerId,
+        sender: sellerId, // Sistema
+        type: 'sale',
+        title: '💰 Você fez uma venda!',
+        message: `${buyerUsername} comprou ${quantity}x ${cardName} por R$ ${price.toFixed(2)}`,
+        icon: 'fa-shopping-cart',
+        color: '#10b981',
+        link: `/meus-pedidos-vendidos?order=${orderId}`,
+      });
+      logger.info(`📧 Notificação de venda criada para vendedor ${sellerId}`);
+    } catch (error) {
+      logger.error('Erro ao criar notificação de venda:', error);
+    }
+  }
+
+  /**
+   * Notifica quando o usuário desbloqueia uma conquista
+   */
+  async notifyAchievement(userId, achievement) {
+    try {
+      await Notification.createNotification({
+        recipient: userId,
+        sender: userId, // Sistema
+        type: 'badge_earned',
+        title: `🏆 Conquista desbloqueada!`,
+        message: `Você desbloqueou: ${achievement.name}`,
+        icon: achievement.icon || 'fa-trophy',
+        color: '#FFB800',
+        link: `/forum/achievements`,
+        metadata: { achievementId: achievement._id }
+      });
+      
+      logger.info(`🏆 Notificação de conquista criada para usuário ${userId}`);
+    } catch (error) {
+      logger.error('Erro ao criar notificação de conquista:', error);
+    }
+  }
+
+  /**
+   * Notifica o comprador quando o status do pedido muda
+   */
+  async notifyOrderStatus(buyerId, orderId, newStatus) {
+    try {
+      const statusMessages = {
+        'Paid': {
+          title: '✅ Pagamento confirmado!',
+          message: 'Seu pedido foi confirmado e está sendo preparado para envio.',
+          color: '#10b981',
+          icon: 'fa-check-circle'
+        },
+        'Shipped': {
+          title: '📦 Pedido enviado!',
+          message: 'Seu pedido foi enviado e está a caminho.',
+          color: '#3b82f6',
+          icon: 'fa-shipping-fast'
+        },
+        'Delivered': {
+          title: '🎉 Pedido entregue!',
+          message: 'Seu pedido foi entregue. Aproveite suas cartas!',
+          color: '#10b981',
+          icon: 'fa-check-circle'
+        },
+        'Cancelled': {
+          title: '❌ Pedido cancelado',
+          message: 'Seu pedido foi cancelado.',
+          color: '#ef4444',
+          icon: 'fa-times-circle'
+        },
+        'PendingPayment': {
+          title: '⏳ Aguardando pagamento',
+          message: 'Estamos aguardando a confirmação do seu pagamento.',
+          color: '#f59e0b',
+          icon: 'fa-clock'
+        }
+      };
+
+      const statusInfo = statusMessages[newStatus] || {
+        title: '📋 Status do pedido atualizado',
+        message: `Status do seu pedido foi atualizado para: ${newStatus}`,
+        color: '#6b7280',
+        icon: 'fa-info-circle'
+      };
+
+      await Notification.createNotification({
+        recipient: buyerId,
+        sender: buyerId, // Sistema
+        type: 'order_status',
+        title: statusInfo.title,
+        message: statusInfo.message,
+        icon: statusInfo.icon,
+        color: statusInfo.color,
+        link: `/meus-pedidos?order=${orderId}`,
+      });
+      
+      logger.info(`📧 Notificação de status de pedido criada para comprador ${buyerId}: ${newStatus}`);
+    } catch (error) {
+      logger.error('Erro ao criar notificação de status de pedido:', error);
+    }
+  }
 }
 
 module.exports = new NotificationService();

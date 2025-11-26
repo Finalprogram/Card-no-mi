@@ -1,0 +1,248 @@
+<%- include('../../partials/header') %>
+<link rel="stylesheet" href="/css/achievements.css">
+
+<div class="achievements-container">
+    <!-- Header -->
+    <div class="achievements-header">
+        <h2>🏆 Conquistas</h2>
+        <p>Desbloqueie conquistas participando da comunidade</p>
+        <div class="overall-progress">
+            <div class="progress-stats">
+                <%= unlockedAchievements %> / <%= totalAchievements %> Conquistadas
+            </div>
+            <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: <%= progress %>%;">
+                    <%= progress %>%
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Posts Achievements -->
+    <% if (achievements.posts && achievements.posts.length > 0) { %>
+    <div class="achievement-category">
+        <div class="category-header posts">
+            📝 Conquistas de Posts
+        </div>
+        <div class="achievements-grid">
+            <% achievements.posts.forEach(item => { %>
+            <div class="achievement-card <%= item.isUnlocked ? 'unlocked' : '' %>">
+                <div class="achievement-header-card">
+                    <div class="achievement-title">
+                        <span class="achievement-icon"><%= item.achievement.icon %></span>
+                        <span><%= item.achievement.name %></span>
+                    </div>
+                    <% if (item.isUnlocked) { %>
+                    <span class="achievement-badge">✓</span>
+                    <% } %>
+                </div>
+                <p class="achievement-description"><%= item.achievement.description %></p>
+                <div class="achievement-meta">
+                    <span class="tier-badge <%= item.achievement.tier %>">
+                        <%= item.achievement.tier %>
+                    </span>
+                    <span class="points-badge">
+                        +<%= item.achievement.rewardPoints %> pontos
+                    </span>
+                </div>
+                <% if (!item.isUnlocked) { %>
+                <div class="achievement-progress">
+                    <div class="achievement-progress-bar" style="width: <%= item.progressPercentage %>%;">
+                        <%= item.currentValue %> / <%= item.achievement.requirement %>
+                    </div>
+                </div>
+                <% } else { %>
+                <p class="achievement-unlocked-date">
+                    Desbloqueada em <%= new Date(item.unlockedAt).toLocaleDateString('pt-BR') %>
+                </p>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Threads Achievements -->
+    <% if (achievements.threads && achievements.threads.length > 0) { %>
+    <div class="achievement-category">
+        <div class="category-header threads">
+            💬 Conquistas de Tópicos
+        </div>
+        <div class="achievements-grid">
+            <% achievements.threads.forEach(item => { %>
+            <div class="achievement-card <%= item.isUnlocked ? 'unlocked' : '' %>">
+                <div class="achievement-header-card">
+                    <div class="achievement-title">
+                        <span class="achievement-icon"><%= item.achievement.icon %></span>
+                        <span><%= item.achievement.name %></span>
+                    </div>
+                    <% if (item.isUnlocked) { %>
+                    <span class="achievement-badge">✓</span>
+                    <% } %>
+                </div>
+                <p class="achievement-description"><%= item.achievement.description %></p>
+                <div class="achievement-meta">
+                    <span class="tier-badge <%= item.achievement.tier %>">
+                        <%= item.achievement.tier %>
+                    </span>
+                    <span class="points-badge">
+                        +<%= item.achievement.rewardPoints %> pontos
+                    </span>
+                </div>
+                <% if (!item.isUnlocked) { %>
+                <div class="achievement-progress">
+                    <div class="achievement-progress-bar" style="width: <%= item.progressPercentage %>%;">
+                        <%= item.currentValue %> / <%= item.achievement.requirement %>
+                    </div>
+                </div>
+                <% } else { %>
+                <p class="achievement-unlocked-date">
+                    Desbloqueada em <%= new Date(item.unlockedAt).toLocaleDateString('pt-BR') %>
+                </p>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Reactions Achievements -->
+    <% if (achievements.reactions && achievements.reactions.length > 0) { %>
+    <div class="achievement-category">
+        <div class="category-header reactions">
+            ❤️ Conquistas de Reações
+        </div>
+        <div class="achievements-grid">
+            <% achievements.reactions.forEach(item => { %>
+            <div class="achievement-card <%= item.isUnlocked ? 'unlocked' : '' %>">
+                <div class="achievement-header-card">
+                    <div class="achievement-title">
+                        <span class="achievement-icon"><%= item.achievement.icon %></span>
+                        <span><%= item.achievement.name %></span>
+                    </div>
+                    <% if (item.isUnlocked) { %>
+                    <span class="achievement-badge">✓</span>
+                    <% } %>
+                </div>
+                <p class="achievement-description"><%= item.achievement.description %></p>
+                <div class="achievement-meta">
+                    <span class="tier-badge <%= item.achievement.tier %>">
+                        <%= item.achievement.tier %>
+                    </span>
+                    <span class="points-badge">
+                        +<%= item.achievement.rewardPoints %> pontos
+                    </span>
+                </div>
+                <% if (!item.isUnlocked) { %>
+                <div class="achievement-progress">
+                    <div class="achievement-progress-bar" style="width: <%= item.progressPercentage %>%;">
+                        <%= item.currentValue %> / <%= item.achievement.requirement %>
+                    </div>
+                </div>
+                <% } else { %>
+                <p class="achievement-unlocked-date">
+                    Desbloqueada em <%= new Date(item.unlockedAt).toLocaleDateString('pt-BR') %>
+                </p>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Faction Achievements -->
+    <% if (achievements.faction && achievements.faction.length > 0) { %>
+    <div class="achievement-category">
+        <div class="category-header faction">
+            ⚔️ Conquistas de Facção
+        </div>
+        <div class="achievements-grid">
+            <% achievements.faction.forEach(item => { %>
+            <div class="achievement-card <%= item.isUnlocked ? 'unlocked' : '' %>">
+                <div class="achievement-header-card">
+                    <div class="achievement-title">
+                        <span class="achievement-icon"><%= item.achievement.icon %></span>
+                        <span><%= item.achievement.name %></span>
+                    </div>
+                    <% if (item.isUnlocked) { %>
+                    <span class="achievement-badge">✓</span>
+                    <% } %>
+                </div>
+                <p class="achievement-description"><%= item.achievement.description %></p>
+                <div class="achievement-meta">
+                    <span class="tier-badge <%= item.achievement.tier %>">
+                        <%= item.achievement.tier %>
+                    </span>
+                    <span class="points-badge">
+                        +<%= item.achievement.rewardPoints %> pontos
+                    </span>
+                </div>
+                <% if (!item.isUnlocked) { %>
+                <div class="achievement-progress">
+                    <div class="achievement-progress-bar" style="width: <%= item.progressPercentage %>%;">
+                        <%= item.currentValue %> / <%= item.achievement.requirement %>
+                    </div>
+                </div>
+                <% } else { %>
+                <p class="achievement-unlocked-date">
+                    Desbloqueada em <%= new Date(item.unlockedAt).toLocaleDateString('pt-BR') %>
+                </p>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Special Achievements -->
+    <% if (achievements.special && achievements.special.length > 0) { %>
+    <div class="achievement-category">
+        <div class="category-header special">
+            ⭐ Conquistas Especiais
+        </div>
+        <div class="achievements-grid">
+            <% achievements.special.forEach(item => { %>
+            <div class="achievement-card <%= item.isUnlocked ? 'unlocked' : '' %>">
+                <div class="achievement-header-card">
+                    <div class="achievement-title">
+                        <span class="achievement-icon"><%= item.achievement.icon %></span>
+                        <span><%= item.achievement.name %></span>
+                    </div>
+                    <% if (item.isUnlocked) { %>
+                    <span class="achievement-badge">✓</span>
+                    <% } %>
+                </div>
+                <p class="achievement-description"><%= item.achievement.description %></p>
+                <div class="achievement-meta">
+                    <span class="tier-badge <%= item.achievement.tier %>">
+                        <%= item.achievement.tier %>
+                    </span>
+                    <span class="points-badge">
+                        +<%= item.achievement.rewardPoints %> pontos
+                    </span>
+                </div>
+                <% if (!item.isUnlocked) { %>
+                <div class="achievement-progress">
+                    <div class="achievement-progress-bar" style="width: <%= item.progressPercentage %>%;">
+                        <%= item.currentValue %> / <%= item.achievement.requirement %>
+                    </div>
+                </div>
+                <% } else { %>
+                <p class="achievement-unlocked-date">
+                    Desbloqueada em <%= new Date(item.unlockedAt).toLocaleDateString('pt-BR') %>
+                </p>
+                <% } %>
+            </div>
+            <% }); %>
+        </div>
+    </div>
+    <% } %>
+
+    <!-- Action Buttons -->
+    <div class="action-buttons">
+        <a href="/forum" class="btn-action btn-secondary">Voltar ao Fórum</a>
+        <a href="/forum/missions" class="btn-action btn-primary">Ver Missões Diárias</a>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

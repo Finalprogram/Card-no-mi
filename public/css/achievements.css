@@ -1,0 +1,570 @@
+﻿/* ==========================================
+   CONQUISTAS E MISSÃ•ES - ESTILOS
+   ========================================== */
+
+/* Container principal */
+.achievements-container,
+.missions-container {
+    max-width: 1400px;
+    margin: 80px auto 40px;
+    padding: 0 var(--spacing-page, 32px);
+}
+
+/* Header das pÃ¡ginas */
+.achievements-header,
+.missions-header {
+    background: var(--action-gradient);
+    border-radius: var(--radius-card, 14px);
+    padding: 40px;
+    margin-bottom: 30px;
+    color: var(--text-primary);
+    box-shadow: 0 10px 30px rgba(162, 89, 255, 0.3);
+    border: 1px solid var(--border);
+}
+
+.achievements-header h2,
+.missions-header h2 {
+    margin: 0 0 10px 0;
+    font-size: 2.5rem;
+    font-weight: bold;
+}
+
+.achievements-header p,
+.missions-header p {
+    margin: 0 0 15px 0;
+    opacity: 0.9;
+    font-size: 1.1rem;
+}
+
+/* Progresso geral */
+.overall-progress {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+}
+
+.progress-stats {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
+
+.progress-bar-container {
+    flex: 1;
+    margin-left: 30px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 50px;
+    height: 30px;
+    overflow: hidden;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: var(--accent-green);
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    font-weight: bold;
+    transition: width 0.5s ease;
+    box-shadow: 0 2px 10px rgba(67, 160, 71, 0.5);
+}
+
+/* Categorias de conquistas */
+.achievement-category {
+    background: var(--surface);
+    border-radius: var(--radius-card);
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border: 1px solid var(--border);
+}
+
+.achievement-category:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.category-header {
+    padding: 15px 20px;
+    border-radius: var(--radius-button);
+    margin-bottom: 20px;
+    color: var(--text-primary);
+    font-weight: bold;
+    font-size: 1.3rem;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.category-header.posts { background: var(--accent-blue); }
+.category-header.threads { background: var(--accent-purple); }
+.category-header.reactions { background: var(--accent-gold); }
+.category-header.faction { background: var(--accent-red); }
+.category-header.special { background: var(--action-gradient); }
+
+/* Grid de conquistas */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+/* Card de conquista */
+.achievement-card {
+    background: var(--surface);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-card);
+    padding: 20px;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.achievement-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--border);
+    transition: background 0.3s ease;
+}
+
+.achievement-card.unlocked {
+    border-color: var(--accent-green);
+    background: var(--muted);
+}
+
+.achievement-card.unlocked::before {
+    background: var(--accent-green);
+}
+
+.achievement-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-header-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.achievement-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    color: var(--text-primary);
+}
+
+.achievement-icon {
+    font-size: 2rem;
+}
+
+.achievement-badge {
+    background: var(--accent-green);
+    color: var(--text-primary);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(34, 197, 94, 0.3);
+}
+
+.achievement-description {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    margin-bottom: 15px;
+    line-height: 1.5;
+}
+
+.achievement-meta {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.tier-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tier-badge.bronze { background: var(--accent-gold); color: var(--text-primary); }
+.tier-badge.silver { background: #9ca3af; color: var(--text-primary); }
+.tier-badge.gold { background: #eab308; color: var(--text-primary); }
+.tier-badge.platinum { background: #06b6d4; color: var(--text-primary); }
+.tier-badge.diamond { background: #8b5cf6; color: var(--text-primary); }
+
+.points-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: bold;
+    background: var(--muted);
+    color: var(--text-primary);
+}
+
+/* Barra de progresso */
+.achievement-progress {
+    background: var(--border);
+    border-radius: 10px;
+    height: 25px;
+    overflow: hidden;
+    position: relative;
+}
+
+.achievement-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-blue) 100%);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    font-weight: bold;
+    transition: width 0.5s ease;
+    min-width: fit-content;
+    padding: 0 10px;
+}
+
+.achievement-unlocked-date {
+    color: var(--accent-green);
+    font-size: 0.9rem;
+    font-weight: 500;
+    margin-top: 10px;
+}
+
+/* ==========================================
+   MISSÃ•ES DIÃRIAS
+   ========================================== */
+
+.mission-card {
+    background: var(--text-primary);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border-left: 5px solid var(--accent-blue);
+}
+
+.mission-card.completed {
+    border-left-color: var(--accent-green);
+    background: linear-gradient(135deg, #f0fdf4 0%, var(--text-primary) 100%);
+}
+
+.mission-card:hover {
+    transform: translateX(5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+}
+
+.mission-content {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.mission-icon-large {
+    font-size: 3.5rem;
+    min-width: 80px;
+    text-align: center;
+}
+
+.mission-info {
+    flex: 1;
+}
+
+.mission-title {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: var(--text-primary);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.mission-status-badge {
+    padding: 5px 15px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    background: var(--accent-green);
+    color: var(--text-primary);
+    font-weight: bold;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.mission-description {
+    color: var(--text-secondary);
+    margin-bottom: 15px;
+    font-size: 1rem;
+}
+
+.mission-progress-bar {
+    background: var(--border);
+    border-radius: 12px;
+    height: 30px;
+    overflow: hidden;
+    position: relative;
+}
+
+.mission-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-blue) 0%, var(--accent-blue) 100%);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-primary);
+    font-weight: bold;
+    transition: width 0.5s ease;
+    font-size: 0.95rem;
+}
+
+.mission-progress-fill.completed {
+    background: linear-gradient(90deg, var(--accent-green) 0%, #16a34a 100%);
+}
+
+.mission-reward {
+    text-align: right;
+    min-width: 150px;
+}
+
+.mission-reward-badge {
+    padding: 10px 20px;
+    border-radius: 25px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    background: linear-gradient(135deg, var(--accent-gold) 0%, var(--accent-gold) 100%);
+    color: var(--text-primary);
+    display: inline-block;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3);
+    margin-bottom: 8px;
+}
+
+.mission-completion-time {
+    color: var(--accent-green);
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.mission-progress-text {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 5px;
+}
+
+/* Resumo de missÃµes */
+.missions-summary {
+    background: var(--text-primary);
+    border-radius: 15px;
+    padding: 30px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+    margin-top: 30px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 30px;
+    text-align: center;
+}
+
+.summary-item h3 {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.summary-item.complete h3 { color: var(--accent-blue); }
+.summary-item.progress h3 { color: var(--accent-gold); }
+.summary-item.points h3 { color: var(--accent-green); }
+
+.summary-item p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Info box */
+.info-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-left: 5px solid var(--accent-blue);
+    border-radius: 12px;
+    padding: 25px;
+    margin-top: 30px;
+}
+
+.info-box h5 {
+    color: #1e40af;
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.info-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.info-box li {
+    padding: 10px 0;
+    color: var(--text-primary);
+    line-height: 1.6;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+}
+
+.info-box li strong {
+    color: #1e40af;
+    min-width: 180px;
+}
+
+/* BotÃµes de aÃ§Ã£o */
+.action-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-top: 30px;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 12px 30px;
+    border-radius: 8px;
+    font-weight: bold;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn-secondary {
+    background: var(--text-secondary);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover {
+    background: #4b5563;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(107, 114, 128, 0.3);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, var(--accent-blue) 0%, var(--accent-blue) 100%);
+    color: var(--text-primary);
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+}
+
+/* Alertas */
+.alert-info {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    padding: 20px;
+    margin: 20px 0;
+}
+
+.alert-info h5 {
+    color: #1e40af;
+    margin-bottom: 10px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .achievements-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .mission-content {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .mission-reward {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .overall-progress {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .progress-bar-container {
+        margin-left: 0;
+        width: 100%;
+    }
+    
+    .achievements-header h2,
+    .missions-header h2 {
+        font-size: 1.8rem;
+    }
+}
+
+/* AnimaÃ§Ãµes */
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.achievement-card,
+.mission-card {
+    animation: slideIn 0.5s ease forwards;
+}
+
+.achievement-card:nth-child(1) { animation-delay: 0.1s; }
+.achievement-card:nth-child(2) { animation-delay: 0.2s; }
+.achievement-card:nth-child(3) { animation-delay: 0.3s; }
+.achievement-card:nth-child(4) { animation-delay: 0.4s; }
+.achievement-card:nth-child(5) { animation-delay: 0.5s; }
+.achievement-card:nth-child(6) { animation-delay: 0.6s; }
+
+/* Loading state */
+.loading-achievements {
+    text-align: center;
+    padding: 60px 20px;
+}
+
+.loading-achievements i {
+    font-size: 3rem;
+    color: var(--accent-blue);
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}

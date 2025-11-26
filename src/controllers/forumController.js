@@ -5,6 +5,8 @@ const UserReputation = require('../models/UserReputation');
 const User = require('../models/User');
 const ModerationLog = require('../models/ModerationLog');
 const notificationService = require('../services/notificationService');
+const achievementService = require('../services/achievementService');
+const { UserDailyProgress } = require('../models/DailyMission');
 const logger = require('../config/logger');
 const factionSystem = require('../config/factionSystem');
 
@@ -582,6 +584,10 @@ exports.createThread = async (req, res) => {
             logger.info(`💰 Usuário ${user.username} ganhou ${pointsAwarded} pontos de facção (thread criada)`);
         }
 
+        // Verificar conquistas e missões diárias
+        await achievementService.checkAchievements(userId, 'threads');
+        await UserDailyProgress.incrementProgress(userId, 'create_thread');
+
         res.json({ 
             success: true, 
             threadUrl: `/forum/${category.slug}/${thread.slug}` 
@@ -711,6 +717,11 @@ exports.createPost = async (req, res) => {
         console.log('🏆 Verificando badges...');
         await reputation.checkAndAwardBadges();
 
+        // Verificar conquistas e missões diárias
+        console.log('🎯 Verificando conquistas...');
+        await achievementService.checkAchievements(userId, 'posts');
+        await UserDailyProgress.incrementProgress(userId, 'create_post');
+
         // Carregar dados necessários para notificações
         console.log('🔔 Preparando notificações...');
         const threadWithCategory = await ForumThread.findById(thread._id)
@@ -832,6 +843,11 @@ exports.votePost = async (req, res) => {
                 const pointsAwarded = await factionSystem.addFactionPoints(postAuthor, 2, 'Recebeu um upvote');
                 logger.info(`💰 Usuário ${postAuthor.username} ganhou ${pointsAwarded} pontos de facção (upvote recebido)`);
             }
+        }
+
+        // Incrementar progresso da missão diária de upvotes
+        if (voteType === 'upvote' && !hadUpvote) {
+            await UserDailyProgress.incrementProgress(userId, 'upvote');
         }
 
         res.json({ 

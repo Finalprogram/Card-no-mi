@@ -8,6 +8,7 @@ const logger = require('../config/logger');
 const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
 const { addPostPaymentJob } = require('../services/postPaymentQueue');
+const notificationService = require('../services/notificationService');
 
 // Helper function to get seller's origin CEP
 async function getSellerOriginCep(sellerId) {
@@ -321,8 +322,17 @@ async function processWebhookLogic(status, external_reference, res) {
       else if (status === 'rejected' || status === 'cancelled') newOrderStatus = 'Cancelled';
 
       if (newOrderStatus) {
-        await Order.updateOne({ _id: external_reference }, { $set: { status: newOrderStatus } });
-        logger.info(`[payment] Webhook: Order ${external_reference} status updated to ${newOrderStatus}.`);
+        const order = await Order.findByIdAndUpdate(
+          external_reference, 
+          { $set: { status: newOrderStatus } },
+          { new: true }
+        );
+        
+        if (order) {
+          // Notificar comprador sobre mudança de status
+          await notificationService.notifyOrderStatus(order.user, external_reference, newOrderStatus);
+          logger.info(`[payment] Webhook: Order ${external_reference} status updated to ${newOrderStatus}.`);
+        }
       }
     }
 

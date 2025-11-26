@@ -76,6 +76,13 @@ exports.getUserProfile = async (req, res) => {
     // Verificar se é o próprio usuário
     const isOwnProfile = req.session.user && req.session.user.username === username;
     
+    // Buscar informações de rank da facção
+    let factionRankInfo = null;
+    if (user.faction) {
+      const { getCurrentRank } = require('../config/factionSystem');
+      factionRankInfo = getCurrentRank(user.faction, user.factionPoints || 0);
+    }
+    
     res.render('pages/forum/profile', {
       profileUser: user,
       threadCount,
@@ -86,6 +93,7 @@ exports.getUserProfile = async (req, res) => {
       recentPosts,
       memberSince,
       isOwnProfile,
+      factionRankInfo,
       user: req.session.user || null,
       pageTitle: `${user.username} - Perfil`
     });

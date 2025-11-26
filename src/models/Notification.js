@@ -26,7 +26,9 @@ const NotificationSchema = new mongoose.Schema({
       'thread_pinned',   // Seu tópico foi fixado
       'post_liked',      // Alguém curtiu seu post (futuro)
       'badge_earned',    // Você ganhou um badge (futuro)
-      'reputation'       // Mudança na reputação
+      'reputation',      // Mudança na reputação
+      'sale',            // Você vendeu uma carta
+      'order_status'     // Status do seu pedido mudou
     ],
     required: true
   },
