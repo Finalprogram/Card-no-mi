@@ -1,0 +1,573 @@
+<%- include('../../partials/header') %>
+
+<%- include('../../partials/navbar') %>
+<style>
+:root {
+    --pirate-primary: #A259FF;
+    --pirate-secondary: #FFB800;
+    --marine-primary: #A259FF;
+    --marine-secondary: #FFB800;
+    --bg-main: #1c1c1d;
+    --surface: #111214;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    overflow-x: hidden;
+}
+
+.faction-choice-container {
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--bg-main) 0%, var(--surface) 100%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Animated Background */
+.faction-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+        radial-gradient(ellipse at 20% 30%, rgba(162, 89, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 70%, rgba(255, 184, 0, 0.15) 0%, transparent 50%);
+}
+
+.faction-header {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 4rem 2rem 2rem;
+    color: white;
+}
+
+.faction-header h1 {
+    font-size: 3rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+}
+
+.faction-header p {
+    font-size: 1.3rem;
+    color: rgba(255,255,255,0.8);
+}
+
+.factions-grid {
+    position: relative;
+    z-index: 10;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+.faction-card {
+    background: var(--surface);
+    border-radius: 24px;
+    padding: 3rem;
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 3px solid rgba(162, 89, 255, 0.3);
+    backdrop-filter: blur(10px);
+    position: relative;
+    overflow: hidden;
+}
+
+.faction-card-content {
+    position: relative;
+    z-index: 2;
+}
+
+.faction-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: conic-gradient(transparent, transparent, transparent, rgba(255,255,255,0.1));
+    animation: rotate 6s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 3;
+    pointer-events: none;
+}
+
+@keyframes rotate {
+    100% { transform: rotate(360deg); }
+}
+
+.faction-card:hover::before {
+    opacity: 1;
+}
+
+.faction-card.pirate {
+    border-color: var(--pirate-primary);
+}
+
+.faction-card.marine {
+    border-color: var(--marine-primary);
+}
+
+.faction-card:hover {
+    transform: translateY(-10px) scale(1.02);
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+
+.faction-card.pirate:hover {
+    box-shadow: 
+        0 20px 60px rgba(162, 89, 255, 0.6),
+        0 0 80px rgba(162, 89, 255, 0.3),
+        inset 0 0 100px rgba(162, 89, 255, 0.1);
+    border-color: var(--pirate-secondary);
+}
+
+.faction-card.marine:hover {
+    box-shadow: 
+        0 20px 60px rgba(162, 89, 255, 0.6),
+        0 0 80px rgba(162, 89, 255, 0.3),
+        inset 0 0 100px rgba(162, 89, 255, 0.1);
+    border-color: var(--marine-secondary);
+}
+
+.faction-icon-wrapper {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 2rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.faction-card.pirate .faction-icon-wrapper {
+    background: linear-gradient(135deg, var(--pirate-primary), var(--pirate-secondary));
+    box-shadow: 0 0 40px rgba(162, 89, 255, 0.5);
+}
+
+.faction-card.marine .faction-icon-wrapper {
+    background: linear-gradient(135deg, var(--marine-primary), var(--marine-secondary));
+    box-shadow: 0 0 40px rgba(162, 89, 255, 0.5);
+}
+
+.faction-icon {
+    font-size: 4rem;
+    color: white;
+}
+
+.faction-name {
+    font-size: 2.5rem;
+    font-weight: 800;
+    text-align: center;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, white, rgba(255,255,255,0.7));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.faction-slogan {
+    font-size: 1.4rem;
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+    opacity: 1;
+    text-shadow: 0 0 20px rgba(255,255,255,0.3);
+    font-style: italic;
+}
+
+.faction-card.pirate .faction-slogan {
+    color: var(--pirate-secondary);
+}
+
+.faction-card.marine .faction-slogan {
+    color: var(--marine-secondary);
+}
+
+.faction-description {
+    color: rgba(255,255,255,0.8);
+    line-height: 1.8;
+    margin-bottom: 2rem;
+    font-size: 1.05rem;
+    text-align: center;
+}
+
+.faction-benefits {
+    list-style: none;
+    margin-bottom: 2rem;
+}
+
+.faction-benefits li {
+    padding: 0.75rem;
+    margin-bottom: 0.5rem;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+    color: rgba(255,255,255,0.9);
+    font-size: 0.95rem;
+    transition: all 0.3s;
+}
+
+.faction-benefits li:hover {
+    background: rgba(255,255,255,0.1);
+    transform: translateX(5px);
+}
+
+.faction-button {
+    width: 100%;
+    padding: 1.25rem 2rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    position: relative;
+    overflow: hidden;
+}
+
+.faction-button::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.faction-button:hover::before {
+    width: 400px;
+    height: 400px;
+}
+
+.faction-card.pirate .faction-button {
+    background: linear-gradient(135deg, var(--pirate-primary), var(--pirate-secondary));
+    color: white;
+    box-shadow: 0 10px 30px rgba(162, 89, 255, 0.3);
+}
+
+.faction-card.pirate .faction-button:hover {
+    box-shadow: 0 15px 40px rgba(162, 89, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.faction-card.marine .faction-button {
+    background: linear-gradient(135deg, var(--marine-primary), var(--marine-secondary));
+    color: white;
+    box-shadow: 0 10px 30px rgba(162, 89, 255, 0.3);
+}
+
+.faction-card.marine .faction-button:hover {
+    box-shadow: 0 15px 40px rgba(162, 89, 255, 0.5);
+    transform: translateY(-2px);
+}
+
+.faction-button span {
+    position: relative;
+    z-index: 1;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+    .factions-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+        padding: 1rem;
+    }
+
+    .faction-header h1 {
+        font-size: 2.5rem;
+    }
+
+    .faction-header p {
+        font-size: 1.1rem;
+    }
+
+    .faction-card {
+        padding: 2rem;
+    }
+}
+
+/* Loading overlay */
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(15, 23, 42, 0.95);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.loading-overlay.active {
+    display: flex;
+}
+
+.loading-content {
+    text-align: center;
+    color: white;
+}
+
+.spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid rgba(255,255,255,0.1);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 1rem;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+</style>
+
+<div class="faction-choice-container">
+    <div class="faction-bg"></div>
+    
+    <div class="faction-header">
+        <h1>⚔️ O Grande Destino Começa Aqui ⚓</h1>
+        <p><em>"Você tem um sonho? Então lute por ele!" - Monkey D. Luffy</em></p>
+        <p style="margin-top: 1rem; font-size: 1.1rem;">Sua escolha moldará sua lenda. Pirata ou Marinha - não há como voltar atrás.</p>
+    </div>
+
+    <div class="factions-grid">
+        <!-- Piratas -->
+        <div class="faction-card pirate" data-faction="pirate">
+            <div class="faction-card-content">
+                <div class="faction-icon-wrapper">
+                    <svg class="faction-icon" viewBox="0 0 448 512" style="width: 4rem; height: 4rem; fill: white;">
+                        <path d="M368 128c0 44.4-25.4 83.5-64 106.4V256c0 17.7-14.3 32-32 32h-96c-17.7 0-32-14.3-32-32v-21.6c-38.6-23-64-62.1-64-106.4C80 57.3 144.5 0 224 0s144 57.3 144 128zM168 176a32 32 0 1 0 0-64 32 32 0 1 0 0 64zm144-32a32 32 0 1 0 -64 0 32 32 0 1 0 64 0zM3.4 273.7c7.9-15.8 27.1-22.2 42.9-14.3L224 348.2l177.7-88.8c15.8-7.9 35-1.5 42.9 14.3s1.5 35-14.3 42.9L295.6 384l134.8 67.4c15.8 7.9 22.2 27.1 14.3 42.9s-27.1 22.2-42.9 14.3L224 419.8 46.3 508.6c-15.8 7.9-35 1.5-42.9-14.3s-1.5-35 14.3-42.9L152.4 384 17.7 316.6C1.9 308.7-4.5 289.5 3.4 273.7z"/>
+                    </svg>
+                </div>
+                
+                <h2 class="faction-name">🏴‍☠️ PIRATAS</h2>
+                <p class="faction-slogan">"Eu vou me tornar o Rei dos Piratas!"</p>
+            
+            <div class="faction-quote" style="background: rgba(220, 38, 38, 0.1); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid var(--pirate-primary);">
+                <p style="color: rgba(255,255,255,0.9); font-style: italic; font-size: 0.95rem;">
+                    💀 <strong>Shanks o Ruivo:</strong> "A liberdade é o maior tesouro que existe nos mares. 
+                    Não importa quantos inimigos você tenha pela frente, continue navegando!"
+                </p>
+            </div>
+            
+            <p class="faction-description">
+                Navegue sob a bandeira da <strong>LIBERDADE</strong>! Como os lendários Luffy, Zoro, e as grandes tripulações, 
+                você escolhe seu próprio caminho. O <strong>One Piece</strong> e a glória eterna esperam por você!
+            </p>
+
+            <ul class="faction-benefits">
+                <li>🏴‍☠️ <strong>Jolly Roger Exclusiva:</strong> Sua própria bandeira pirata</li>
+                <li>💰 <strong>Sistema de Recompensas:</strong> Aumente sua tagpreço como os Yonkou</li>
+                <li>🗺️ <strong>Missões de Tesouro:</strong> Desvende os segredos das Poneglyphs</li>
+                <li>⚔️ <strong>Títulos Lendários:</strong> De Recruta a Yonkou (Imperador dos Mares)</li>
+                <li>🏝️ <strong>Território Pirata:</strong> Conquiste ilhas e forme alianças</li>
+                <li>🍖 <strong>Festas Épicas:</strong> Celebre vitórias ao estilo Mugiwara!</li>
+            </ul>
+
+            <div style="background: rgba(251, 191, 36, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="color: var(--pirate-secondary); font-size: 0.9rem; text-align: center;">
+                    ⚡ <strong>Ranques Piratas:</strong> Recruta → Marinheiro → Veterano → Capitão → Supernova → Shichibukai → Yonkou
+                </p>
+            </div>
+
+                <button class="faction-button" onclick="chooseFaction('pirate')">
+                    <span>⛵ LEVANTAR A ÂNCORA E ZARPAR!</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Marinha -->
+        <div class="faction-card marine" data-faction="marine">
+            <div class="faction-card-content">
+                <div class="faction-icon-wrapper">
+                    <svg class="faction-icon" viewBox="0 0 576 512" style="width: 4rem; height: 4rem; fill: white;">
+                        <path d="M256 96c0-17.7 14.3-32 32-32s32 14.3 32 32V240h-64V96zM192 240v48H160c-17.7 0-32 14.3-32 32v32h96V448H192l-32 32H160l-32-32H96V416H64c-17.7 0-32-14.3-32-32V352c0-17.7 14.3-32 32-32H32c-17.7 0-32-14.3-32-32V256c0-17.7 14.3-32 32-32H192zm64 0H416c17.7 0 32 14.3 32 32v32c0 17.7-14.3 32-32 32H384c17.7 0 32 14.3 32 32v32c0 17.7-14.3 32-32 32H352v32H320L288 480l-32-32V352h96V320H256V240zm128 0V96c0-17.7 14.3-32 32-32s32 14.3 32 32V240H384z"/>
+                    </svg>
+                </div>
+                
+                <h2 class="faction-name">⚓ MARINHA</h2>
+                <p class="faction-slogan">"Justiça Absoluta prevalecerá!"</p>
+            
+            <div class="faction-quote" style="background: rgba(14, 165, 233, 0.1); padding: 1rem; border-radius: 12px; margin-bottom: 1.5rem; border-left: 4px solid var(--marine-primary);">
+                <p style="color: rgba(255,255,255,0.9); font-style: italic; font-size: 0.95rem;">
+                    ⚖️ <strong>Almirante Sengoku:</strong> "A Marinha é o escudo que protege os inocentes. 
+                    Nossa justiça manterá a ordem nos mares, não importa o custo!"
+                </p>
+            </div>
+            
+            <p class="faction-description">
+                Vista o manto da <strong>JUSTIÇA</strong>! Como os lendários Garp, Sengoku, e Aokiji, 
+                você defenderá a paz mundial. Capture criminosos, proteja os inocentes, e suba ao posto de <strong>Almirante da Frota</strong>!
+            </p>
+
+            <ul class="faction-benefits">
+                <li>⚓ <strong>Insígnia da Justiça:</strong> Símbolo do poder do Governo Mundial</li>
+                <li>🎖️ <strong>Condecorações Militares:</strong> Medalhas de honra e mérito</li>
+                <li>📜 <strong>Operações Secretas:</strong> Missões do Cipher Pol e Buster Call</li>
+                <li>⚖️ <strong>Hierarquia Naval:</strong> De Recruta a Almirante da Frota</li>
+                <li>🏛️ <strong>Base G-1/Marineford:</strong> Acesso às instalações navais</li>
+                <li>⚔️ <strong>Tecnologia Avançada:</strong> Armamentos e navios de guerra da Marinha</li>
+            </ul>
+
+            <div style="background: rgba(99, 102, 241, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="color: var(--marine-secondary); font-size: 0.9rem; text-align: center;">
+                    ⚡ <strong>Ranques da Marinha:</strong> Recruta → Marinheiro → Cabo → Tenente → Comandante → Vice-Almirante → Almirante
+                </p>
+            </div>
+
+                <button class="faction-button" onclick="chooseFaction('marine')">
+                    <span>🎖️ ALISTAR-SE NA MARINHA AGORA!</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="loading-overlay" id="loadingOverlay">
+    <div class="loading-content">
+        <div class="spinner"></div>
+        <p>Selando seu destino...</p>
+    </div>
+</div>
+
+<script>
+async function chooseFaction(faction) {
+    const overlay = document.getElementById('loadingOverlay');
+    const loadingText = overlay.querySelector('p');
+    
+    if (faction === 'pirate') {
+        loadingText.textContent = '🏴‍☠️ Içando sua Jolly Roger...';
+    } else {
+        loadingText.textContent = '⚓ Preparando seu alistamento...';
+    }
+    
+    overlay.classList.add('active');
+
+    try {
+        const response = await fetch('/forum/faction/choose', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ faction })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            // Criar modal customizado ao invés de alert
+            const modal = document.createElement('div');
+            modal.style.cssText = `
+                position: fixed;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                background: #111214;
+                padding: 3rem;
+                border-radius: 20px;
+                border: 3px solid #A259FF;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.8), 0 0 100px rgba(162, 89, 255, 0.5);
+                z-index: 10000;
+                max-width: 600px;
+                text-align: center;
+                color: white;
+                animation: modalAppear 0.5s ease;
+            `;
+            
+            if (faction === 'pirate') {
+                modal.innerHTML = `
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">🏴‍☠️</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #FFB800;">BEM-VINDO À VIDA DE PIRATA!</h2>
+                    <p style="font-style: italic; color: rgba(255,255,255,0.8); margin-bottom: 2rem;">
+                        "Eu não fujo de ninguém! Essa é a minha Nindo... Quer dizer, minha Pirateway!" - Luffy
+                    </p>
+                    <div style="background: rgba(162, 89, 255, 0.2); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                        <p style="font-size: 1.3rem; margin-bottom: 0.5rem;">⚡ <strong>Rank Inicial:</strong></p>
+                        <p style="font-size: 1.8rem; color: #FFB800; font-weight: bold;">${data.rank.name}</p>
+                    </div>
+                    <p style="line-height: 1.8; margin-bottom: 1rem;">
+                        💰 Sua primeira recompensa: <strong>Ativa!</strong><br>
+                        🗺️ A Grand Line te aguarda!<br>
+                        ⚔️ Prepare-se para aventuras épicas!
+                    </p>
+                    <button onclick="window.location.href='/forum'" style="
+                        background: linear-gradient(135deg, #A259FF, #FFB800);
+                        color: white;
+                        border: none;
+                        padding: 1rem 2rem;
+                        font-size: 1.2rem;
+                        font-weight: bold;
+                        border-radius: 10px;
+                        cursor: pointer;
+                        margin-top: 1rem;
+                        text-transform: uppercase;
+                    ">⛵ Zarpar Agora!</button>
+                `;
+            } else {
+                modal.innerHTML = `
+                    <div style="font-size: 4rem; margin-bottom: 1rem;">⚓</div>
+                    <h2 style="font-size: 2.5rem; margin-bottom: 1rem; color: #FFB800;">BEM-VINDO À MARINHA!</h2>
+                    <p style="font-style: italic; color: rgba(255,255,255,0.8); margin-bottom: 2rem;">
+                        "A Justiça sempre prevalecerá sobre o mal!" - Almirante Sengoku
+                    </p>
+                    <div style="background: rgba(162, 89, 255, 0.2); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                        <p style="font-size: 1.3rem; margin-bottom: 0.5rem;">🎖️ <strong>Patente Inicial:</strong></p>
+                        <p style="font-size: 1.8rem; color: #FFB800; font-weight: bold;">${data.rank.name}</p>
+                    </div>
+                    <p style="line-height: 1.8; margin-bottom: 1rem;">
+                        ⚖️ Insígnia da Justiça: <strong>Concedida!</strong><br>
+                        🏛️ Base Naval: <strong>Acesso liberado!</strong><br>
+                        ⚔️ Proteja os inocentes e mantenha a paz!
+                    </p>
+                    <button onclick="window.location.href='/forum'" style="
+                        background: linear-gradient(135deg, #A259FF, #FFB800);
+                        color: white;
+                        border: none;
+                        padding: 1rem 2rem;
+                        font-size: 1.2rem;
+                        font-weight: bold;
+                        border-radius: 10px;
+                        cursor: pointer;
+                        margin-top: 1rem;
+                        text-transform: uppercase;
+                    ">🎖️ Assumir Posto!</button>
+                `;
+            }
+            
+            document.body.appendChild(modal);
+            overlay.classList.remove('active');
+        } else {
+            alert(data.message || 'Erro ao escolher facção');
+            overlay.classList.remove('active');
+        }
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('⚠️ Erro na conexão! As tempestades da Grand Line estão fortes...\n\nTente novamente!');
+        overlay.classList.remove('active');
+    }
+}
+</script>
+
+<%- include('../../partials/footer') %>

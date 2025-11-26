@@ -44,11 +44,31 @@
 
       <div class="navbar-actions">
           <% if (user) { %>
-              <!-- Notificações -->
-              <a href="/forum/notifications" class="notification-bell">
-                  <i class="fas fa-bell"></i>
-                  <span class="notification-badge" style="display: none;">0</span>
-              </a>
+              <!-- Notificações com Dropdown -->
+              <div class="notification-dropdown-container">
+                  <button class="notification-bell" id="notificationBellBtn">
+                      <i class="fas fa-bell"></i>
+                      <span class="notification-badge" style="display: none;">0</span>
+                  </button>
+                  
+                  <div class="notification-dropdown" id="notificationDropdown" style="display: none;">
+                      <div class="notification-dropdown-header">
+                          <h3>Notificações</h3>
+                          <button class="mark-all-read-btn" id="markAllReadBtn" title="Marcar todas como lidas">
+                              <i class="fas fa-check-double"></i>
+                          </button>
+                      </div>
+                      <div class="notification-dropdown-body" id="notificationList">
+                          <div class="notification-loading">
+                              <i class="fas fa-spinner fa-spin"></i>
+                              <p>Carregando...</p>
+                          </div>
+                      </div>
+                      <div class="notification-dropdown-footer">
+                          <a href="/forum/notifications">Ver todas as notificações</a>
+                      </div>
+                  </div>
+              </div>
               
               <a href="/vender" class="btn-primary btn-sell-now-navbar">Vender Agora</a>
               <div class="user-dropdown">
@@ -75,8 +95,18 @@
                   </div>
               </div>
               
-              <!-- Script para atualizar notificações -->
+              <!-- Script para sistema de notificações com dropdown -->
               <script>
+                // Estado do dropdown
+                let notificationsLoaded = false;
+                
+                // Elementos
+                const notificationBell = document.getElementById('notificationBellBtn');
+                const notificationDropdown = document.getElementById('notificationDropdown');
+                const notificationList = document.getElementById('notificationList');
+                const markAllReadBtn = document.getElementById('markAllReadBtn');
+                
+                // Função para atualizar o contador de notificações
                 async function updateNotificationCount() {
                   try {
                     const response = await fetch('/forum/api/notifications/unread-count');
@@ -94,6 +124,132 @@
                     console.error('Erro ao buscar notificações:', error);
                   }
                 }
+                
+                // Função para carregar notificações recentes
+                async function loadRecentNotifications() {
+                  try {
+                    const response = await fetch('/forum/api/notifications/recent');
+                    const data = await response.json();
+                    
+                    if (data.notifications && data.notifications.length > 0) {
+                      notificationList.innerHTML = data.notifications.map(notif => {
+                        const timeAgo = getTimeAgo(new Date(notif.createdAt));
+                        const unreadClass = notif.isRead ? '' : 'unread';
+                        
+                        return `
+                          <div class="notification-item ${unreadClass}" data-id="${notif._id}">
+                            <div class="notification-icon">
+                              ${getNotificationIcon(notif.type)}
+                            </div>
+                            <div class="notification-content">
+                              <p class="notification-message">${notif.message}</p>
+                              <span class="notification-time">${timeAgo}</span>
+                            </div>
+                            ${notif.link ? `<a href="${notif.link}" class="notification-link-overlay"></a>` : ''}
+                          </div>
+                        `;
+                      }).join('');
+                    } else {
+                      notificationList.innerHTML = `
+                        <div class="notification-empty">
+                          <i class="fas fa-bell-slash"></i>
+                          <p>Nenhuma notificação</p>
+                        </div>
+                      `;
+                    }
+                    
+                    notificationsLoaded = true;
+                  } catch (error) {
+                    console.error('Erro ao carregar notificações:', error);
+                    notificationList.innerHTML = `
+                      <div class="notification-error">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Erro ao carregar notificações</p>
+                      </div>
+                    `;
+                  }
+                }
+                
+                // Função para obter ícone baseado no tipo de notificação
+                function getNotificationIcon(type) {
+                  const icons = {
+                    'thread_reply': '<i class="fas fa-reply"></i>',
+                    'post_reply': '<i class="fas fa-comment"></i>',
+                    'mention': '<i class="fas fa-at"></i>',
+                    'upvote': '<i class="fas fa-arrow-up"></i>',
+                    'thread_pinned': '<i class="fas fa-thumbtack"></i>',
+                    'rank_up': '<i class="fas fa-level-up-alt"></i>',
+                    'system': '<i class="fas fa-info-circle"></i>'
+                  };
+                  return icons[type] || '<i class="fas fa-bell"></i>';
+                }
+                
+                // Função para calcular tempo relativo
+                function getTimeAgo(date) {
+                  const seconds = Math.floor((new Date() - date) / 1000);
+                  
+                  if (seconds < 60) return 'Agora';
+                  if (seconds < 3600) return `${Math.floor(seconds / 60)}min`;
+                  if (seconds < 86400) return `${Math.floor(seconds / 3600)}h`;
+                  if (seconds < 604800) return `${Math.floor(seconds / 86400)}d`;
+                  return date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' });
+                }
+                
+                // Toggle dropdown
+                notificationBell.addEventListener('click', (e) => {
+                  e.stopPropagation();
+                  const isVisible = notificationDropdown.style.display === 'block';
+                  
+                  if (!isVisible) {
+                    notificationDropdown.style.display = 'block';
+                    if (!notificationsLoaded) {
+                      loadRecentNotifications();
+                    }
+                  } else {
+                    notificationDropdown.style.display = 'none';
+                  }
+                });
+                
+                // Fechar dropdown ao clicar fora
+                document.addEventListener('click', (e) => {
+                  if (!notificationDropdown.contains(e.target) && e.target !== notificationBell) {
+                    notificationDropdown.style.display = 'none';
+                  }
+                });
+                
+                // Marcar todas como lidas
+                markAllReadBtn.addEventListener('click', async () => {
+                  try {
+                    const response = await fetch('/forum/api/notifications/read-all', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' }
+                    });
+                    
+                    if (response.ok) {
+                      updateNotificationCount();
+                      loadRecentNotifications();
+                    }
+                  } catch (error) {
+                    console.error('Erro ao marcar notificações como lidas:', error);
+                  }
+                });
+                
+                // Marcar notificação como lida ao clicar
+                notificationList.addEventListener('click', async (e) => {
+                  const notifItem = e.target.closest('.notification-item');
+                  if (notifItem && notifItem.classList.contains('unread')) {
+                    const notifId = notifItem.dataset.id;
+                    try {
+                      await fetch(`/forum/api/notifications/${notifId}/read`, {
+                        method: 'POST'
+                      });
+                      notifItem.classList.remove('unread');
+                      updateNotificationCount();
+                    } catch (error) {
+                      console.error('Erro ao marcar notificação como lida:', error);
+                    }
+                  }
+                });
                 
                 // Atualizar ao carregar a página
                 updateNotificationCount();

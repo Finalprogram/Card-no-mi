@@ -27,15 +27,6 @@ router.get('/cards', cardController.showCardsPage);
 router.get('/card/:id', cardController.showCardDetailPage);
 
 /**
- * Rota da API para obter detalhes de uma carta por ID.
- * @name GET /api/cards/:id
- * @function
- * @memberof module:routes/cardRoutes
- * @inner
- */
-router.get('/api/cards/:id', cardController.getCardById);
-
-/**
  * Rota da API para buscar cartas para venda.
  * @name GET /api/cards/search
  * @function
@@ -64,12 +55,23 @@ router.get('/api/cards/all', cardController.getAllCards);
 
 /**
  * Rota da API para obter cartas disponíveis (com anúncios ativos) com filtros.
+ * IMPORTANTE: Esta rota DEVE vir antes de /api/cards/:id para não ser confundida com um ID.
  * @name GET /api/cards/available
  * @function
  * @memberof module:routes/cardRoutes
  * @inner
  */
 router.get('/api/cards/available', cardController.getAvailableCards);
+
+/**
+ * Rota da API para obter detalhes de uma carta por ID.
+ * IMPORTANTE: Esta rota DEVE vir após rotas específicas (/available, /all, /search, etc).
+ * @name GET /api/cards/:id
+ * @function
+ * @memberof module:routes/cardRoutes
+ * @inner
+ */
+router.get('/api/cards/:id', cardController.getCardById);
 
 /**
  * Rota da API para buscar cartas para o deck builder.

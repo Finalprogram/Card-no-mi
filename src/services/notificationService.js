@@ -12,27 +12,43 @@ class NotificationService {
    */
   async notifyThreadReply(thread, post, replier) {
     try {
+      console.log('🔔 notifyThreadReply chamado:', {
+        threadAuthor: thread.author,
+        replierId: replier._id,
+        threadId: thread._id
+      });
+
+      // Extrair ID do autor (pode estar populado ou não)
+      const threadAuthorId = thread.author?._id || thread.author;
+      
       // Não notificar se o autor está respondendo o próprio tópico
-      if (thread.author.toString() === replier._id.toString()) {
+      if (threadAuthorId.toString() === replier._id.toString()) {
+        console.log('⚠️ Não notificando: autor respondendo próprio tópico');
         return;
       }
 
+      // Extrair dados da categoria (pode estar populada ou não)
+      const categorySlug = thread.category?.slug || thread.category;
+      const categoryId = thread.category?._id || thread.category;
+
+      console.log('📧 Criando notificação de resposta...');
       await Notification.createNotification({
-        recipient: thread.author,
+        recipient: threadAuthorId,
         sender: replier._id,
         type: 'reply',
         title: 'Nova resposta no seu tópico',
         message: `${replier.username} respondeu ao seu tópico "${thread.title}"`,
         thread: thread._id,
         post: post._id,
-        category: thread.category,
-        link: `/forum/${thread.category.slug}/${thread.slug}#post-${post._id}`,
+        category: categoryId,
+        link: `/forum/${categorySlug}/${thread.slug}#post-${post._id}`,
         icon: 'fa-comment',
         color: '#3b82f6'
       });
       
-      logger.info(`Notificação de resposta criada para thread ${thread._id}`);
+      console.log(`✅ Notificação de resposta criada para thread ${thread._id}`);
     } catch (error) {
+      console.error('❌ Erro ao criar notificação de resposta:', error);
       logger.error('Erro ao criar notificação de resposta:', error);
     }
   }
@@ -42,19 +58,28 @@ class NotificationService {
    */
   async notifyMention(content, thread, post, mentioner) {
     try {
+      console.log('🔔 notifyMention chamado');
       // Extrair todas as menções @username do conteúdo
       const mentionRegex = /@(\w+)/g;
       const mentions = [...content.matchAll(mentionRegex)];
       
-      if (mentions.length === 0) return;
+      if (mentions.length === 0) {
+        console.log('⚠️ Nenhuma menção encontrada');
+        return;
+      }
 
       // Obter usernames únicos
       const uniqueUsernames = [...new Set(mentions.map(m => m[1]))];
+      console.log('📧 Usernames mencionados:', uniqueUsernames);
       
       // Buscar usuários mencionados
       const mentionedUsers = await User.find({
         username: { $in: uniqueUsernames }
       }).select('_id username');
+
+      // Extrair dados da categoria
+      const categorySlug = thread.category?.slug || thread.category;
+      const categoryId = thread.category?._id || thread.category;
 
       // Criar notificação para cada usuário mencionado
       for (const mentionedUser of mentionedUsers) {
@@ -71,15 +96,16 @@ class NotificationService {
           message: `${mentioner.username} mencionou você em "${thread.title}"`,
           thread: thread._id,
           post: post._id,
-          category: thread.category,
-          link: `/forum/${thread.category.slug}/${thread.slug}#post-${post._id}`,
+          category: categoryId,
+          link: `/forum/${categorySlug}/${thread.slug}#post-${post._id}`,
           icon: 'fa-at',
           color: '#8b5cf6'
         });
       }
       
-      logger.info(`${mentionedUsers.length} notificações de menção criadas`);
+      console.log(`✅ ${mentionedUsers.length} notificações de menção criadas`);
     } catch (error) {
+      console.error('❌ Erro ao criar notificações de menção:', error);
       logger.error('Erro ao criar notificações de menção:', error);
     }
   }

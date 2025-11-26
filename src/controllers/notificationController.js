@@ -58,6 +58,29 @@ exports.getUnreadCount = async (req, res) => {
   }
 };
 
+// @desc    Get recent notifications for dropdown (5 most recent)
+// @route   GET /api/notifications/recent
+// @access  Private
+exports.getRecentNotifications = async (req, res) => {
+  try {
+    if (!req.session.user) {
+      return res.json({ notifications: [] });
+    }
+    
+    const notifications = await Notification.getUserNotifications(
+      req.session.user._id,
+      5,
+      0
+    );
+    
+    res.json({ notifications });
+    
+  } catch (error) {
+    logger.error('Erro ao buscar notificações recentes:', error);
+    res.json({ notifications: [] });
+  }
+};
+
 // @desc    Mark notification as read
 // @route   POST /api/notifications/:id/read
 // @access  Private

@@ -1,0 +1,408 @@
+<%- include('../../partials/header') %>
+<%- include('../../partials/navbar') %>
+
+<link rel="stylesheet" href="/css/forum.css">
+
+<style>
+.leaderboard-container {
+    max-width: 1400px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+}
+
+.leaderboard-header {
+    text-align: center;
+    margin-bottom: 3rem;
+    padding: 2rem;
+    background: linear-gradient(135deg, rgba(162, 89, 255, 0.1), rgba(255, 184, 0, 0.1));
+    border-radius: 15px;
+    border: 2px solid rgba(162, 89, 255, 0.3);
+}
+
+.leaderboard-title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #A259FF, #FFB800);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.leaderboard-subtitle {
+    font-size: 1.1rem;
+    color: #888;
+}
+
+.stats-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.stat-card-lb {
+    background: rgba(30, 30, 30, 0.5);
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 2px solid rgba(162, 89, 255, 0.2);
+    text-align: center;
+}
+
+.stat-card-lb.pirate {
+    border-color: rgba(162, 89, 255, 0.4);
+    background: linear-gradient(135deg, rgba(162, 89, 255, 0.1), rgba(139, 0, 0, 0.1));
+}
+
+.stat-card-lb.marine {
+    border-color: rgba(0, 128, 255, 0.4);
+    background: linear-gradient(135deg, rgba(0, 0, 139, 0.1), rgba(0, 128, 255, 0.1));
+}
+
+.stat-card-lb h3 {
+    font-size: 1rem;
+    color: #888;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.stat-card-lb .stat-value-lb {
+    font-size: 1.8rem;
+    font-weight: bold;
+    color: #FFB800;
+    font-family: 'Courier New', monospace;
+}
+
+.factions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(600px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+}
+
+.faction-leaderboard {
+    background: rgba(30, 30, 30, 0.5);
+    border-radius: 15px;
+    overflow: hidden;
+    border: 2px solid;
+}
+
+.faction-leaderboard.pirate {
+    border-color: rgba(162, 89, 255, 0.5);
+}
+
+.faction-leaderboard.marine {
+    border-color: rgba(0, 128, 255, 0.5);
+}
+
+.faction-header-lb {
+    padding: 1.5rem;
+    text-align: center;
+    font-size: 1.8rem;
+    font-weight: bold;
+    border-bottom: 2px solid;
+}
+
+.faction-header-lb.pirate {
+    background: linear-gradient(135deg, rgba(162, 89, 255, 0.2), rgba(139, 0, 0, 0.2));
+    border-color: rgba(162, 89, 255, 0.3);
+    color: #A259FF;
+}
+
+.faction-header-lb.marine {
+    background: linear-gradient(135deg, rgba(0, 0, 139, 0.2), rgba(0, 128, 255, 0.2));
+    border-color: rgba(0, 128, 255, 0.3);
+    color: #0080FF;
+}
+
+.leaderboard-table {
+    width: 100%;
+}
+
+.leaderboard-table tr {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    transition: background 0.2s;
+}
+
+.leaderboard-table tr:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.leaderboard-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.leaderboard-table td {
+    padding: 1rem;
+}
+
+.rank-position {
+    font-size: 1.5rem;
+    font-weight: bold;
+    text-align: center;
+    width: 60px;
+}
+
+.rank-position.gold {
+    color: #FFD700;
+    text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+}
+
+.rank-position.silver {
+    color: #C0C0C0;
+    text-shadow: 0 0 10px rgba(192, 192, 192, 0.5);
+}
+
+.rank-position.bronze {
+    color: #CD7F32;
+    text-shadow: 0 0 10px rgba(205, 127, 50, 0.5);
+}
+
+.player-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.player-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: 2px solid rgba(162, 89, 255, 0.5);
+}
+
+.player-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.player-name {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #fff;
+    text-decoration: none;
+}
+
+.player-name:hover {
+    color: #A259FF;
+}
+
+.player-rank-title {
+    font-size: 0.9rem;
+    color: #888;
+    font-style: italic;
+}
+
+.bounty-display {
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #FFB800;
+    font-family: 'Courier New', monospace;
+    text-align: right;
+}
+
+.points-display {
+    text-align: right;
+    color: #888;
+    font-size: 0.9rem;
+}
+
+.empty-leaderboard {
+    padding: 3rem;
+    text-align: center;
+    color: #666;
+}
+
+.empty-leaderboard i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.3;
+}
+
+@media (max-width: 1200px) {
+    .factions-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .leaderboard-table {
+        font-size: 0.9rem;
+    }
+    
+    .player-avatar {
+        width: 40px;
+        height: 40px;
+    }
+    
+    .bounty-display {
+        font-size: 1rem;
+    }
+}
+</style>
+
+<div class="leaderboard-container">
+    <!-- Header -->
+    <div class="leaderboard-header">
+        <h1 class="leaderboard-title">
+            🏆 Ranking de Facções
+        </h1>
+        <p class="leaderboard-subtitle">Os piratas e marines mais temidos dos mares!</p>
+    </div>
+
+    <!-- Estatísticas Gerais -->
+    <div class="stats-overview">
+        <div class="stat-card-lb pirate">
+            <h3>🏴‍☠️ Total Piratas</h3>
+            <div class="stat-value-lb"><%= stats.pirates.total %></div>
+        </div>
+        <div class="stat-card-lb pirate">
+            <h3>💰 Bounty Total Piratas</h3>
+            <div class="stat-value-lb">₿<%= stats.pirates.totalBounty.toLocaleString('pt-BR') %></div>
+        </div>
+        <div class="stat-card-lb marine">
+            <h3>⚓ Total Marines</h3>
+            <div class="stat-value-lb"><%= stats.marines.total %></div>
+        </div>
+        <div class="stat-card-lb marine">
+            <h3>💰 Bounty Total Marines</h3>
+            <div class="stat-value-lb">₿<%= stats.marines.totalBounty.toLocaleString('pt-BR') %></div>
+        </div>
+    </div>
+
+    <!-- Leaderboards das Facções -->
+    <div class="factions-grid">
+        <!-- Piratas -->
+        <div class="faction-leaderboard pirate">
+            <div class="faction-header-lb pirate">
+                🏴‍☠️ Top Piratas
+            </div>
+            <% if (topPirates.length > 0) { %>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px; text-align: center;">#</th>
+                            <th>Pirata</th>
+                            <th style="text-align: right;">Bounty</th>
+                            <th style="text-align: right;">Pontos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% topPirates.forEach((pirate, index) => { %>
+                            <tr>
+                                <td class="rank-position <%= index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '' %>">
+                                    <%= index + 1 %>
+                                </td>
+                                <td>
+                                    <div class="player-info">
+                                        <img src="<%= pirate.avatar || '/images/default-avatar.png' %>" 
+                                             alt="<%= pirate.username %>" 
+                                             class="player-avatar">
+                                        <div class="player-details">
+                                            <a href="/forum/user/<%= pirate.username %>" class="player-name">
+                                                <%= pirate.username %>
+                                            </a>
+                                            <span class="player-rank-title">
+                                                ⚔️ <%= pirate.rankInfo.title %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="bounty-display">
+                                    ₿<%= pirate.bounty.toLocaleString('pt-BR') %>
+                                </td>
+                                <td class="points-display">
+                                    <%= pirate.factionPoints.toLocaleString('pt-BR') %> pts
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-leaderboard">
+                    <i class="fas fa-skull-crossbones"></i>
+                    <p>Nenhum pirata no ranking ainda</p>
+                </div>
+            <% } %>
+        </div>
+
+        <!-- Marines -->
+        <div class="faction-leaderboard marine">
+            <div class="faction-header-lb marine">
+                ⚓ Top Marines
+            </div>
+            <% if (topMarines.length > 0) { %>
+                <table class="leaderboard-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 60px; text-align: center;">#</th>
+                            <th>Marine</th>
+                            <th style="text-align: right;">Bounty</th>
+                            <th style="text-align: right;">Pontos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% topMarines.forEach((marine, index) => { %>
+                            <tr>
+                                <td class="rank-position <%= index === 0 ? 'gold' : index === 1 ? 'silver' : index === 2 ? 'bronze' : '' %>">
+                                    <%= index + 1 %>
+                                </td>
+                                <td>
+                                    <div class="player-info">
+                                        <img src="<%= marine.avatar || '/images/default-avatar.png' %>" 
+                                             alt="<%= marine.username %>" 
+                                             class="player-avatar">
+                                        <div class="player-details">
+                                            <a href="/forum/user/<%= marine.username %>" class="player-name">
+                                                <%= marine.username %>
+                                            </a>
+                                            <span class="player-rank-title">
+                                                🎖️ <%= marine.rankInfo.title %>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="bounty-display">
+                                    ₿<%= marine.bounty.toLocaleString('pt-BR') %>
+                                </td>
+                                <td class="points-display">
+                                    <%= marine.factionPoints.toLocaleString('pt-BR') %> pts
+                                </td>
+                            </tr>
+                        <% }) %>
+                    </tbody>
+                </table>
+            <% } else { %>
+                <div class="empty-leaderboard">
+                    <i class="fas fa-anchor"></i>
+                    <p>Nenhum marine no ranking ainda</p>
+                </div>
+            <% } %>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="leaderboard-header" style="margin-top: 2rem;">
+        <p style="font-size: 1.1rem; color: #fff; margin-bottom: 1rem;">
+            💪 Quer aparecer no ranking?
+        </p>
+        <p style="color: #888;">
+            Ganhe pontos criando threads (+10), postando (+5) e recebendo upvotes (+2)!
+        </p>
+        <% if (!user || !user.faction) { %>
+            <a href="/forum/faction/choose" style="display: inline-block; margin-top: 1rem; padding: 0.75rem 2rem; background: linear-gradient(135deg, #A259FF, #FFB800); color: #000; font-weight: bold; border-radius: 8px; text-decoration: none;">
+                Escolher Facção
+            </a>
+        <% } %>
+    </div>
+</div>
+
+<%- include('../../partials/footer') %>

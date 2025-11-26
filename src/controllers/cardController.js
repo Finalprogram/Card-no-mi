@@ -467,6 +467,7 @@ const debugCardSearch = async (req, res) => {
 // Nova função para a API de cartas disponíveis (com filtros)
 const getAvailableCards = async (req, res) => {
   try {
+    console.log('📦 getAvailableCards chamado com query:', req.query);
     const currentPage = parseInt(req.query.p) || 1;
     const limit = 50;
     
@@ -483,6 +484,8 @@ const getAvailableCards = async (req, res) => {
       cardMatchQuery.set_name = new RegExp(setCode, 'i');
     }
     if (req.query.q && req.query.q !== '') cardMatchQuery.name = new RegExp(req.query.q, 'i');
+    
+    console.log('🔍 Query construída:', cardMatchQuery);
 
     // Busca no banco de dados - apenas cartas COM anúncios ativos
     const distinctCardIds = await Listing.distinct('card', { quantity: { $gt: 0 } });
@@ -518,6 +521,8 @@ const getAvailableCards = async (req, res) => {
       { $limit: limit }
     ]);
 
+    console.log(`✅ Retornando ${cards.length} cartas (página ${currentPage} de ${Math.ceil(totalCards/limit)})`);
+    
     res.json({
       cards: cards,
       hasMore: (currentPage * limit) < totalCards,
@@ -526,7 +531,7 @@ const getAvailableCards = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("Erro na API de cartas disponíveis:", error);
+    console.error("❌ Erro na API de cartas disponíveis:", error);
     res.status(500).json({ message: 'Erro no servidor', cards: [], hasMore: false, currentPage: 1, totalCards: 0 });
   }
 };

@@ -13,6 +13,9 @@
     <p class="forum-subtitle">Participe das discussões, compartilhe estratégias e conecte-se com a comunidade!</p>
     
     <div class="forum-actions">
+      <a href="/forum/leaderboard" class="btn btn-secondary">
+        <i class="fas fa-trophy"></i> Ranking
+      </a>
       <a href="/forum/search" class="btn btn-secondary">
         <i class="fas fa-search"></i> Buscar
       </a>
@@ -81,7 +84,11 @@
                   <img src="<%= category.lastThread.author.avatar || '/images/default-avatar.png' %>" 
                        alt="<%= category.lastThread.author.username %>" 
                        class="activity-avatar">
-                  <span class="activity-author"><%= category.lastThread.author.username %></span>
+                  <% if (category.lastThread.author.faction) { %>
+                    <span style="font-size: 2.6em;">
+                      <%= category.lastThread.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+                    </span>
+                  <% } %>
                   <span class="activity-time">
                     <i class="far fa-clock"></i>
                     <%= new Date(category.lastThread.lastActivity).toLocaleDateString('pt-BR', { 

@@ -1,0 +1,1 @@
+Write-Host "Digite seu username:" -ForegroundColor Yellow; $username = Read-Host; node scripts/resetMyFaction.js $username

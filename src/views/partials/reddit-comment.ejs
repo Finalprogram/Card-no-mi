@@ -58,8 +58,22 @@
       <% } else if (post.author.role === 'moderator') { %>
         <span class="user-badge mod-badge" title="Moderador"><i class="fas fa-shield-alt"></i> Mod</span>
       <% } %>
-      <% if (post.author.reputation) { %>
-        <span class="comment-rep-level">Nível <%= post.author.reputation.level %></span>
+      <% if (post.author.faction) { %>
+        <span class="user-badge faction-badge faction-<%= post.author.faction %>" title="<%= post.author.faction === 'pirate' ? 'Pirata' : 'Marinha' %>">
+          <%= post.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+        </span>
+        <% 
+          const factionSystem = require('../config/factionSystem');
+          const rankInfo = factionSystem.getCurrentRank(post.author.faction, post.author.factionPoints || 0);
+        %>
+        <span class="comment-faction-rank" style="color: #FFB800; font-size: 0.75rem; font-style: italic;">
+          <%= rankInfo ? rankInfo.title : 'Recruta' %>
+        </span>
+      <% } %>
+      <% if (post.author.faction && post.author.factionPoints > 0) { %>
+        <span class="comment-bounty" title="Bounty">
+          💰 ₿<%= (post.author.factionPoints * 10000).toLocaleString('pt-BR') %>
+        </span>
       <% } %>
       <span class="comment-time">
         <%= new Date(post.createdAt).toLocaleString('pt-BR', {

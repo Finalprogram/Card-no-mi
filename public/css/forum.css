@@ -1653,15 +1653,80 @@
   position: absolute;
   bottom: -5px;
   right: -5px;
-  background: var(--warning-color);
   border-radius: 50%;
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   display: flex;
   align-items: center;
   justify-content: center;
+  font-size: 1.8rem;
+  border: 3px solid var(--surface);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+.profile-badge-overlay.faction-overlay.faction-pirate {
+  background: linear-gradient(135deg, #A259FF, #FFB800);
+}
+
+.profile-badge-overlay.faction-overlay.faction-marine {
+  background: linear-gradient(135deg, #A259FF, #FFB800);
+}
+
+.profile-faction-info {
+  display: flex;
+  gap: 2rem;
+  align-items: center;
+  margin: 1rem 0;
+  padding: 1rem;
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.1), rgba(255, 184, 0, 0.1));
+  border-radius: 12px;
+  border: 2px solid rgba(162, 89, 255, 0.3);
+}
+
+.faction-rank-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.rank-icon {
   font-size: 1.5rem;
-  border: 3px solid var(--card-bg);
+}
+
+.rank-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #FFB800;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.faction-bounty-display {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-left: 2rem;
+  border-left: 2px solid rgba(162, 89, 255, 0.3);
+}
+
+.bounty-icon {
+  font-size: 1.5rem;
+}
+
+.bounty-label {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bounty-amount {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #A259FF;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 15px rgba(162, 89, 255, 0.5);
 }
 
 .profile-info {
@@ -1760,6 +1825,30 @@
 .stat-label {
   font-size: 0.875rem;
   color: var(--text-secondary);
+}
+
+/* Stats de Facção */
+.stat-card.faction-stat {
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.1), rgba(255, 184, 0, 0.1));
+  border: 2px solid rgba(162, 89, 255, 0.3);
+}
+
+.stat-card.faction-stat .stat-value {
+  color: #FFB800;
+  font-size: 1.2rem;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.stat-card.bounty-stat {
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.15), rgba(255, 184, 0, 0.15));
+  border: 2px solid rgba(255, 184, 0, 0.4);
+}
+
+.stat-card.bounty-stat .stat-value {
+  color: #A259FF;
+  font-family: 'Courier New', monospace;
+  font-size: 1.3rem;
+  text-shadow: 0 0 10px rgba(162, 89, 255, 0.5);
 }
 
 .profile-section {
@@ -2297,12 +2386,21 @@
   color: var(--primary-color);
 }
 
-.comment-rep-level {
+.comment-faction-rank {
   font-size: 0.75rem;
   padding: 0.125rem 0.5rem;
-  background: var(--primary-color);
-  color: white;
+  margin-left: 0.25rem;
+}
+
+.comment-bounty {
+  font-size: 0.7rem;
+  padding: 0.125rem 0.5rem;
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.2), rgba(255, 184, 0, 0.2));
+  color: #FFB800;
   border-radius: 12px;
+  font-weight: 600;
+  margin-left: 0.5rem;
+  font-family: 'Courier New', monospace;
 }
 
 .comment-time {
@@ -2843,6 +2941,66 @@
   background: linear-gradient(135deg, #4CAF50, #2E7D32);
   color: #fff;
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+}
+
+/* Badges de Facção */
+.faction-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-left: 0.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.faction-badge.faction-pirate {
+  background: linear-gradient(135deg, #A259FF, #FFB800);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(162, 89, 255, 0.4);
+}
+
+.faction-badge.faction-marine {
+  background: linear-gradient(135deg, #A259FF, #FFB800);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(162, 89, 255, 0.4);
+}
+
+.faction-rank-title {
+  font-weight: 600;
+  font-style: italic;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.3);
+}
+
+/* Sistema de Bounty (Recompensa) */
+.author-bounty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.1), rgba(255, 184, 0, 0.1));
+  border-left: 3px solid #FFB800;
+  border-radius: 6px;
+}
+
+.bounty-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #FFB800;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.bounty-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #A259FF;
+  font-family: 'Courier New', monospace;
+  text-shadow: 0 0 10px rgba(162, 89, 255, 0.3);
 }
 
 /* Botão de denúncia */
@@ -4165,8 +4323,13 @@
 }
 
 /* ============================================================================
-   NOTIFICA��ES
+   NOTIFICAÇÕES - DROPDOWN
    ============================================================================ */
+
+.notification-dropdown-container {
+  position: relative;
+  margin-right: 12px;
+}
 
 .notification-bell {
   position: relative;
@@ -4179,8 +4342,8 @@
   background: var(--forum-surface-hover);
   color: var(--forum-text);
   transition: all 0.2s ease;
-  text-decoration: none;
-  margin-right: 12px;
+  border: none;
+  cursor: pointer;
 }
 
 .notification-bell:hover {
@@ -4201,6 +4364,198 @@
   border-radius: 10px;
   min-width: 18px;
   text-align: center;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 380px;
+  max-height: 500px;
+  background: rgba(30, 30, 30, 0.98);
+  border: 2px solid rgba(162, 89, 255, 0.3);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  backdrop-filter: blur(10px);
+  animation: dropdownFadeIn 0.2s ease;
+}
+
+@keyframes dropdownFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.notification-dropdown-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(162, 89, 255, 0.2);
+  background: linear-gradient(135deg, rgba(162, 89, 255, 0.1), rgba(255, 184, 0, 0.05));
+}
+
+.notification-dropdown-header h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #fff;
+}
+
+.mark-all-read-btn {
+  background: none;
+  border: none;
+  color: #A259FF;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  transition: all 0.2s;
+  font-size: 1rem;
+}
+
+.mark-all-read-btn:hover {
+  background: rgba(162, 89, 255, 0.2);
+  color: #FFB800;
+}
+
+.notification-dropdown-body {
+  overflow-y: auto;
+  max-height: 380px;
+  padding: 0.5rem 0;
+}
+
+.notification-dropdown-body::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-dropdown-body::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.notification-dropdown-body::-webkit-scrollbar-thumb {
+  background: rgba(162, 89, 255, 0.5);
+  border-radius: 3px;
+}
+
+.notification-item {
+  position: relative;
+  display: flex;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.notification-item:hover {
+  background: rgba(162, 89, 255, 0.1);
+}
+
+.notification-item.unread {
+  background: rgba(162, 89, 255, 0.05);
+  border-left: 3px solid #A259FF;
+}
+
+.notification-item.unread:hover {
+  background: rgba(162, 89, 255, 0.15);
+}
+
+.notification-icon {
+  flex-shrink: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(162, 89, 255, 0.2);
+  border-radius: 50%;
+  color: #A259FF;
+  font-size: 1.1rem;
+}
+
+.notification-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-message {
+  margin: 0 0 0.25rem 0;
+  font-size: 0.9rem;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 0.75rem;
+  color: #888;
+}
+
+.notification-link-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+}
+
+.notification-loading,
+.notification-empty,
+.notification-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 1rem;
+  color: #888;
+  text-align: center;
+}
+
+.notification-loading i,
+.notification-empty i,
+.notification-error i {
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+  opacity: 0.5;
+}
+
+.notification-dropdown-footer {
+  border-top: 1px solid rgba(162, 89, 255, 0.2);
+  padding: 0.75rem;
+  text-align: center;
+}
+
+.notification-dropdown-footer a {
+  color: #A259FF;
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+  transition: color 0.2s;
+}
+
+.notification-dropdown-footer a:hover {
+  color: #FFB800;
+}
+
+@media (max-width: 480px) {
+  .notification-dropdown {
+    width: calc(100vw - 2rem);
+    right: -100px;
+  }
 }
 
 .notifications-header {

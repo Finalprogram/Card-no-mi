@@ -6,6 +6,97 @@ const User = require('../models/User');
 const ModerationLog = require('../models/ModerationLog');
 const notificationService = require('../services/notificationService');
 const logger = require('../config/logger');
+const factionSystem = require('../config/factionSystem');
+
+// ============================================================================
+// SISTEMA DE FACÇÃO
+// ============================================================================
+
+// @desc    Show faction choice page
+// @route   GET /forum/faction/choose
+// @access  Private
+exports.getFactionChoice = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.redirect('/auth/login?redirect=/forum');
+        }
+
+        const user = await User.findById(req.session.user._id || req.session.user.id);
+        
+        // Se já tem facção, redirecionar para o fórum
+        if (user && user.faction) {
+            return res.redirect('/forum');
+        }
+
+        res.render('pages/forum/faction-choice', {
+            user: req.session.user,
+            pageTitle: 'Escolha sua Facção'
+        });
+    } catch (error) {
+        logger.error('Erro ao exibir escolha de facção:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
+};
+
+// @desc    Process faction choice
+// @route   POST /forum/faction/choose
+// @access  Private
+exports.postFactionChoice = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ success: false, message: 'Não autorizado' });
+        }
+
+        const { faction } = req.body;
+        
+        if (!faction || !['pirate', 'marine'].includes(faction)) {
+            return res.status(400).json({ success: false, message: 'Facção inválida' });
+        }
+
+        const userId = req.session.user._id || req.session.user.id;
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+        }
+
+        // Se já tem facção, não permitir mudança
+        if (user.faction) {
+            return res.status(400).json({ success: false, message: 'Você já escolheu uma facção' });
+        }
+
+        // Definir facção
+        user.faction = faction;
+        user.factionRank = 0;
+        user.factionPoints = 0;
+        user.factionJoinedAt = new Date();
+        user.factionChangedAt = new Date();
+        
+        await user.save();
+
+        // Atualizar sessão
+        req.session.user.faction = faction;
+        req.session.user.factionRank = 0;
+
+        logger.info(`Usuário ${user.username} escolheu a facção: ${faction}`);
+
+        // Obter nome do rank inicial
+        const factionSystem = require('../config/factionSystem');
+        const rankInfo = factionSystem.getCurrentRank(faction, 0);
+
+        res.json({ 
+            success: true, 
+            message: 'Facção escolhida com sucesso!',
+            rank: {
+                name: rankInfo ? rankInfo.title : 'Recruta',
+                level: 0
+            }
+        });
+    } catch (error) {
+        logger.error('Erro ao processar escolha de facção:', error);
+        res.status(500).json({ success: false, message: 'Erro ao processar escolha' });
+    }
+};
 
 // ============================================================================
 // CATEGORIAS
@@ -16,6 +107,14 @@ const logger = require('../config/logger');
 // @access  Public
 exports.getForumIndex = async (req, res) => {
     try {
+        // Verificar se o usuário está logado e não tem facção escolhida
+        if (req.session.user) {
+            const user = await User.findById(req.session.user._id || req.session.user.id);
+            if (user && !user.faction) {
+                return res.redirect('/forum/faction/choose');
+            }
+        }
+        
         // Buscar apenas categorias principais (sem parent ou com parent null/undefined)
         const categories = await ForumCategory.find({ 
             isActive: true,
@@ -86,7 +185,7 @@ exports.getForumIndex = async (req, res) => {
                 isDeleted: false 
             })
                 .sort({ lastActivity: -1 })
-                .populate('author', 'username avatar role')
+                .populate('author', 'username avatar role faction factionPoints')
                 .populate('lastActivityBy', 'username')
                 .lean();
 
@@ -476,6 +575,13 @@ exports.createThread = async (req, res) => {
         await reputation.addPoints(10, 'Criou uma nova thread', thread._id);
         await reputation.checkAndAwardBadges();
 
+        // Adicionar pontos de facção (+10 por thread)
+        const user = await User.findById(userId);
+        if (user && user.faction) {
+            const pointsAwarded = await factionSystem.addFactionPoints(user, 10, 'Criou uma thread');
+            logger.info(`💰 Usuário ${user.username} ganhou ${pointsAwarded} pontos de facção (thread criada)`);
+        }
+
         res.json({ 
             success: true, 
             threadUrl: `/forum/${category.slug}/${thread.slug}` 
@@ -495,20 +601,26 @@ exports.createThread = async (req, res) => {
 // @access  Private
 exports.createPost = async (req, res) => {
     try {
+        console.log('📝 Iniciando criação de post...');
         if (!req.session.user) {
             return res.status(401).json({ success: false, message: 'Não autorizado' });
         }
 
         const userId = req.session.user._id || req.session.user.id;
         const { content, parentPostId, quotedPostId } = req.body;
+        console.log('📝 Dados recebidos:', { userId, content: content?.substring(0, 50), parentPostId, quotedPostId });
+        
         const thread = await ForumThread.findOne({ 
             slug: req.params.threadSlug,
             isDeleted: false 
         });
 
         if (!thread) {
+            console.log('❌ Thread não encontrada:', req.params.threadSlug);
             return res.status(404).json({ success: false, message: 'Thread não encontrada' });
         }
+        
+        console.log('✅ Thread encontrada:', thread._id);
 
         if (thread.isLocked) {
             return res.status(403).json({ success: false, message: 'Thread bloqueada' });
@@ -572,21 +684,35 @@ exports.createPost = async (req, res) => {
             post.mentions = mentionedUsers.map(u => u._id);
         }
 
+        console.log('💾 Salvando post...');
         await post.save();
+        console.log('✅ Post salvo:', post._id);
 
         // Atualizar thread
+        console.log('🔄 Atualizando thread...');
         await thread.updateLastActivity(userId);
 
         // Atualizar reputação
+        console.log('⭐ Atualizando reputação...');
         let reputation = await UserReputation.findOne({ user: userId });
         if (!reputation) {
             reputation = new UserReputation({ user: userId });
         }
         reputation.stats.postsCreated += 1;
         await reputation.addPoints(5, 'Criou um post', thread._id, post._id);
+
+        // Adicionar pontos de facção (+5 por post)
+        console.log('💰 Adicionando pontos de facção...');
+        const user = await User.findById(userId);
+        if (user && user.faction) {
+            const pointsAwarded = await factionSystem.addFactionPoints(user, 5, 'Criou um post');
+            console.log(`✅ Pontos de facção adicionados: ${pointsAwarded.pointsAdded}`);
+        }
+        console.log('🏆 Verificando badges...');
         await reputation.checkAndAwardBadges();
 
         // Carregar dados necessários para notificações
+        console.log('🔔 Preparando notificações...');
         const threadWithCategory = await ForumThread.findById(thread._id)
             .populate('category', 'slug')
             .populate('author');
@@ -594,19 +720,23 @@ exports.createPost = async (req, res) => {
 
         // Criar notificações
         // 1. Notificar autor da thread sobre nova resposta
+        console.log('📧 Notificando autor da thread...');
         await notificationService.notifyThreadReply(threadWithCategory, post, postAuthor);
 
         // 2. Notificar usuários mencionados
+        console.log('📧 Notificando menções...');
         await notificationService.notifyMention(content, threadWithCategory, post, postAuthor);
 
         // 3. Se citou alguém, notificar
         if (quotedPostId) {
+            console.log('📧 Notificando citação...');
             const quotedPost = await ForumPost.findById(quotedPostId).populate('author');
             if (quotedPost) {
                 await notificationService.notifyQuote(quotedPost, post, postAuthor);
             }
         }
 
+        console.log('✅ Post criado com sucesso!');
         res.json({ success: true });
     } catch (error) {
         logger.error('Erro ao criar post:', error);
@@ -685,10 +815,23 @@ exports.votePost = async (req, res) => {
 
         const userId = req.session.user._id || req.session.user.id;
         
+        // Verificar se é um novo upvote (não uma remoção ou mudança)
+        const hadUpvote = post.upvotes.some(id => id.toString() === userId.toString());
+        const hadDownvote = post.downvotes.some(id => id.toString() === userId.toString());
+        
         if (voteType === 'remove') {
             await post.removeVote(userId);
         } else {
             await post.addVote(userId, voteType);
+        }
+
+        // Adicionar pontos de facção ao autor do post quando recebe upvote (+2 pontos)
+        if (voteType === 'upvote' && !hadUpvote && post.author.toString() !== userId.toString()) {
+            const postAuthor = await User.findById(post.author);
+            if (postAuthor && postAuthor.faction) {
+                const pointsAwarded = await factionSystem.addFactionPoints(postAuthor, 2, 'Recebeu um upvote');
+                logger.info(`💰 Usuário ${postAuthor.username} ganhou ${pointsAwarded} pontos de facção (upvote recebido)`);
+            }
         }
 
         res.json({ 
@@ -787,6 +930,13 @@ exports.getUserProfile = async (req, res) => {
         // Verificar se é o próprio usuário
         const isOwnProfile = req.session.user && req.session.user.username === req.params.username;
 
+        // Obter informações de facção se existir
+        let factionRankInfo = null;
+        if (user.faction) {
+            const factionSystem = require('../config/factionSystem');
+            factionRankInfo = factionSystem.getCurrentRank(user.faction, user.factionPoints || 0);
+        }
+
         res.render('pages/forum/profile', {
             profileUser: user,
             reputation,
@@ -798,6 +948,7 @@ exports.getUserProfile = async (req, res) => {
             reputationLevel,
             memberSince,
             isOwnProfile,
+            factionRankInfo,
             user: req.session.user || null,
             pageTitle: `Perfil de ${user.username}`
         });
@@ -1605,6 +1756,78 @@ exports.getModerationHistory = async (req, res) => {
         });
     } catch (error) {
         logger.error('Erro ao carregar histórico de moderação:', error);
+        res.status(500).send('Erro interno do servidor');
+    }
+};
+
+// ============================================================================
+// LEADERBOARD DE FACÇÕES
+// ============================================================================
+
+// @desc    Show faction leaderboard
+// @route   GET /forum/leaderboard
+// @access  Public
+exports.getLeaderboard = async (req, res) => {
+    try {
+        const limit = 20; // Top 20 de cada facção
+
+        // Buscar top piratas
+        const topPirates = await User.find({ 
+            faction: 'pirate',
+            factionPoints: { $gt: 0 }
+        })
+            .select('username avatar faction factionPoints factionRank')
+            .sort({ factionPoints: -1 })
+            .limit(limit)
+            .lean();
+
+        // Buscar top marines
+        const topMarines = await User.find({ 
+            faction: 'marine',
+            factionPoints: { $gt: 0 }
+        })
+            .select('username avatar faction factionPoints factionRank')
+            .sort({ factionPoints: -1 })
+            .limit(limit)
+            .lean();
+
+        // Adicionar informações de rank para cada usuário
+        topPirates.forEach(user => {
+            user.rankInfo = factionSystem.getCurrentRank(user.faction, user.factionPoints);
+            user.bounty = user.factionPoints * 10000;
+        });
+
+        topMarines.forEach(user => {
+            user.rankInfo = factionSystem.getCurrentRank(user.faction, user.factionPoints);
+            user.bounty = user.factionPoints * 10000;
+        });
+
+        // Calcular estatísticas gerais
+        const totalPiratePoints = topPirates.reduce((sum, u) => sum + u.factionPoints, 0);
+        const totalMarinePoints = topMarines.reduce((sum, u) => sum + u.factionPoints, 0);
+
+        const stats = {
+            pirates: {
+                total: topPirates.length,
+                totalBounty: totalPiratePoints * 10000,
+                avgBounty: topPirates.length > 0 ? Math.floor((totalPiratePoints * 10000) / topPirates.length) : 0
+            },
+            marines: {
+                total: topMarines.length,
+                totalBounty: totalMarinePoints * 10000,
+                avgBounty: topMarines.length > 0 ? Math.floor((totalMarinePoints * 10000) / topMarines.length) : 0
+            }
+        };
+
+        res.render('pages/forum/leaderboard', {
+            topPirates,
+            topMarines,
+            stats,
+            user: req.session.user || null,
+            pageTitle: 'Ranking de Facções'
+        });
+    } catch (error) {
+        logger.error('Erro ao carregar leaderboard:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };

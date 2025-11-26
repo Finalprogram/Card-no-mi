@@ -25,8 +25,11 @@
                     <img src="<%= profileUser.avatar || '/images/default-avatar.png' %>" 
                          alt="<%= profileUser.username %>"
                          onerror="this.src='/images/default-avatar.png'">
-                    <% if (reputationLevel !== 'Novato') { %>
-                        <span class="profile-badge-overlay" title="<%= reputationLevel %>">⭐</span>
+                    <% if (profileUser.faction) { %>
+                        <span class="profile-badge-overlay faction-overlay faction-<%= profileUser.faction %>" 
+                              title="<%= profileUser.faction === 'pirate' ? 'Pirata' : 'Marinha' %>">
+                            <%= profileUser.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+                        </span>
                     <% } %>
                 </div>
                 
@@ -38,17 +41,33 @@
                         <% } else if (profileUser.accountType === 'shop') { %>
                             <span class="user-role-badge seller">🏪 Loja</span>
                         <% } %>
+                        <% if (profileUser.faction) { %>
+                            <span class="user-badge faction-badge faction-<%= profileUser.faction %>">
+                                <%= profileUser.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+                                <%= profileUser.faction === 'pirate' ? 'Pirata' : 'Marinha' %>
+                            </span>
+                        <% } %>
                     </h1>
                     
-                    <% if (profileUser.forumTitle) { %>
+                    <% if (profileUser.faction && factionRankInfo) { %>
+                        <div class="profile-faction-info">
+                            <div class="faction-rank-display">
+                                <span class="rank-icon"><%= profileUser.faction === 'pirate' ? '⚔️' : '🎖️' %></span>
+                                <span class="rank-title"><%= factionRankInfo.title %></span>
+                            </div>
+                            <% if (profileUser.factionPoints > 0) { %>
+                                <div class="faction-bounty-display">
+                                    <span class="bounty-icon">💰</span>
+                                    <span class="bounty-label">Bounty:</span>
+                                    <span class="bounty-amount">₿<%= (profileUser.factionPoints * 10000).toLocaleString('pt-BR') %></span>
+                                </div>
+                            <% } %>
+                        </div>
+                    <% } else if (profileUser.forumTitle) { %>
                         <div class="profile-custom-title"><%= profileUser.forumTitle %></div>
                     <% } %>
                     
                     <div class="profile-stats-inline">
-                        <span class="stat-item">
-                            <i class="fas fa-star"></i> <strong><%= reputationScore %></strong> pontos de reputação
-                        </span>
-                        <span class="stat-divider">•</span>
                         <span class="stat-item">
                             <i class="fas fa-calendar"></i> Membro desde <%= memberSince %>
                         </span>
@@ -121,16 +140,29 @@
                 <div class="stat-value"><%= postCount %></div>
                 <div class="stat-label">Posts</div>
             </div>
-            <div class="stat-card">
-                <div class="stat-icon">⭐</div>
-                <div class="stat-value"><%= reputationScore %></div>
-                <div class="stat-label">Reputação</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-icon">🏅</div>
-                <div class="stat-value"><%= reputationLevel %></div>
-                <div class="stat-label">Nível</div>
-            </div>
+            <% if (profileUser.faction && factionRankInfo) { %>
+                <div class="stat-card faction-stat">
+                    <div class="stat-icon"><%= profileUser.faction === 'pirate' ? '⚔️' : '🎖️' %></div>
+                    <div class="stat-value"><%= factionRankInfo.title %></div>
+                    <div class="stat-label"><%= profileUser.faction === 'pirate' ? 'Rank Pirata' : 'Patente Naval' %></div>
+                </div>
+                <div class="stat-card bounty-stat">
+                    <div class="stat-icon">💰</div>
+                    <div class="stat-value">₿<%= (profileUser.factionPoints * 10000).toLocaleString('pt-BR') %></div>
+                    <div class="stat-label">Bounty</div>
+                </div>
+            <% } else { %>
+                <div class="stat-card">
+                    <div class="stat-icon">⭐</div>
+                    <div class="stat-value"><%= reputationScore %></div>
+                    <div class="stat-label">Reputação</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏅</div>
+                    <div class="stat-value"><%= reputationLevel %></div>
+                    <div class="stat-label">Nível</div>
+                </div>
+            <% } %>
         </div>
 
         <!-- Recent Activity -->

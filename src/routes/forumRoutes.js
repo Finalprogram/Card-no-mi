@@ -10,6 +10,16 @@ const forumUpload = require('../middleware/forumUpload');
 // Index do fórum (todas as categorias)
 router.get('/', forumController.getForumIndex);
 
+// ============================================================================
+// SISTEMA DE FACÇÃO
+// ============================================================================
+
+// Tela de escolha de facção
+router.get('/faction/choose', forumController.getFactionChoice);
+
+// Processar escolha de facção
+router.post('/faction/choose', forumController.postFactionChoice);
+
 // Painel de moderação (apenas para moderadores/admins) - deve vir antes da rota dinâmica de categoria
 router.get('/moderation', forumController.getModerationDashboard);
 
@@ -21,6 +31,9 @@ router.get('/search', forumController.searchForum);
 
 // Perfil de usuário no fórum
 router.get('/user/:username', forumController.getUserProfile);
+
+// Leaderboard de facções
+router.get('/leaderboard', forumController.getLeaderboard);
 
 // ============================================================================
 // ROTAS PRIVADAS (Requerem autenticação)

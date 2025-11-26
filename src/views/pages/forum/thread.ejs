@@ -65,16 +65,25 @@
             <% } else if (thread.author.role === 'moderator') { %>
               <span class="user-badge mod-badge" title="Moderador"><i class="fas fa-shield-alt"></i> Mod</span>
             <% } %>
+            <% if (thread.author.faction) { %>
+              <span class="user-badge faction-badge faction-<%= thread.author.faction %>" title="<%= thread.author.faction === 'pirate' ? 'Pirata' : 'Marinha' %>">
+                <%= thread.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+                <%= thread.author.faction === 'pirate' ? 'Pirata' : 'Marinha' %>
+              </span>
+            <% } %>
           </a>
-          <% if (thread.author.reputation) { %>
-            <div class="author-reputation">
-              <span class="rep-title"><%= thread.author.reputation.title %></span>
-              <span class="rep-level">Nível <%= thread.author.reputation.level %></span>
-              <div class="rep-badges">
-                <% thread.author.reputation.badges.slice(0, 3).forEach(badge => { %>
-                  <span class="badge-icon" title="<%= badge.description %>"><%= badge.icon %></span>
-                <% }) %>
-              </div>
+          <% if (thread.author.faction) { 
+            const factionSystem = require('../../config/factionSystem');
+            const rankInfo = factionSystem.getCurrentRank(thread.author.faction, thread.author.factionPoints || 0);
+          %>
+            <div class="faction-rank-title" style="color: <%= thread.author.faction === 'pirate' ? '#FFB800' : '#FFB800' %>; font-size: 0.85rem; margin-top: 0.25rem;">
+              <%= rankInfo ? rankInfo.title : 'Recruta' %>
+            </div>
+          <% } %>
+          <% if (thread.author.faction && thread.author.factionPoints > 0) { %>
+            <div class="author-bounty">
+              <span class="bounty-label">💰 Bounty:</span>
+              <span class="bounty-value">₿<%= (thread.author.factionPoints * 10000).toLocaleString('pt-BR') %></span>
             </div>
           <% } %>
           <div class="author-stats">

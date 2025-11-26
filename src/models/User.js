@@ -25,6 +25,29 @@ const UserSchema = new mongoose.Schema({
     twitch: { type: String }
   },
   
+  // Sistema de Facção
+  faction: {
+    type: String,
+    enum: ['pirate', 'marine', null],
+    default: null
+  },
+  factionRank: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  factionPoints: {
+    type: Number,
+    default: 0,
+    min: 0
+  },
+  factionJoinedAt: {
+    type: Date
+  },
+  factionChangedAt: {
+    type: Date
+  },
+  
   accountType: {
     type: String,
     // Adicionamos o tipo 'admin'
