@@ -7,6 +7,12 @@ const forumThreadSchema = new mongoose.Schema({
     trim: true,
     maxlength: 200
   },
+  type: {
+    type: String,
+    enum: ['duvida', 'anuncio', 'discussao', 'tutorial', 'outro'],
+    default: 'discussao',
+    required: true
+  },
   slug: {
     type: String,
     required: true,

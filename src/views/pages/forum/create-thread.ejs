@@ -103,6 +103,22 @@
       </div>
 
       <div class="form-group">
+        <label for="type">
+          Tipo do Tópico <span class="required">*</span>
+        </label>
+        <select id="type" name="type" class="form-control" required>
+          <option value="discussao">Discussão</option>
+          <option value="duvida">Dúvida</option>
+          <option value="anuncio">Anúncio</option>
+          <option value="tutorial">Tutorial</option>
+          <option value="outro">Outro</option>
+        </select>
+        <small class="form-text">
+          Escolha o tipo que melhor representa seu tópico.
+        </small>
+      </div>
+
+      <div class="form-group">
         <label for="tags">
           Tags (opcional)
         </label>

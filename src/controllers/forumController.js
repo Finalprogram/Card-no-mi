@@ -521,7 +521,7 @@ exports.createThread = async (req, res) => {
             return res.status(401).json({ success: false, message: 'ID de usuário não encontrado na sessão' });
         }
 
-        const { title, content, tags } = req.body;
+        const { title, content, tags, type } = req.body;
         
         const category = await ForumCategory.findOne({ slug: req.params.categorySlug });
 
@@ -556,6 +556,7 @@ exports.createThread = async (req, res) => {
 
         const thread = new ForumThread({
             title,
+            type: type || 'discussao',
             slug,
             content,
             category: category._id,

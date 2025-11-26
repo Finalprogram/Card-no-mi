@@ -561,9 +561,9 @@
 .glass-panel { max-width: 450px; margin: 5vh auto; padding: 2rem 2.5rem; background: rgba(var(--surface), 0.4); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(var(--text-primary), 0.1); border-radius: 16px; box-shadow: 0 8px 32px 0 rgba(var(--bg-main), 0.37); }
 .glass-panel h1 { text-align: center; margin-bottom: 0.5rem; font-size: 2rem; }
 .glass-panel .subtitle { text-align: center; color: var(--text-secondary); margin-bottom: 2rem; }
-.glass-panel .form-control { background: rgba(var(--bg-main), 0.2); border: 1px solid rgba(var(--text-primary), 0.1); }
+.glass-panel .form-control { background: rgba(var(--bg-main), 0.2); border: 2px solid #A259FF; }
 .glass-panel .form-control::placeholder { color: var(--text-secondary); }
-.glass-panel .form-control:focus { border-color: var(--accent-primary); }
+.glass-panel .form-control:focus { border-color: #A259FF; box-shadow: 0 0 0 3px rgba(162, 89, 255, 0.1); }
 .social-login { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
 .btn-social { flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
 .btn-social:hover { background-color: rgba(var(--text-primary), 0.1); }

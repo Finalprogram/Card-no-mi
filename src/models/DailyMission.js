@@ -124,7 +124,15 @@ UserDailyProgressSchema.statics.getTodayProgress = async function(userId) {
 
 // Método para incrementar progresso de uma missão
 UserDailyProgressSchema.statics.incrementProgress = async function(userId, missionType, amount = 1) {
-  const progress = await this.getTodayProgress(userId);
+  // Buscar o documento bruto, não formatado
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let progress = await this.findOne({ user: userId, date: today }).populate('missions.mission');
+  if (!progress) {
+    // Se não existe, cria usando getTodayProgress (que já popula)
+    await this.getTodayProgress(userId);
+    progress = await this.findOne({ user: userId, date: today }).populate('missions.mission');
+  }
   const User = mongoose.model('User');
   
   let pointsEarned = 0;
