@@ -15,13 +15,13 @@ exports.getNotifications = async (req, res) => {
     const skip = (page - 1) * limit;
     
     const notifications = await Notification.getUserNotifications(
-      req.session.user._id,
+      req.session.user.id,
       limit,
       skip
     );
     
     const totalNotifications = await Notification.countDocuments({
-      recipient: req.session.user._id
+      recipient: req.session.user.id
     });
     
     const totalPages = Math.ceil(totalNotifications / limit);
@@ -45,11 +45,17 @@ exports.getNotifications = async (req, res) => {
 // @access  Private
 exports.getUnreadCount = async (req, res) => {
   try {
+    console.log('🔔 getUnreadCount chamado');
+    console.log('👤 req.session.user:', req.session.user);
+    
     if (!req.session.user) {
+      console.log('❌ Sem usuário na sessão');
       return res.json({ count: 0 });
     }
     
-    const count = await Notification.getUnreadCount(req.session.user._id);
+    console.log('🆔 User ID:', req.session.user.id);
+    const count = await Notification.getUnreadCount(req.session.user.id);
+    console.log('📊 Count retornado:', count);
     res.json({ count });
     
   } catch (error) {
@@ -63,15 +69,21 @@ exports.getUnreadCount = async (req, res) => {
 // @access  Private
 exports.getRecentNotifications = async (req, res) => {
   try {
+    console.log('📥 getRecentNotifications chamado');
+    console.log('👤 req.session.user:', req.session.user);
+    
     if (!req.session.user) {
+      console.log('❌ Sem usuário na sessão');
       return res.json({ notifications: [] });
     }
     
+    console.log('🆔 User ID:', req.session.user.id);
     const notifications = await Notification.getUserNotifications(
-      req.session.user._id,
+      req.session.user.id,
       5,
       0
     );
+    console.log('📋 Notificações encontradas:', notifications.length);
     
     res.json({ notifications });
     
@@ -92,7 +104,7 @@ exports.markAsRead = async (req, res) => {
     
     const { id } = req.params;
     
-    await Notification.markAsRead(id, req.session.user._id);
+    await Notification.markAsRead(id, req.session.user.id);
     
     res.json({ success: true });
     
@@ -111,7 +123,7 @@ exports.markAllAsRead = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Não autorizado' });
     }
     
-    await Notification.markAllAsRead(req.session.user._id);
+    await Notification.markAllAsRead(req.session.user.id);
     
     res.json({ success: true });
     
@@ -134,7 +146,7 @@ exports.deleteNotification = async (req, res) => {
     
     await Notification.findOneAndDelete({
       _id: id,
-      recipient: req.session.user._id
+      recipient: req.session.user.id
     });
     
     res.json({ success: true });
