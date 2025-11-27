@@ -144,6 +144,7 @@
   height: 180px;
   width: auto;
   transition: transform 0.3s ease;
+  padding-left: 30px;
 }
 
 .navbar-logo-img:hover {
@@ -250,12 +251,18 @@
   transition: background-color 0.2s;
 }
 
+
 .footer-social-btn.discord {
   background-color: #5865F2;
 }
 
 .footer-social-btn.whatsapp {
   background-color: #25D366;
+}
+
+.footer-social-btn.instagram {
+  background-color: #d6249f;
+  color: #fff;
 }
 
 .footer-social-btn:hover {
