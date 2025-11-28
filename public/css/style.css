@@ -361,7 +361,7 @@
 .hero { text-align: center; padding: 6rem 0; }
 .hero h1 { font-size: 3.5rem; margin-bottom: 2rem; margin-top: 2rem;}
 .hero-logo-inline {
-  height: 2.1em; /* Adjust size relative to font-size of h1 */
+  height: 1.5em; /* Adjust size relative to font-size of h1 */
   width: auto;
   vertical-align: middle;
   margin-left: 0.2em; /* Small space after the text */
@@ -508,8 +508,22 @@
   border-width: 2px; /* Make the border grow */
   box-shadow: 0 10px 20px rgba(var(--accent-primary-rgb), 0.2);
 }
-.card-item .card-image-container { transition: transform 0.2s ease-in-out; }
-/* .card-item .card-image-container:hover { transform: scale(1.6) translateY(-20%); } */ /* Desativado - zoom específico no carousel */
+.card-item .card-image-container {
+  transition: transform 0.25s cubic-bezier(.22,1,.36,1);
+}
+.card-item .card-image-container:hover {
+  transform: scale(1.5) translateY(-8px);
+  z-index: 2;
+  box-shadow: 0 8px 32px #9b5cff44;
+}
+.cards-carousel .card-item img {
+  transition: transform 0.25s cubic-bezier(.22,1,.36,1);
+}
+.cards-carousel .card-item:hover img {
+  transform: scale(1.13) translateY(-8px);
+  z-index: 2;
+  box-shadow: 0 8px 32px #9b5cff44;
+}
 .card-item img { width: 100%; height: auto; display: block; border-radius: 6px; margin-bottom: 0.5rem; }
 .card-item h4 { font-size: 1rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); text-decoration: none !important; }
 .card-info { flex-grow: 1; display: flex; flex-direction: column; justify-content: flex-end; }

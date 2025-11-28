@@ -18,7 +18,7 @@
 
             <% if (cards.length > 0) { %>
                 <p><%= cards.length %> carta(s) encontrada(s).</p>
-                <div class="cards-carousel">
+                <div class="cards-carousel cardsearch-zoom">
                     <% cards.forEach(card => { %>
                         <div class="card-item">
                             <% if (card.image_uris && card.image_uris.normal) { %>
