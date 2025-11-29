@@ -20,9 +20,29 @@
       </div>
 
       <div class="pagination d-flex justify-content-center mt-4">
-          <button id="prev-page" class="btn btn-primary me-2" disabled>Anterior</button>
-          <span id="page-indicator" class="align-self-center">Página 1</span>
-          <button id="next-page" class="btn btn-primary ms-2">Próxima</button>
+          <div class="pagination-right">
+            <button id="prev-page" class="btn btn-primary me-2" disabled>Anterior</button>
+            <span id="page-indicator" class="align-self-center">Página <%= typeof currentPage !== 'undefined' ? currentPage : 1 %></span>
+            <span id="total-pages" class="align-self-center mx-2">de <%= typeof totalPages !== 'undefined' ? totalPages : 1 %></span>
+            <div id="google-style-pagination" class="mx-2">
+              <% if (typeof totalPages !== 'undefined' && totalPages > 1) { %>
+                <% let start = Math.max(1, currentPage - 2); %>
+                <% let end = Math.min(totalPages, currentPage + 2); %>
+                <% if (start > 1) { %>
+                  <button class="page-btn" data-page="1">1</button>
+                  <% if (start > 2) { %><span>...</span><% } %>
+                <% } %>
+                <% for (let i = start; i <= end; i++) { %>
+                  <button class="page-btn <%= i === currentPage ? 'active' : '' %>" data-page="<%= i %>"><%= i %></button>
+                <% } %>
+                <% if (end < totalPages) { %>
+                  <% if (end < totalPages - 1) { %><span>...</span><% } %>
+                  <button class="page-btn" data-page="<%= totalPages %>"><%= totalPages %></button>
+                <% } %>
+              <% } %>
+            </div>
+            <button id="next-page" class="btn btn-primary ms-2">Próxima</button>
+          </div>
       </div>
     </section>
   </div>

@@ -1,3 +1,47 @@
+.card-versions-section {
+  margin: 2.5rem 0 1.5rem 0;
+}
+.card-versions-section h2 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  font-weight: 700;
+}
+.card-versions-list {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+.card-version-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #18181b;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px #9b5cff22;
+  padding: 1.2rem 1.2rem 0.7rem 1.2rem;
+  min-width: 140px;
+  max-width: 180px;
+}
+.card-version-img {
+  width: 100px;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 0.7rem;
+  box-shadow: 0 2px 8px #9b5cff44;
+}
+.card-version-badge {
+  display: inline-block;
+  margin-top: 0.5rem;
+  padding: 0.3rem 0.9rem;
+  border-radius: 12px;
+  font-size: 0.98rem;
+  font-weight: 600;
+  background: linear-gradient(90deg, #9b5cff 0%, #00aaff 100%);
+  color: #fff;
+  box-shadow: 0 2px 8px #9b5cff44;
+  letter-spacing: 0.02em;
+}
 .hero-logo-center {
   display: flex;
   justify-content: center;

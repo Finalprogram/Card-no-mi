@@ -125,11 +125,13 @@ const showCardsPage = async (req, res) => {
     ];
 
     // Define os filtros que serão enviados para a view (com opção "Todas")
+    const dons = await Card.distinct('don', { game: 'onepiece' });
     const filterGroups = [
       { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
       { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
       { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
-      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] }
+      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] },
+      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] }
     ];
 
     res.render('pages/cardSearchPage', {
@@ -140,6 +142,7 @@ const showCardsPage = async (req, res) => {
       currentPage,
       hasMore: (currentPage * limit) < totalCards,
       totalCards,
+      totalPages: Math.max(1, Math.ceil(totalCards / limit)),
       filters: req.query,
     });
   } catch (error) {
@@ -160,63 +163,53 @@ const showCardsPage = async (req, res) => {
 // --- FUNÇÃO PARA A PÁGINA DE DETALHES DA CARTA ---
 const showCardDetailPage = async (req, res) => {
   try {
-    const cardId = req.params.id;
 
-    // Validação do ID para evitar erros do Mongoose
+    const cardId = req.params.id;
     if (!mongoose.Types.ObjectId.isValid(cardId)) {
       return res.status(400).send('ID de carta inválido');
     }
 
-    const results = await Card.aggregate([
-      // 1. Encontrar a carta principal pelo ID
-      { $match: { _id: new mongoose.Types.ObjectId(cardId) } },
-
-      // 2. Buscar os anúncios (listings) para essa carta
-      {
-        $lookup: {
-          from: 'listings', // A coleção de anúncios
-          localField: '_id',
-          foreignField: 'card',
-          as: 'listings',
-          // Pipeline aninhado para popular os vendedores
-          pipeline: [
-            { $sort: { price: 1 } }, // Ordena os anúncios pelo preço
-            {
-              $lookup: {
-                from: 'users',
-                localField: 'seller',
-                foreignField: '_id',
-                as: 'sellerInfo',
-                pipeline: [
-                  { $project: { username: 1, accountType: 1, avatar: 1 } } // Seleciona apenas campos necessários
-                ]
-              }
-            },
-            { $unwind: { path: '$sellerInfo', preserveNullAndEmptyArrays: true } },
-            { $addFields: { seller: '$sellerInfo' } }, // Substitui o ID do vendedor pelo objeto populado
-            { $project: { sellerInfo: 0 } } // Remove o campo temporário
-          ]
-        }
-      },
-
-      // 3. Adicionar campos calculados (menor/maior preço)
-      {
-        $addFields: {
-          lowestPrice: { $min: '$listings.price' },
-          highestPrice: { $max: '$listings.price' }
-        }
-      }
-    ]);
-
-    if (results.length === 0) {
+    // Busca a carta principal
+    const mainCard = await Card.findById(cardId).lean();
+    if (!mainCard) {
       return res.status(404).send('Carta não encontrada');
     }
 
-    const cardData = results[0];
 
-    res.render('pages/card-detail', { 
-      card: cardData, 
-      listings: cardData.listings // Passa os listings já ordenados e populados
+    // Busca todas as versões (pelo base do api_id), incluindo a principal
+    let allVersions = [];
+    if (mainCard.api_id) {
+      const baseApiId = mainCard.api_id.split('_')[0];
+      allVersions = await Card.find({
+        api_id: { $regex: `^${baseApiId}` },
+        set_name: mainCard.set_name
+      }).lean();
+    }
+ 11   // Ordena por api_id para manter ordem: normal, _p1, _p2, _p3
+    allVersions = allVersions.sort((a, b) => {
+      if (a.api_id === mainCard.api_id) return -1;
+      if (b.api_id === mainCard.api_id) return 1;
+      return a.api_id.localeCompare(b.api_id);
+    });
+
+    // Busca os anúncios (listings) para essa carta
+    const listings = await Listing.find({ card: mainCard._id })
+      .sort({ price: 1 })
+      .populate({
+        path: 'seller',
+        select: 'username accountType avatar'
+      })
+      .lean();
+
+    // Calcula menor/maior preço
+    const prices = listings.map(l => l.price);
+    mainCard.lowestPrice = prices.length ? Math.min(...prices) : null;
+    mainCard.highestPrice = prices.length ? Math.max(...prices) : null;
+
+    res.render('pages/card-detail', {
+      card: mainCard,
+      listings,
+      allVersions
     });
 
   } catch (error) {

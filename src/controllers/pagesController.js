@@ -231,11 +231,23 @@ const getEncyclopediaPage = async (req, res) => {
       game: 'onepiece',
       name: { $exists: true, $ne: null, $ne: '', $ne: 'undefined' }
     };
-    
+
+    // Filtros vindos da query
+    const page = parseInt(req.query.page) || 1;
+    const limit = 50;
+    const queryFilters = { ...baseFilter };
+    if (req.query.rarity && req.query.rarity !== '') queryFilters.rarity = req.query.rarity;
+    if (req.query.color && req.query.color !== '') queryFilters.colors = new RegExp(req.query.color, 'i');
+    if (req.query.type && req.query.type !== '') queryFilters.type_line = req.query.type;
+    if (req.query.set && req.query.set !== '') queryFilters.set_name = new RegExp(req.query.set, 'i');
+    if (req.query.q && req.query.q !== '') queryFilters.name = new RegExp(req.query.q, 'i');
+    if (req.query.don && req.query.don !== '') queryFilters.don = req.query.don;
+
     // Busca as opções de filtro dinamicamente do banco de dados
     const rarities = await Card.distinct('rarity', baseFilter);
     const colors = await Card.distinct('colors', baseFilter);
     const types = await Card.distinct('type_line', baseFilter);
+    const dons = await Card.distinct('don', baseFilter);
 
     // Busca e ordena todas as edições
     const rawSets = await Card.distinct('set_name', baseFilter);
@@ -260,16 +272,29 @@ const getEncyclopediaPage = async (req, res) => {
 
     // Define os filtros que serão enviados para a view
     const filterGroups = [
-      { name: 'Raridade', key: 'rarity', options: rarities.sort() },
-      { name: 'Cor', key: 'color', options: colors.sort() },
-      { name: 'Tipo', key: 'type', options: types.sort() },
-      { name: 'Edição', key: 'set', options: setOptions }
+      { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
+      { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
+      { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
+      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...setOptions] },
+      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] }
     ];
+
+    // Paginação e busca de cartas
+    const totalCards = await Card.countDocuments(queryFilters);
+    const cards = await Card.find(queryFilters)
+      .sort({ name: 1 })
+      .skip((page - 1) * limit)
+      .limit(limit);
 
     res.render('pages/encyclopedia', {
       title: 'Enciclopédia de Cartas',
       filterGroups: filterGroups,
       filters: req.query, // Passa os filtros atuais para a view
+      cards,
+      currentPage: page,
+      hasMore: (page * limit) < totalCards,
+      totalCards,
+      totalPages: Math.max(1, Math.ceil(totalCards / limit)),
     });
   } catch (error) {
     console.error("Erro ao carregar a página da enciclopédia:", error);

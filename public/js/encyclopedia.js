@@ -1,4 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
+        // Navegação estilo Google: clique nos botões de página
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('page-btn')) {
+                const page = parseInt(e.target.dataset.page);
+                if (!isNaN(page) && page !== currentFilters.page) {
+                    currentFilters.page = page;
+                    fetchCards();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        });
     const cardList = document.getElementById('card-list');
     const prevPageButton = document.getElementById('prev-page');
     const nextPageButton = document.getElementById('next-page');

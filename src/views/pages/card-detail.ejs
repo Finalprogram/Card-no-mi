@@ -3,6 +3,7 @@
 <main class="container">
   <%- include('../partials/navbar') %>
 
+
   <div class="card-detail-container">
     <div class="card-image-section">
       <img src="<%= card.image_url %>" alt="<%= card.name %>">
@@ -12,7 +13,6 @@
       <p><strong>Set:</strong> <%= card.set_name %></p>
       <p><strong>Raridade:</strong> <%= card.rarity %></p>
       <p><strong>Tipo:</strong> <%= card.type_line %></p>
-      
       <div class="price-trend">
         <strong>Preço Médio:</strong> <%= formatPrice(card.averagePrice) %>
         <% if (card.price_trend === 'up') { %>
@@ -31,6 +31,25 @@
       <% } %>
     </div>
   </div>
+
+    <% var versionsList = typeof allVersions !== 'undefined' ? allVersions : [];
+       if (versionsList.length > 1) { %>
+    <div class="card-versions-section">
+      <h2>Outras Versões</h2>
+      <div class="card-versions-list">
+        <% versionsList.forEach(function(ver) { %>
+          <div class="card-version-item">
+            <img src="<%= ver.image_url %>" alt="<%= ver.name %>" class="card-version-img">
+            <% let badge = 'Normal';
+              if (ver.api_id && ver.api_id.endsWith('_p1')) badge = 'Alt Art 1';
+              else if (ver.api_id && ver.api_id.endsWith('_p2')) badge = 'Alt Art 2';
+              else if (ver.api_id && ver.api_id.endsWith('_p3')) badge = 'Full Art'; %>
+            <span class="card-version-badge"><%= badge %></span>
+          </div>
+        <% }) %>
+      </div>
+    </div>
+  <% } %>
 
   <div class="listings-section">
     <h2>Anúncios Disponíveis</h2>

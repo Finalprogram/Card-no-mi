@@ -1,3 +1,46 @@
+.pagination-right {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+}
+/* Estilo para botões de paginação numerados (Google-style) */
+.page-btn {
+    padding: 0.5rem 1rem;
+    margin: 0 2px;
+    border: 2px solid var(--border, #ddd);
+    border-radius: 8px;
+    background: var(--bg-surface, #fff);
+    color: var(--text-primary, #007bff);
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 40px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+}
+
+.page-btn:hover {
+    border-color: var(--accent-primary, #007bff);
+    background: var(--bg-hover, #f0f0f0);
+    color: var(--accent-primary, #007bff);
+    transform: translateY(-2px);
+}
+
+.page-btn.active {
+    background: var(--accent-primary, #007bff);
+    color: #fff;
+    border-color: var(--accent-primary, #007bff);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    z-index: 1;
+}
+
+#google-style-pagination {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+}
 /* Estilos para a página de busca de cartas */
 
 .page-header {

@@ -1,4 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
+        // Navegação estilo Google: clique nos botões de página
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('page-btn')) {
+                const page = parseInt(e.target.dataset.page);
+                if (!isNaN(page) && page !== currentFilters.p) {
+                    currentFilters.p = page;
+                    fetchCards();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                }
+            }
+        });
     const cardList = document.getElementById('card-list');
     const prevPageButton = document.getElementById('prev-page');
     const nextPageButton = document.getElementById('next-page');
@@ -102,6 +113,7 @@ document.addEventListener('DOMContentLoaded', () => {
         pageIndicator.textContent = `Página ${currentPage}`;
         prevPageButton.disabled = currentPage === 1;
         nextPageButton.disabled = !hasMore;
+        // TODO: Adicionar navegação avançada (total de páginas, botões numerados estilo Google)
     };
 
     // --- EVENT LISTENERS ---
