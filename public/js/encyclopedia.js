@@ -163,18 +163,14 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.classList.contains('filter-chip')) {
             const key = e.target.dataset.filterKey;
             const value = e.target.dataset.filterValue;
-            
-            // If clicking "Todas", remove filter
-            if (value === 'all') {
+            // Se clicar em "Todas" (valor vazio), remove filtro
+            if (value === '') {
                 delete tempFilters[key];
-                // Remove active from all chips in this group
                 const groupChips = filtersModal.querySelectorAll(`.filter-chip[data-filter-key="${key}"]`);
                 groupChips.forEach(chip => chip.classList.remove('active'));
                 e.target.classList.add('active');
             } else {
-                // Set filter and update chip states
                 tempFilters[key] = value;
-                // Remove active from all chips in this group
                 const groupChips = filtersModal.querySelectorAll(`.filter-chip[data-filter-key="${key}"]`);
                 groupChips.forEach(chip => chip.classList.remove('active'));
                 e.target.classList.add('active');
