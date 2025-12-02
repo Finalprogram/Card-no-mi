@@ -268,104 +268,91 @@
 
   <!-- Formulário de Resposta -->
   <% if (user && !thread.isLocked) { %>
-    <div class="reply-form" id="replyForm">
-      <h3 class="form-title">
-        <i class="fas fa-reply"></i>
-        Responder à Thread
-      </h3>
-      
-      <!-- Dica de como citar -->
-      <div class="reply-hint" id="quoteHint" style="display: none;">
-        <div class="hint-icon">💡</div>
-        <div class="hint-content">
-          <strong>Como citar um post?</strong>
-          <p>Clique no botão <span class="hint-button"><i class="fas fa-quote-left"></i> Citar</span> em qualquer post para inserir uma citação no editor. A citação aparecerá automaticamente e você pode adicionar sua resposta logo abaixo!</p>
-        </div>
-        <button type="button" class="hint-close" onclick="document.getElementById('quoteHint').style.display='none'">
-          <i class="fas fa-times"></i>
-        </button>
-      </div>
-      
-      <form id="postForm">
-        <input type="hidden" id="parentPostId" name="parentPostId">
-        <input type="hidden" id="quotedPostId" name="quotedPostId">
-        
-        <div id="replyingTo" class="replying-to" style="display: none;">
-          Respondendo a <strong id="replyingToUser"></strong>
-          <button type="button" onclick="cancelReply()" class="btn-cancel-reply">
+    <% if (user && !thread.isLocked) { %>
+      <button class="btn btn-primary" id="showReplyBtn" onclick="document.getElementById('replyForm').style.display='block'; this.style.display='none';">
+        <i class="fas fa-reply"></i> Responder à Thread
+      </button>
+      <div class="reply-form" id="replyForm" style="display:none;">
+        <h3 class="form-title">
+          <i class="fas fa-reply"></i>
+          Responder à Thread
+        </h3>
+        <!-- Dica de como citar -->
+        <div class="reply-hint" id="quoteHint" style="display: none;">
+          <div class="hint-icon">💡</div>
+          <div class="hint-content">
+            <strong>Como citar um post?</strong>
+            <p>Clique no botão <span class="hint-button"><i class="fas fa-quote-left"></i> Citar</span> em qualquer post para inserir uma citação no editor. A citação aparecerá automaticamente e você pode adicionar sua resposta logo abaixo!</p>
+          </div>
+          <button type="button" class="hint-close" onclick="document.getElementById('quoteHint').style.display='none'">
             <i class="fas fa-times"></i>
           </button>
         </div>
-
-        <div id="quotedContent" class="quoted-preview" style="display: none;"></div>
-
-        <div class="editor-toolbar-wrapper" style="margin-bottom: 15px;">
-          <div id="replyToolbar">
-            <span class="ql-formats">
-              <button class="ql-bold" title="Negrito"></button>
-              <button class="ql-italic" title="Itálico"></button>
-              <button class="ql-underline" title="Sublinhado"></button>
-              <button class="ql-strike" title="Tachado"></button>
-            </span>
-            <span class="ql-formats">
-              <button class="ql-header" value="2" title="Título 2"></button>
-              <button class="ql-header" value="3" title="Título 3"></button>
-            </span>
-            <span class="ql-formats">
-              <button class="ql-list" value="ordered" title="Lista Numerada"></button>
-              <button class="ql-list" value="bullet" title="Lista com Marcadores"></button>
-              <button class="ql-blockquote" title="Citação"></button>
-              <button class="ql-code-block" title="Bloco de Código"></button>
-            </span>
-            <span class="ql-formats">
-              <button class="ql-link" title="Inserir Link"></button>
-              <button class="ql-image" title="Inserir Imagem URL"></button>
-            </span>
-            <span class="ql-formats">
-              <button class="ql-clean" title="Limpar Formatação"></button>
-            </span>
+        <form id="postForm">
+          <input type="hidden" id="parentPostId" name="parentPostId">
+          <input type="hidden" id="quotedPostId" name="quotedPostId">
+          <div id="replyingTo" class="replying-to" style="display: none;">
+            Respondendo a <strong id="replyingToUser"></strong>
+            <button type="button" onclick="cancelReply()" class="btn-cancel-reply">
+              <i class="fas fa-times"></i>
+            </button>
           </div>
-          <div id="replyEditor" style="min-height: 150px; background: white; color: #1a1a1a;"></div>
-          <input type="hidden" id="postContent" name="content">
-        </div>
-        
-        <!-- Upload de Imagens na Resposta -->
-        <div class="form-group" style="margin-top: 15px;">
-          <label for="replyImages">
-            <i class="fas fa-image"></i> Adicionar imagens (opcional)
-          </label>
-          <input 
-            type="file" 
-            id="replyImages" 
-            name="images" 
-            class="form-control" 
-            accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-            multiple
-          >
-          <small class="form-text">
-            Máximo de 5 imagens, até 5MB cada
-          </small>
-          <div id="replyImagePreview" class="image-preview-container"></div>
-        </div>
-        
-        <div class="form-actions">
-          <button type="submit" class="btn btn-primary">
-            <i class="fas fa-paper-plane"></i> Enviar Resposta
-          </button>
-        </div>
-      </form>
-    </div>
-  <% } else if (thread.isLocked) { %>
-    <div class="thread-locked-notice">
-      <i class="fas fa-lock fa-2x"></i>
-      <p>Esta thread está bloqueada e não aceita mais respostas.</p>
-    </div>
-  <% } else { %>
-    <div class="login-prompt">
-      <i class="fas fa-sign-in-alt fa-2x"></i>
-      <p>Você precisa estar logado para responder.</p>
-      <a href="/auth/login?redirect=<%= encodeURIComponent(`/forum/${thread.category.slug}/${thread.slug}`) %>" class="btn btn-primary">
-        Fazer Login
+          <div id="quotedContent" class="quoted-preview" style="display: none;"></div>
+          <div class="editor-toolbar-wrapper" style="margin-bottom: 15px;">
+            <div id="replyToolbar">
+              <span class="ql-formats">
+                <button class="ql-bold" title="Negrito"></button>
+                <button class="ql-italic" title="Itálico"></button>
+                <button class="ql-underline" title="Sublinhado"></button>
+                <button class="ql-strike" title="Tachado"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-header" value="2" title="Título 2"></button>
+                <button class="ql-header" value="3" title="Título 3"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-list" value="ordered" title="Lista Numerada"></button>
+                <button class="ql-list" value="bullet" title="Lista com Marcadores"></button>
+                <button class="ql-blockquote" title="Citação"></button>
+                <button class="ql-code-block" title="Bloco de Código"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-link" title="Inserir Link"></button>
+                <button class="ql-image" title="Inserir Imagem URL"></button>
+              </span>
+              <span class="ql-formats">
+                <button class="ql-clean" title="Limpar Formatação"></button>
+              </span>
+            </div>
+            <div id="replyEditor" style="min-height: 150px; background: var(--forum-bg); color: var(--forum-text);"></div>
+            <input type="hidden" id="postContent" name="content">
+          </div>
+          <!-- Upload de Imagens na Resposta -->
+          <div class="form-group" style="margin-top: 15px;">
+            <label for="replyImages">
+              <i class="fas fa-image"></i> Adicionar imagens (opcional)
+            </label>
+            <input 
+              type="file" 
+              id="replyImages" 
+              name="images" 
+              class="form-control" 
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+              multiple
+            >
+            <small class="form-text">
+              Máximo de 5 imagens, até 5MB cada
+            </small>
+            <div id="replyImagePreview" class="image-preview-container"></div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane"></i> Enviar Resposta
+            </button>
+          </div>
+        </form>
+      </div>
+    <% } %>
       </a>
     </div>
   <% } %>
@@ -386,6 +373,7 @@ const replyQuill = new Quill('#replyEditor', {
   placeholder: 'Digite sua resposta...'
 });
 
+
 // Mostrar hint de citação na primeira visita
 if (!localStorage.getItem('quoteHintSeen')) {
   setTimeout(() => {
@@ -397,13 +385,34 @@ if (!localStorage.getItem('quoteHintSeen')) {
   }, 1500);
 }
 
+// Exibir formulário ao clicar em 'Responder à Thread'
+document.addEventListener('DOMContentLoaded', function() {
+  const showReplyBtn = document.getElementById('showReplyBtn');
+  const replyForm = document.getElementById('replyForm');
+  if (showReplyBtn && replyForm) {
+    showReplyBtn.addEventListener('click', function() {
+      replyForm.style.display = 'block';
+      showReplyBtn.style.display = 'none';
+      replyQuill.focus();
+      replyForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    });
+  }
+});
+
 function showReplyForm(postId, username) {
   currentReplyTo = postId;
   document.getElementById('parentPostId').value = postId || '';
   document.getElementById('replyingToUser').textContent = username;
   document.getElementById('replyingTo').style.display = 'flex';
+  // Exibe o formulário se estiver oculto
+  const replyForm = document.getElementById('replyForm');
+  const showReplyBtn = document.getElementById('showReplyBtn');
+  if (replyForm && replyForm.style.display === 'none') {
+    replyForm.style.display = 'block';
+    if (showReplyBtn) showReplyBtn.style.display = 'none';
+  }
   replyQuill.focus();
-  document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth' });
+  replyForm.scrollIntoView({ behavior: 'smooth' });
 }
 
 function cancelReply() {
@@ -443,23 +452,24 @@ async function votePost(postId, voteType) {
 function quotePost(postId, content) {
   currentQuotedPost = postId;
   document.getElementById('quotedPostId').value = postId || '';
-  
   // Limpar HTML tags e mostrar apenas o texto
   const tempDiv = document.createElement('div');
   tempDiv.innerHTML = content;
   const plainText = tempDiv.textContent || tempDiv.innerText || '';
-  
   // Mostrar preview da citação
   const quotedText = plainText.substring(0, 200) + (plainText.length > 200 ? '...' : '');
   document.getElementById('quotedContent').innerHTML = 
     '<i class="fas fa-quote-left"></i> ' + quotedText;
   document.getElementById('quotedContent').style.display = 'block';
-  
-  // Não inserir no editor, apenas mostrar o preview
-  // O usuário digita sua resposta normalmente
-  
+  // Exibe o formulário se estiver oculto
+  const replyForm = document.getElementById('replyForm');
+  const showReplyBtn = document.getElementById('showReplyBtn');
+  if (replyForm && replyForm.style.display === 'none') {
+    replyForm.style.display = 'block';
+    if (showReplyBtn) showReplyBtn.style.display = 'none';
+  }
   replyQuill.focus();
-  document.getElementById('replyForm').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  replyForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 async function reactToThread(threadId, reactionType) {
