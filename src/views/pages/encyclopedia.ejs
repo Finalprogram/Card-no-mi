@@ -58,6 +58,7 @@
         </button>
       </div>
       <div class="filters-modal-body">
+        <!-- Grupo de filtro de Edições -->
         <% if (filterGroups && filterGroups.length > 0) { %>
           <% filterGroups.forEach(group => { %>
             <div class="filter-group-modal">
@@ -65,7 +66,7 @@
               <div class="filter-options-grid">
               <% group.options.forEach(option => { 
                    const value = typeof option === 'object' ? option.value : option;
-                   const label = typeof option === 'object' ? option.display : option;
+                   const label = typeof option === 'object' ? option.label : option;
                    const isActive = (filters && filters[group.key] === value);
               %>
                 <button class="filter-chip <%= isActive ? 'active' : '' %>" data-filter-key="<%= group.key %>" data-filter-value="<%= value %>">

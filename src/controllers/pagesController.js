@@ -266,9 +266,9 @@ const getEncyclopediaPage = async (req, res) => {
     }
 
     const setOptions = rawSets.map(setName => ({
-      value: setName,
-      display: normalizeSetName(setName)
-    })).sort((a, b) => a.display.localeCompare(b.display));
+      value: normalizeSetName(setName),
+      label: normalizeSetName(setName)
+    })).sort((a, b) => a.label.localeCompare(b.label));
 
     // Define os filtros que serão enviados para a view
     const filterGroups = [
