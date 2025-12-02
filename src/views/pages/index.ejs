@@ -2,6 +2,77 @@
 <%- include('../partials/navbar') %>
 
 <style>
+        /* Responsividade para mobile */
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 8px;
+            }
+            .hero {
+                text-align: center;
+                padding: 24px 0 12px 0;
+            }
+            .hero-logo-center img {
+                max-width: 80vw;
+                height: auto;
+            }
+            .hero-search {
+                flex-direction: column;
+                gap: 8px;
+            }
+            .hero-search input {
+                width: 100%;
+                font-size: 1.1em;
+            }
+            .hero-search button {
+                width: 100%;
+                font-size: 1em;
+            }
+            .recently-added {
+                padding: 0;
+            }
+            .carousel-wrapper {
+                flex-direction: column;
+                align-items: center;
+            }
+            .cards-carousel {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 8px;
+                justify-content: center;
+            }
+            .card-item {
+                min-width: 120px;
+                max-width: 45vw;
+            }
+            .card-image-container img {
+                max-width: 100%;
+                height: auto;
+            }
+            .carousel-btn {
+                font-size: 1.5em;
+                padding: 8px;
+            }
+            .trust-features {
+                padding: 0;
+            }
+            .features-grid {
+                display: flex;
+                flex-direction: column;
+                gap: 16px;
+            }
+            .feature-item {
+                flex-direction: row;
+                align-items: center;
+                padding: 8px 0;
+            }
+            .feature-icon {
+                margin-right: 12px;
+            }
+            .card-modal-content {
+                width: 95vw;
+                max-width: 400px;
+            }
+        }
     .hero-search input {
         position: relative;
         overflow: hidden;

@@ -3,11 +3,18 @@
   <div class="container">
 
     <nav class="navbar">
+      <!-- Botão hamburguer para mobile -->
+      <button class="navbar-burger" id="navbarBurger" aria-label="Abrir menu" aria-expanded="false" style="display:none">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
   <a href="/" class="navbar-logo-link">
     <img src="/images/Horizontal.png" alt="Logo Car'D No Mi" class="navbar-logo-img">
   </a>
 
       <ul class="navbar-menu">
+      <!-- O menu já está aqui, só precisa ser escondido/exibido via JS/CSS no mobile -->
     <li class="navbar-dropdown">
       <a href="#" class="dropdown-toggle-navbar">
         Explorar Cartas
@@ -18,7 +25,7 @@
         <a href="/encyclopedia" class="dropdown-item-navbar">Enciclopédia</a>
       </div>
     </li>
-    <li><a href="/decks/community">Deck Builder</a></li>
+    <li><a href="/decks/community" class="dropdown-toggle-navbar">Deck Builder</a></li>
     <li class="navbar-dropdown">
       <a href="#" class="dropdown-toggle-navbar">
         Comunidade
@@ -33,7 +40,7 @@
         <% } %>
       </div>
     </li>
-    <li><a href="/about">Sobre</a></li>
+    <li><a href="/about" class="dropdown-toggle-navbar">Sobre</a></li>
     <% if (user && (user.role === 'moderator' || user.role === 'admin')) { %>
     <li>
       <a href="/forum/moderation" class="moderation-link">
@@ -268,12 +275,37 @@
                 // Atualizar a cada 30 segundos
                 setInterval(updateNotificationCount, 30000);
               </script>
-          <% } else { %>
-              <a href="/auth/login" class="btn-secondary">Entrar</a>
-              <a href="/auth/register" class="btn-primary">Cadastrar</a>
-          <% } %>
+            <% } else { %>
+              <a href="/auth/login" class="btn-secondary navbar-login-btn">Entrar</a>
+              <a href="/auth/register" class="btn-primary navbar-register-btn">Cadastrar</a>
+            <% } %>
       </div>
     </nav>
+    <style>
+    @media (max-width: 900px) {
+      .navbar-register-btn {
+        display: none !important;
+      }
+    }
+    </style>
+    <script>
+    // Responsividade do menu hamburguer
+    document.addEventListener('DOMContentLoaded', function() {
+      const burger = document.getElementById('navbarBurger');
+      const menu = document.querySelector('.navbar-menu');
+      burger.style.display = window.innerWidth <= 900 ? 'flex' : 'none';
+      function toggleMenu() {
+        const expanded = burger.getAttribute('aria-expanded') === 'true';
+        burger.setAttribute('aria-expanded', !expanded);
+        menu.classList.toggle('navbar-menu-open', !expanded);
+      }
+      burger.addEventListener('click', toggleMenu);
+      window.addEventListener('resize', function() {
+        burger.style.display = window.innerWidth <= 900 ? 'flex' : 'none';
+        if(window.innerWidth > 900) menu.classList.remove('navbar-menu-open');
+      });
+    });
+    </script>
     
   </div>
 </header>
