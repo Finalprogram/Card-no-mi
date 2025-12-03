@@ -339,3 +339,21 @@
 .results {
     width: 100%;
 }
+
+.ability-badge {
+    display: inline-block;
+    background-color: #ff0000;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    margin-left: 5px;
+}
+
+.card-image-container {
+    position: relative;
+}

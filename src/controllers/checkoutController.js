@@ -108,6 +108,8 @@ async function showCheckout(req, res) {
       name: (it.meta && it.meta.cardName) || it.cardId,
       imageUrl: (it.meta && it.meta.imageUrl) || '',
       condition: (it.meta && it.meta.condition) || '',
+      is_foil: it.meta.is_foil,
+      ability: it.meta.ability,
       qty: it.qty,
       unit: it.price,
       line: Number((it.qty * it.price).toFixed(2)),

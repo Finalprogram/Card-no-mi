@@ -87,12 +87,17 @@ document.addEventListener('DOMContentLoaded', () => {
                     trendColor = 'red';
                 }
                 
+                let abilityBadge = '';
+                if (card.hasFoil) {
+                    abilityBadge = `<div class="ability-badge">Foil</div>`;
+                }
+
                 cardElement.innerHTML = `
                     <a href="/card/${card._id}" class="card-link">
                         <div class="card-image-container">
                             <img src="${card.image_url}" alt="${card.name}">
                         </div>
-                        <h4>${card.name}</h4>
+                        <h4>${card.name} ${abilityBadge}</h4>
                         <p>
                             Menor Preço: ${priceDisplay}
                             <span style="color: ${trendColor}; font-size: 1.5em;">${trendIcon}</span>

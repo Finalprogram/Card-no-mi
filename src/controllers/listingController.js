@@ -63,7 +63,7 @@ const showEditListingPage = async (req, res) => {
       return res.status(404).send('Anúncio não encontrado.');
     }
     // Authorization: Check if the logged-in user is the seller
-    if (listing.seller.toString() !== req.session.user.id) {
+    if (listing.seller.toString() !== req.session.user.id.toString()) {
       return res.status(403).send('Você não tem permissão para editar este anúncio.');
     }
     res.render('pages/edit-listing', { listing });
@@ -75,7 +75,7 @@ const showEditListingPage = async (req, res) => {
 
 const updateListing = async (req, res) => {
   try {
-    const { price, quantity, condition, language } = req.body;
+    const { price, quantity, condition, language, is_foil } = req.body;
 
     if (parseFloat(price) > 999999) {
       req.flash('error_msg', 'O preço do anúncio não pode exceder R$ 999.999.');
@@ -89,7 +89,7 @@ const updateListing = async (req, res) => {
     }
 
     // Authorization: Check if the logged-in user is the seller
-    if (listing.seller.toString() !== req.session.user.id) {
+    if (listing.seller.toString() !== req.session.user.id.toString()) {
       return res.status(403).send('Você não tem permissão para editar este anúncio.');
     }
 
@@ -97,6 +97,7 @@ const updateListing = async (req, res) => {
     listing.quantity = quantity;
     listing.condition = condition;
     listing.language = language;
+    listing.is_foil = is_foil === 'on' || is_foil === true || is_foil === 'true';
 
     await listing.save();
 
@@ -123,7 +124,7 @@ const deleteListing = async (req, res) => {
     logger.info(`Listing found. Seller ID: ${listing.seller.toString()}`);
 
     // Authorization: Check if the logged-in user is the seller
-    if (!req.session.user || listing.seller.toString() !== req.session.user.id) {
+    if (!req.session.user || listing.seller.toString() !== req.session.user.id.toString()) {
       logger.warn(`User ${req.session.user ? req.session.user.id : 'N/A'} attempted to delete listing ${req.params.id} without permission.`);
       req.flash('error_msg', 'Você não tem permissão para deletar este anúncio.');
       return res.status(403).redirect('/meus-anuncios');

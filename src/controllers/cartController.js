@@ -102,6 +102,8 @@ async function add(req, res) {
       imageUrl: card.image_url,
       condition: listing.condition || meta?.condition,
       language: listing.language || meta?.language,
+      is_foil: listing.is_foil,
+      ability: card.ability,
       sellerName: seller.username || seller.name,
       sellerId: vendorId
     };

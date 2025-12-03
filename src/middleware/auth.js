@@ -11,7 +11,7 @@ const DEBOUNCE_TIME_MS = 60 * 1000; // 1 minute
 const isAuthPage = async (req, res, next) => {
   if (req.session.user) {
     // Activity tracking with debouncing
-    const userId = req.session.user._id;
+    const userId = req.session.user.id;
     const now = Date.now();
 
     if (!lastActivityUpdate[userId] || (now - lastActivityUpdate[userId] > DEBOUNCE_TIME_MS)) {

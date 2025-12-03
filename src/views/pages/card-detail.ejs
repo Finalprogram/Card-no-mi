@@ -1,15 +1,42 @@
 <%- include('../partials/header') %>
-
+<style>
+  .ability-badge {
+    display: inline-block;
+    background-color: #ff0000;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    line-height: 1;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    margin-left: 10px;
+  }
+  .card-image-container {
+    position: relative;
+    display: inline-block; /* To make the container wrap the image */
+  }
+</style>
 <main class="container">
   <%- include('../partials/navbar') %>
 
+  <%
+    const hasFoilListing = listings.some(l => l.is_foil);
+  %>
 
   <div class="card-detail-container">
     <div class="card-image-section">
-      <img src="<%= card.image_url %>" alt="<%= card.name %>">
+      <div class="card-image-container">
+        <img src="<%= card.image_url %>" alt="<%= card.name %>">
+      </div>
     </div>
     <div class="card-info-section">
-      <h1><%= card.name %></h1>
+      <h1><%= card.name %>
+        <% if (hasFoilListing) { %>
+          <div class="ability-badge">Foil</div>
+        <% } %>
+      </h1>
       <p><strong>Set:</strong> <%= card.set_name %></p>
       <p><strong>Raridade:</strong> <%= card.rarity %></p>
       <p><strong>Tipo:</strong> <%= card.type_line %></p>
@@ -56,39 +83,43 @@
     <% if (listings && listings.length > 0) { %>
       <table class="table">
         <thead>
-          <tr>
-            <th>Vendedor</th>
-            <th>Condição</th>
-            <th>Idioma</th>
-            <th>Preço</th>
-            <th>Quantidade</th>
-            <th>Ação</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% listings.forEach(listing => { %>
-            <tr>
-              <td>
-                <a href="/vendedores/<%= listing.seller._id %>" class="seller-link">
-                  <%= listing.seller.username %>
-                </a>
-              </td>
-              <td><%= listing.condition %></td>
-              <td><%= listing.language %></td>
-              <td><%= formatPrice(listing.price) %></td>
-              <td><%= listing.quantity %></td>
-              <td>
-                <button class="btn btn-primary add-to-cart-btn" 
-                        data-listing-id="<%= listing._id %>" 
-                        data-card-id="<%= card._id %>"
-                        data-seller-id="<%= listing.seller._id %>"
-                        data-price="<%= listing.price %>"
-                        data-max-qty="<%= listing.quantity %>">
-                  <i class="fas fa-cart-plus"></i> Adicionar
-                </button>
-              </td>
-            </tr>
-          <% }) %>
+                    <tr>
+                      <th>Vendedor</th>
+                      <th>Condição</th>
+                      <th>Idioma</th>
+                      <th>Preço</th>
+                      <th>Quantidade</th>
+                      <th>Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <% listings.forEach(listing => { %>
+                      <tr>
+                        <td>
+                          <a href="/vendedores/<%= listing.seller._id %>" class="seller-link">
+                            <%= listing.seller.username %>
+                          </a>
+                        </td>
+                        <td>
+                          <%= listing.condition %>
+                          <% if (listing.is_foil) { %>
+                            <div class="ability-badge">Foil</div>
+                          <% } %>
+                        </td>
+                        <td><%= listing.language %></td>
+                        <td><%= formatPrice(listing.price) %></td>
+                        <td><%= listing.quantity %></td>
+                        <td>
+                          <button class="btn btn-primary add-to-cart-btn" 
+                                  data-listing-id="<%= listing._id %>" 
+                                  data-card-id="<%= card._id %>"
+                                  data-seller-id="<%= listing.seller._id %>"
+                                  data-price="<%= listing.price %>"
+                                  data-max-qty="<%= listing.quantity %>">
+                            <i class="fas fa-cart-plus"></i> Adicionar
+                          </button>
+                        </td>
+                      </tr>          <% }) %>
         </tbody>
       </table>
     <% } else { %>

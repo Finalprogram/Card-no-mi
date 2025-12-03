@@ -93,6 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     </select>
                     <input type="number" name="quantity" class="form-control" placeholder="Qtd." min="1" value="1">
                     <input type="number" name="price" class="form-control price-input" placeholder="Preço (R$)" step="0.01" min="0">
+                    <label style="margin-left:10px;">
+                        <input type="checkbox" name="is_foil" class="form-check-input" style="margin-right:5px;"> Foil
+                    </label>
                     <div class="net-price-display" style="grid-column: span 2; font-size: 0.85rem; color: var(--text-muted); padding: 5px 10px; background: var(--bg-surface); border-radius: 4px; display: none;">
                         <span class="net-price-text"></span>
                     </div>
@@ -150,12 +153,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const language = item.querySelector('[name="language"]').value;
             const quantity = item.querySelector('[name="quantity"]').value;
             const price = item.querySelector('[name="price"]').value;
+            const is_foil = item.querySelector('[name="is_foil"]').checked;
 
             if (!price || parseFloat(price) <= 0) {
                 allValid = false;
             }
 
-            listingsData.push({ cardId, condition, language, quantity, price });
+            listingsData.push({ cardId, condition, language, quantity, price, is_foil });
         });
 
         if (!allValid) {

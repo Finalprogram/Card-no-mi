@@ -29,6 +29,23 @@
             aspect-ratio: 63/88; /* Proporção de carta de TCG */
             object-fit: contain;
         }
+        .ability-badge {
+            display: inline-block;
+            background-color: #ff0000;
+            color: #fff;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            white-space: nowrap;
+            line-height: 1;
+            box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+            margin-bottom: 10px; /* Add some space below the badge */
+        }
+
+        .card-image-container {
+            position: relative;
+        }
         .listing-card__info {
             padding: 15px;
             flex-grow: 1;
@@ -136,6 +153,9 @@
                         <% } %>
                         <div class="listing-card__info">
                             <h3 class="listing-card__name"><%= listing.card ? listing.card.name : 'Carta não encontrada' %></h3>
+                            <% if (listing.is_foil) { %>
+                                <div class="ability-badge">Foil</div>
+                            <% } %>
                             <div class="listing-card__details">
                                 <p><span>Condição:</span> <strong><%= listing.condition %></strong></p>
                                 <p><span>Idioma:</span> <strong><%= listing.language %></strong></p>

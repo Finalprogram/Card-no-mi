@@ -44,6 +44,12 @@
                     <option value="JP" <%= listing.language === 'JP' ? 'selected' : '' %>>Japanese (JP)</option>
                 </select>
             </div>
+                <div class="form-group">
+                    <label for="is_foil">
+                        <input type="checkbox" id="is_foil" name="is_foil" class="form-check-input" <%= listing.is_foil ? 'checked' : '' %> />
+                        Foil
+                    </label>
+                </div>
             <button type="submit" class="btn btn-primary">Salvar Alterações</button>
             <a href="/meus-anuncios" class="btn btn-secondary">Cancelar</a>
         </form>

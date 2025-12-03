@@ -39,7 +39,8 @@ const showCardsPage = async (req, res) => {
           as: 'listings'
       }},
       { $addFields: {
-          lowestAvailablePrice: { $min: '$listings.price' }
+          lowestAvailablePrice: { $min: '$listings.price' },
+          hasFoil: { $anyElementTrue: [ '$listings.is_foil' ] }
       }},
       { $project: {
           _id: 1,
@@ -50,7 +51,9 @@ const showCardsPage = async (req, res) => {
           type_line: 1,
           averagePrice: 1,
           price_trend: 1,
-          lowestAvailablePrice: 1
+          lowestAvailablePrice: 1,
+          ability: 1,
+          hasFoil: 1
       }},
       { $sort: { name: 1 }},
       { $skip: (currentPage - 1) * limit },
@@ -496,7 +499,8 @@ const getAvailableCards = async (req, res) => {
           as: 'listings'
       }},
       { $addFields: {
-          lowestAvailablePrice: { $min: '$listings.price' }
+          lowestAvailablePrice: { $min: '$listings.price' },
+          hasFoil: { $anyElementTrue: [ '$listings.is_foil' ] }
       }},
       { $project: {
           _id: 1,
@@ -507,7 +511,9 @@ const getAvailableCards = async (req, res) => {
           type_line: 1,
           averagePrice: 1,
           price_trend: 1,
-          lowestAvailablePrice: 1
+          lowestAvailablePrice: 1,
+          ability: 1,
+          hasFoil: 1
       }},
       { $sort: { name: 1 }},
       { $skip: (currentPage - 1) * limit },
