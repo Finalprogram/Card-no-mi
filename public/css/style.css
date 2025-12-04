@@ -432,9 +432,9 @@
 .hero p { font-size: 1.25rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto 2rem auto; }
 .hero-search { display: flex; max-width: 700px; margin: 0 auto; }
 .hero-search input { flex-grow: 1; padding: 1.2rem; border-radius: 6px 0 0 6px; font-size: 1.2rem; }
-.hero-search button { padding: 1.2rem 2.5rem; border-radius: 0 6px 6px 0; font-size: 1.2rem; border: none; background-color: var(--accent-primary); color: white; cursor: pointer; }
-.hero-search button:hover { background-color: var(--accent-hover); }
-
+.hero-search button { padding: 1.2rem 2.5rem; border-radius: 0 6px 6px 0; font-size: 1.2rem; border: none; background: var(--action-gradient); color: white; cursor: pointer; transition: filter 0.3s ease; }
+.hero-search button:hover { filter: brightness(1.15); }
+ite
 .game-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
 .game-card-link { text-decoration: none; color: inherit; outline: none; }
 .game-card { background-color: var(--bg-surface); border-radius: 8px; overflow: hidden; text-align: center; transition: transform 0.3s ease; border: 1px solid var(--border); }
