@@ -17,6 +17,84 @@
     position: relative;
     display: inline-block; /* To make the container wrap the image */
   }
+
+  .card-versions-section {
+    margin-top: 2rem;
+  }
+
+  .card-versions-section h2 {
+    margin-bottom: 1rem;
+  }
+
+  .card-versions-list {
+    display: flex;
+    gap: 1.5rem;
+    overflow-x: auto;
+    padding: 1rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-primary, #007bff) var(--bg-surface-2, #f8f9fa);
+  }
+
+  .card-versions-list::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .card-versions-list::-webkit-scrollbar-track {
+    background: var(--bg-surface-2, #f8f9fa);
+    border-radius: 4px;
+  }
+
+  .card-versions-list::-webkit-scrollbar-thumb {
+    background-color: var(--accent-primary, #007bff);
+    border-radius: 4px;
+  }
+
+  .card-version-item {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+    cursor: pointer;
+    flex-shrink: 0; /* Prevent items from shrinking */
+  }
+
+  .card-version-link {
+    text-decoration: none;
+    display: block;
+    outline: none;
+  }
+
+  .card-version-link.active .card-version-item {
+    border: 2px solid var(--accent-primary, #007bff);
+  }
+
+  .card-version-link:focus .card-version-item,
+  .card-version-item:hover {
+    transform: scale(1.05);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .card-version-img {
+    display: block;
+    width: 130px;
+    height: auto;
+    border-radius: 8px;
+  }
+
+  .card-version-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: linear-gradient(135deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.6) 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    backdrop-filter: blur(4px);
+  }
 </style>
 <main class="container">
   <%- include('../partials/navbar') %>
@@ -65,14 +143,16 @@
       <h2>Outras Versões</h2>
       <div class="card-versions-list">
         <% versionsList.forEach(function(ver) { %>
-          <div class="card-version-item">
-            <img src="<%= ver.image_url %>" alt="<%= ver.name %>" class="card-version-img">
-            <% let badge = 'Normal';
-              if (ver.api_id && ver.api_id.endsWith('_p1')) badge = 'Alt Art 1';
-              else if (ver.api_id && ver.api_id.endsWith('_p2')) badge = 'Alt Art 2';
-              else if (ver.api_id && ver.api_id.endsWith('_p3')) badge = 'Full Art'; %>
-            <span class="card-version-badge"><%= badge %></span>
-          </div>
+          <a href="/card/<%= ver._id %>" class="card-version-link <%= card._id.toString() === ver._id.toString() ? 'active' : '' %>">
+            <div class="card-version-item">
+              <img src="<%= ver.image_url %>" alt="<%= ver.name %>" class="card-version-img">
+              <% let badge = 'Normal';
+                if (ver.api_id && ver.api_id.endsWith('_p1')) badge = 'Alt Art 1';
+                else if (ver.api_id && ver.api_id.endsWith('_p2')) badge = 'Alt Art 2';
+                else if (ver.api_id && ver.api_id.endsWith('_p3')) badge = 'Full Art'; %>
+              <span class="card-version-badge"><%= badge %></span>
+            </div>
+          </a>
         <% }) %>
       </div>
     </div>
