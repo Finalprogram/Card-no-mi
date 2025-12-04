@@ -237,8 +237,7 @@ const searchCardsForSale = async (req, res) => {
           { api_id: { $regex: searchQuery, $options: 'i' } }
         ]
       })
-      .select('name set_name image_url api_id code') // Also select 'code'
-      .limit(10);
+      .select('name set_name image_url api_id code'); // Remove o .limit(10)
     }
     res.json(searchResults);
     
@@ -416,19 +415,9 @@ const getAllCards = async (req, res) => {
     let totalCards;
     let hasMore = false;
 
-    if (req.query.q) {
-      // Se houver uma busca específica (q), retorna todos os resultados sem paginação
-      cards = await Card.find(filterQuery).sort({ name: 1 });
-      totalCards = cards.length;
-    } else {
-      // Se não houver busca, aplica a paginação
-      cards = await Card.find(filterQuery)
-        .sort({ name: 1 })
-        .skip((page - 1) * limit)
-        .limit(limit);
-      totalCards = await Card.countDocuments(filterQuery);
-      hasMore = (page * limit) < totalCards;
-    }
+    // Sempre retorna todos os resultados, sem paginação ou limite
+    cards = await Card.find(filterQuery).sort({ name: 1 });
+    totalCards = cards.length;
 
     res.json({
       cards,
