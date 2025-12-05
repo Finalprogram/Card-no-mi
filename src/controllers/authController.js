@@ -170,11 +170,13 @@ const loginUser = async (req, res) => {
       }
 
       // Salvamos as informações do usuário na nova sessão
-      req.session.user = {
-        id: user._id,
-        accountType: user.accountType,
-        avatar: user.avatar
-      };
+        req.session.user = {
+          id: user._id,
+          username: user.username,
+          accountType: user.accountType,
+          avatar: user.avatar,
+          role: user.role
+        };
       
       logger.info(`[Login] Success: User ${user.username} (ID: ${user._id}) logged in. IP: ${clientIp}`);
 

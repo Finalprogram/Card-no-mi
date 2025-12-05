@@ -127,7 +127,7 @@
                     <p class="profile-member-since">Membro desde <%= profileUser.createdAt.toLocaleDateString('pt-BR') %></p>
                     
                     <!-- Fee Information (for sellers viewing their own profile) -->
-                    <% if (user && user.id === profileUser.id.toString() && sellerFeePercentage !== null) { %>
+                    <% if (user && user.id.toString() === profileUser.id.toString() && sellerFeePercentage !== null) { %>
                         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px; border-radius: 8px; margin-top: 1rem; box-shadow: 0 4px 12px rgba(0,0,0,0.15);">
                             <div style="font-size: 0.85rem; opacity: 0.9; margin-bottom: 5px;">
                                 <i class="fas fa-percentage"></i> Sua Taxa do Marketplace
@@ -147,7 +147,7 @@
                         </div>
                     <% } %>
 
-                    <% if (user && user.id === profileUser.id.toString()) { %>
+                    <% if (user && user.id.toString() === profileUser.id.toString()) { %>
                         <% if (user.accountType === 'admin') { %>
                             <a href="/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Admin Dashboard</a>
                         <% } else { %>
@@ -163,7 +163,7 @@
         </aside>
 
         <section class="profile-main">
-            <% if (user && user.id === profileUser.id.toString()) { %>
+            <% if (user && user.id.toString() === profileUser.id.toString()) { %>
             <div class="address-section card" hidden>
                 <h2>Meus Dados</h2>
                 <p>Este endereço será usado como origem para o cálculo de fretes.</p>

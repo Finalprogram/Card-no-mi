@@ -97,7 +97,8 @@ const showProfilePage = async (req, res) => {
       averageRating, // Pass the average rating to the view
       error: errorMessage, // Passa a mensagem de erro para a view
       sellerFeePercentage, // Pass seller fee
-      defaultFeePercentage // Pass default fee
+      defaultFeePercentage, // Pass default fee
+      user: req.session.user // Passa o usuário logado para o template
     });
 
   } catch (error) {

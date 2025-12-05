@@ -10,6 +10,9 @@ const logger = require('../config/logger');
 exports.getUserProfile = async (req, res) => {
   try {
     const { username } = req.params;
+    // Log para debug
+    console.log('Sessão username:', req.session.user ? req.session.user.username : null);
+    console.log('URL username:', username);
     
     const user = await User.findOne({ username })
       .select('-password -verificationToken -verificationTokenExpires')
