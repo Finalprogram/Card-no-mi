@@ -434,7 +434,6 @@
 .hero-search input { flex-grow: 1; padding: 1.2rem; border-radius: 6px 0 0 6px; font-size: 1.2rem; }
 .hero-search button { padding: 1.2rem 2.5rem; border-radius: 0 6px 6px 0; font-size: 1.2rem; border: none; background: var(--action-gradient); color: white; cursor: pointer; transition: filter 0.3s ease; }
 .hero-search button:hover { filter: brightness(1.15); }
-ite
 .game-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 2rem; }
 .game-card-link { text-decoration: none; color: inherit; outline: none; }
 .game-card { background-color: var(--bg-surface); border-radius: 8px; overflow: hidden; text-align: center; transition: transform 0.3s ease; border: 1px solid var(--border); }
@@ -562,7 +561,7 @@ ite
 /* --- Grade de Cartas --- */
 .cards-carousel { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1.5rem; }
 .card-link { text-decoration: none; color: inherit; }
-.card-item { width: 110%; max-width: 220px; margin: 0 auto; background-color: var(--bg-surface); border-radius: 8px; padding: 1rem; border: 1px solid var(--border); position: relative; z-index: 1; text-align: center; transition: all 0.2s ease-in-out, border-width 0.2s ease-in-out, border-color 0.2s ease-in-out; min-height: 375px; display: flex; flex-direction: column; justify-content: space-between; }
+.card-item { width: 110%; max-width: 220px; margin: 0 auto; background-color: var(--bg-surface); border-radius: 8px; padding: 1rem; border: 1px solid var(--border); position: relative; z-index: 1; text-align: center; transition: all 0.2s ease-in-out, border-width 0.2s ease-in-out, border-color 0.2s ease-in-out; min-height: 375px; display: flex; flex-direction: column; justify-content: space-between; overflow: visible !important; }
 .card-item:hover {
   z-index: 1003;
   transform: translateY(-5px);
@@ -1477,14 +1476,15 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
 }
 /* --- 4.7. Carousel --- */
 .cards-carousel {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: 220px;
-  gap: 1.5rem;
-  overflow-x: auto;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-  padding-bottom: 1.5rem;
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: max-content; /* evita cortar largura */
+    gap: 1.5rem;
+    overflow-x: auto; /* só rolagem horizontal */
+    overflow-y: visible; /* permite que a carta "cresça" para fora */
+    scroll-snap-type: x mandatory;
+    padding-bottom: 2rem; /* espaço para hover crescer */
+    padding-top: 1rem;
 }
 
 .cards-carousel .card-item {
@@ -1754,6 +1754,7 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
 
 .cards-carousel {
   padding-top: 5px;
+  overflow: visible;
 }
 /* --- 4.8. Carousel Wrapper and Buttons --- */
 .carousel-wrapper {
