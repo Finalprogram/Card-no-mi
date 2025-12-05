@@ -1,3 +1,12 @@
+#card-list.cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    justify-content: center;
+    align-items: start;
+    margin: 0 auto;
+    max-width: 1200px;
+}
 .pagination-right {
     display: flex;
     justify-content: flex-end;
@@ -68,7 +77,24 @@
 }
 
 .search-input-main {
-    flex: 1;
+    .card-item {
+        width: 100%;
+        max-width: 220px;
+        margin: 0 auto;
+        background-color: var(--bg-surface);
+        border-radius: 8px;
+        padding: 1rem;
+        border: 1px solid var(--border);
+        position: relative;
+        z-index: 1;
+        text-align: center;
+        transition: all 0.2s ease-in-out, border-width 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        min-height: 375px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+        /* Removido o scale do card, zoom só na imagem */
     padding: 0.75rem 1rem;
     border: 1px solid var(--border, #ddd);
     border-radius: 8px;

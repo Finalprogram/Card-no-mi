@@ -25,9 +25,13 @@
             <section class="sell-section">
                 <h2>Anúncios para Criar</h2>
                 
-                <div id="listing-staging-area">
-                    <p class="empty-staging-message">As cartas que você adicionar aparecerão aqui.</p>
-                </div>
+
+                                <div style="position:relative;">
+                                    <div id="listing-staging-area">
+                                            <p class="empty-staging-message">As cartas que você adicionar aparecerão aqui.</p>
+                                    </div>
+                                    <div class="staging-scroll-arrow" onclick="document.getElementById('listing-staging-area').scrollBy({left:220,behavior:'smooth'})" style="display:none;">&#8594;</div>
+                                </div>
 
                 <button id="save-all-listings-btn" class="btn-primary btn-submit-full">Salvar Todos os Anúncios</button>
             </section>

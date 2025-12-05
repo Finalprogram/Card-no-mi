@@ -1,4 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
+        // Seta de scroll para o container de staging
+        const stagingArea = document.getElementById('listing-staging-area');
+        const scrollArrow = document.querySelector('.staging-scroll-arrow');
+        function updateScrollArrow() {
+            if (!stagingArea || !scrollArrow) return;
+            if (stagingArea.scrollWidth > stagingArea.clientWidth + 10) {
+                scrollArrow.style.display = 'flex';
+            } else {
+                scrollArrow.style.display = 'none';
+            }
+        }
+        stagingArea.addEventListener('scroll', updateScrollArrow);
+        window.addEventListener('resize', updateScrollArrow);
+        setInterval(updateScrollArrow, 500);
     const searchForm = document.getElementById('sell-search-form');
     const searchInput = document.getElementById('sell-search-input');
     const searchResultsContainer = document.getElementById('sell-search-results');
