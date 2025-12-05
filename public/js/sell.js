@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const searchForm = document.getElementById('sell-search-form');
     const searchInput = document.getElementById('sell-search-input');
     const searchResultsContainer = document.getElementById('sell-search-results');
-    const stagingArea = document.getElementById('listing-staging-area');
+    // stagingArea já foi declarado acima
     const saveAllButton = document.getElementById('save-all-listings-btn');
 
     // --- 1. Lógica de Busca Dinâmica (com Debounce) ---
