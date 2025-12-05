@@ -147,7 +147,7 @@ app.use(async (req, res, next) => {
   if (req.session.user && req.session.user.id) {
     try {
       const User = require('./src/models/User');
-      const updatedUser = await User.findById(req.session.user.id).select('username email avatar role').lean();
+      const updatedUser = await User.findById(req.session.user.id).select('username email avatar accountType').lean();
       if (updatedUser) {
         // Atualizar sessão com dados mais recentes
         req.session.user = {
@@ -155,7 +155,7 @@ app.use(async (req, res, next) => {
           username: updatedUser.username,
           email: updatedUser.email,
           avatar: updatedUser.avatar,
-          role: updatedUser.role
+          accountType: updatedUser.accountType
         };
       }
     } catch (error) {

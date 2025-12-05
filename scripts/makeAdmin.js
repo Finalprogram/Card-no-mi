@@ -11,7 +11,7 @@ mongoose.connect(process.env.MONGODB_URI)
     // Atualizar usuário para admin
     const result = await User.updateOne(
       { email: 'murilobdf14@gmail.com' },
-      { $set: { role: 'admin' } }
+      { $set: { accountType: 'admin' } }
     );
     
     if (result.matchedCount > 0) {
@@ -22,7 +22,7 @@ mongoose.connect(process.env.MONGODB_URI)
       console.log('\nDados do usuário:');
       console.log('Email:', user.email);
       console.log('Username:', user.username);
-      console.log('Role:', user.role);
+      console.log('Account Type:', user.accountType);
     } else {
       console.log('❌ Usuário não encontrado');
     }

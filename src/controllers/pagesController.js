@@ -23,6 +23,19 @@ const showHomePage = async (req, res) => {
   }
 };
 const showProfilePage = async (req, res) => {
+    // ...existing code...
+    let userId = req.params.id;
+
+    // If no ID is provided in the URL, try to get it from the session (logged-in user)
+    if (!userId) {
+      if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if not logged in
+      }
+      userId = req.session.user.id;
+    }
+
+    const profileUser = await User.findById(userId);
+    console.log('DEBUG - profileUser.accountType:', profileUser ? profileUser.accountType : 'NÃO DEFINIDO');
   try {
     let userId = req.params.id;
 
@@ -43,11 +56,18 @@ const showProfilePage = async (req, res) => {
     // If the logged-in user is viewing their own profile, update the session with the latest data
     if (req.session.user && req.session.user.id === profileUser._id.toString()) {
       req.session.user = {
-        id: profileUser._id.toString(), // Ensure ID is a string
+        id: profileUser._id.toString(),
         username: profileUser.username,
         accountType: profileUser.accountType,
-        address: profileUser.address, // Also update address if it changed
-        // Add any other relevant user properties you want to keep in the session
+        email: profileUser.email,
+        avatar: profileUser.avatar,
+        fullName: profileUser.fullName,
+        address: profileUser.address,
+        businessName: profileUser.businessName,
+        documentType: profileUser.documentType,
+        documentNumber: profileUser.documentNumber,
+        phone: profileUser.phone,
+        isVerified: profileUser.isVerified
       };
     }
 

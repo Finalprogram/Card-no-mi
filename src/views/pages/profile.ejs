@@ -109,6 +109,9 @@
                     <% } %>
                 </div>
                 <div class="profile-card-body">
+                                                            <% if (user) { %>
+                                                                <div style="color: red;">Tipo de conta: <%= user.accountType %></div>
+                                                            <% } %>
                     <div class="profile-average-rating">
                         <span class="rating-value"><%= averageRating.toFixed(1) %></span>
                         <span class="star-rating">
@@ -147,12 +150,12 @@
                         </div>
                     <% } %>
 
+                    <% if (user && user.id.toString() === profileUser.id.toString() && user.accountType === 'admin') { %>
+                        <a href="/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Admin Dashboard</a>
+                    <% } else if (user && user.id.toString() === profileUser.id.toString()) { %>
+                        <a href="/dashboard-vendedor" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Acessar Dashboard</a>
+                    <% } %>
                     <% if (user && user.id.toString() === profileUser.id.toString()) { %>
-                        <% if (user.accountType === 'admin') { %>
-                            <a href="/admin/dashboard" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Admin Dashboard</a>
-                        <% } else { %>
-                            <a href="/dashboard-vendedor" class="btn btn-primary" style="margin-top: 1rem; width: 100%;">Acessar Dashboard</a>
-                        <% } %>
                         <a href="/forum/user/<%= profileUser.username || user.username %>" class="btn btn-secondary" style="margin-top: 0.5rem; width: 100%; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
                             <i class="fas fa-comments"></i> Perfil do Fórum
                         </a>

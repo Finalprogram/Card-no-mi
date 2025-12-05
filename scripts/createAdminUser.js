@@ -14,11 +14,11 @@ async function createAdminUser() {
       console.log('⚠️  Usuário já existe!');
       console.log('Email:', existing.email);
       console.log('Username:', existing.username);
-      console.log('Role:', existing.role);
+      console.log('Account Type:', existing.accountType);
       
       // Atualizar para admin se não for
-      if (existing.role !== 'admin') {
-        existing.role = 'admin';
+      if (existing.accountType !== 'admin') {
+        existing.accountType = 'admin';
         await existing.save();
         console.log('✅ Atualizado para admin!');
       }
@@ -34,8 +34,7 @@ async function createAdminUser() {
       username: 'Murilo',
       email: 'murilobdf14@gmail.com',
       password: hashedPassword,
-      role: 'admin',
-      accountType: 'individual',
+      accountType: 'admin',
       isVerified: true,
       profile: {
         bio: 'Administrador do sistema',
@@ -53,7 +52,7 @@ async function createAdminUser() {
     console.log('\n📧 Email: murilobdf14@gmail.com');
     console.log('🔑 Senha: Admin123!');
     console.log('👤 Username: Murilo');
-    console.log('⭐ Role: admin');
+    console.log('⭐ Account Type: admin');
     console.log('\n⚠️  IMPORTANTE: Altere a senha após o primeiro login!');
     
   } catch (error) {

@@ -139,7 +139,7 @@ const loginUser = async (req, res) => {
     }
 
     // Encontra o usuário no banco de dados pelo email
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select('+accountType');
     if (!user) {
       logger.warn(`[Login Attempt] Failed: User not found for email: ${email}. IP: ${clientIp}`);
       req.flash('error', 'Email ou senha inválidos.');
@@ -169,16 +169,20 @@ const loginUser = async (req, res) => {
         return res.status(500).send('Erro no servidor.');
       }
 
+      // Log para depuração do valor de accountType
+      logger.debug(`[LOGIN DEBUG] user.accountType: ${user.accountType}`);
       // Salvamos as informações do usuário na nova sessão
-        req.session.user = {
-          id: user._id,
-          username: user.username,
-          accountType: user.accountType,
-          avatar: user.avatar,
-          role: user.role
-        };
+      req.session.user = {
+        id: user._id,
+        username: user.username,
+        accountType: user.accountType,
+        email: user.email,
+        avatar: user.avatar,
+        fullName: user.fullName
+      };
       
       logger.info(`[Login] Success: User ${user.username} (ID: ${user._id}) logged in. IP: ${clientIp}`);
+      logger.debug(`[LOGIN DEBUG] req.session.user:`, req.session.user);
 
       if (user.firstLogin) {
         return res.redirect('/welcome/step1');

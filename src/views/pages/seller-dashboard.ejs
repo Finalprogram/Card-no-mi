@@ -257,6 +257,6 @@
 </main>
 <%- include('../partials/footer') %>
 <script>
-  window.initialSalesChartData = <%- salesChartData %>;
+  window.initialSalesChartData = <%- JSON.stringify(salesChartData) %>;
 </script>
 <script src="/js/seller-dashboard.js"></script>
