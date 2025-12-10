@@ -1,0 +1,77 @@
+# CSVs de exemplo para importação no PostgreSQL
+
+## User.csv
+email,username,password,avatar,fullName,phone,isVerified,accountType,businessName,documentType,documentNumber
+user1@email.com,user1,senha123,/images/default-avatar.png,User One,11999999999,true,individual,,,CPF,12345678900
+user2@email.com,user2,senha456,/images/default-avatar.png,User Two,11888888888,false,shop,Loja XP,CNPJ,12345678000199
+
+## Order.csv
+order_id,user_id,created_at,subtotal,shipping,total,status
+1,1,2025-12-01,100.00,10.00,110.00,pendente
+2,2,2025-12-02,50.00,5.00,55.00,concluída
+
+## Card.csv
+api_id,code,rarity,type,name,cost,power,color,ability,game
+OP01-001,OP01-001,SR,Personagem,Monkey D. Luffy,5,7000,Red,"Rush",onepiece
+OP01-002,OP01-002,R,Evento,Jet Pistol,2,,Red,"KO até 1 personagem custo 6 ou menos",onepiece
+
+## Listing.csv
+listing_id,card_id,seller_id,price,quantity,condition,is_foil,createdAt,language
+1,1,1,50.00,2,NM,false,2025-12-01,EN
+2,2,2,30.00,1,LP,true,2025-12-02,EN
+
+## Review.csv
+review_id,order_id,orderItemId,seller_id,buyer_id,rating,comment,createdAt
+1,1,1,1,2,5,"Ótima compra!",2025-12-03
+2,2,2,2,1,4,"Tudo certo.",2025-12-04
+
+## Payout.csv
+payout_id,seller_id,amount,status,createdAt
+1,1,90.00,Pending,2025-12-05
+2,2,27.00,Completed,2025-12-06
+
+## Coupon.csv
+coupon_id,code,discountType,discountValue,expirationDate,usageLimit,usedCount,isActive,minimumOrderAmount
+1,BLACKFRIDAY,percentage,10,2025-12-31,100,10,true,50.00
+2,XPTO10,fixed,10,2025-12-31,50,5,true,30.00
+
+## ForumPost.csv
+post_id,thread_id,author_id,content,createdAt
+1,1,1,"Primeiro post do fórum!",2025-12-01
+2,1,2,"Bem-vindo ao fórum!",2025-12-02
+
+## Achievement.csv
+achievement_id,key,name,description,icon,category,tier,requirement,rewardPoints,isHidden,order
+1,first_post,Primeiro Post,"Faça seu primeiro post!",fa-star,posts,bronze,1,10,false,1
+2,top_seller,Top Vendedor,"Venda 10 cartas.",fa-trophy,trading,silver,10,50,false,2
+
+## DailyVisitorCount.csv
+date,count
+2025-12-01,10
+2025-12-02,15
+
+## ModerationLog.csv
+log_id,actionType,targetType,targetId,targetModel,moderator_id,moderatorUsername,targetUser_id,targetUsername,createdAt
+1,thread_flagged,thread,1,ForumThread,1,admin,2,user1,2025-12-01
+
+## PriceHistory.csv
+price_id,card_id,price,date
+1,1,50.00,2025-12-01
+2,2,30.00,2025-12-02
+
+## ForumCategory.csv
+category_id,name,slug,icon,description,order,color,isActive,parentCategory,isSubforum,showInHome
+1,Geral,geral,💬,"Discussões gerais",1,#A259FF,true,,false,true
+
+## ForumThread.csv
+thread_id,title,type,slug,category_id,author_id,content,createdAt
+1,"Bem-vindo!",discussao,bem-vindo,1,1,"Apresente-se aqui!",2025-12-01
+
+## DailyMission.csv
+mission_id,key,title,description,icon,type,requirement,rewardPoints,isActive
+1,login,Login Diário,"Faça login no site",fa-trophy,login,1,5,true
+
+## UserReputation.csv
+reputation_id,user_id,totalPoints,level,title
+1,1,100,2,Novato
+2,2,200,3,Experiente

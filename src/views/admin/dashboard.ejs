@@ -1,4 +1,105 @@
+
+<div class="card">
+    <div class="card-header bg-warning text-dark">Vendas Pendentes de Pagamento de Taxa (Split Manual)</div>
+    <div class="card-body">
+        <table class="pending-fee-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>ID Pedido</th>
+                    <th>Vendedor</th>
+                    <th>Comprador</th>
+                    <th>Carta</th>
+                    <th>Qtd</th>
+                    <th>Preço Unit.</th>
+                    <th>Taxa Marketplace</th>
+                    <th>Valor Líquido</th>
+                    <th>Status</th>
+                    <th>Incluído em Payout?</th>
+                </tr>
+            </thead>
+            <tbody>
+                <% if (pendingFeeOrders && pendingFeeOrders.length > 0) { %>
+                    <% pendingFeeOrders.forEach(order => { %>
+                        <% order.items.forEach(item => { if (!item.balanceProcessed) { %>
+                            <tr>
+                                <td><%= new Date(order.createdAt).toLocaleDateString('pt-BR') %></td>
+                                <td><%= order._id %></td>
+                                <td><%= item.sellerName || (item.seller && item.seller.username) %></td>
+                                <td><%= order.user && order.user.username %> (<%= order.user && order.user.email %>)</td>
+                                <td><%= item.cardName %></td>
+                                <td><%= item.quantity %></td>
+                                <td>R$ <%= item.price.toFixed(2) %></td>
+                                <td>R$ <%= item.marketplaceFee.toFixed(2) %></td>
+                                <td>R$ <%= item.sellerNet.toFixed(2) %></td>
+                                <td class="status"><%= order.status %></td>
+                                <td class="payout <%= item.includedInPayout ? '' : 'no' %>"><%= item.includedInPayout ? 'Sim' : 'Não' %></td>
+                            </tr>
+                        <% } }); %>
+                    <% }); %>
+                <% } else { %>
+                    <tr>
+                        <td colspan="11">Nenhuma venda pendente de pagamento de taxa encontrada.</td>
+                    </tr>
+                <% } %>
+            </tbody>
+        </table>
+    </div>
+</div>
+</div>
+
+<!-- Se houver modal overlay para dashboard, coloque aqui no final do arquivo -->
 <style>
+        /* Tabela de vendas pendentes de taxa */
+        .pending-fee-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: #23263a;
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+        .pending-fee-table th {
+            background: #8A4FFF;
+            color: #fff;
+            font-weight: 700;
+            padding: 12px 8px;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            border-bottom: 2px solid #3C4150;
+        }
+        .pending-fee-table td {
+            padding: 10px 8px;
+            color: #F0F2F5;
+            border-bottom: 1px solid #3C4150;
+            font-size: 0.98rem;
+        }
+        .pending-fee-table tr:nth-child(even) {
+            background: #282b3c;
+        }
+        .pending-fee-table tr:hover {
+            background: #3C4150;
+            transition: background 0.2s;
+        }
+        .pending-fee-table td.status {
+            font-weight: bold;
+            color: #FFD700;
+        }
+        .pending-fee-table td.payout {
+            font-weight: bold;
+            color: #28a745;
+        }
+        .pending-fee-table td.payout.no {
+            color: #dc3545;
+        }
+        @media (max-width: 900px) {
+            .pending-fee-table th, .pending-fee-table td {
+                font-size: 0.85rem;
+                padding: 7px 4px;
+            }
+        }
     body {
         font-family: 'Inter', sans-serif;
 color: #F0F2F5;
@@ -247,7 +348,7 @@ color: #F0F2F5;
                     <h5 class="card-title"><%= totalUsers %></h5>
                     <p class="card-text">Registered users in the system.</p>
                 </div>
-            </div>
+                <!-- Removido row mt-4 que quebrava o grid -->
         </div>
         <div class="col-md-4">
             <div class="card text-white bg-success mb-3">

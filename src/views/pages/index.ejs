@@ -54,53 +54,53 @@
             }
             .trust-features {
                 padding: 0;
-            }
-            .features-grid {
-                display: flex;
-                flex-direction: column;
-                gap: 16px;
-            }
-            .feature-item {
-                flex-direction: row;
-                align-items: center;
-                padding: 8px 0;
-            }
-            .feature-icon {
-                margin-right: 12px;
-            }
-            .card-modal-content {
-                width: 95vw;
-                max-width: 400px;
-            }
-        }
-    .hero-search input {
-        position: relative;
-        overflow: hidden;
-    }
-
-    .hero-search input:focus {
-        outline: none;
-        border-color: transparent; /* Remove default border */
-    }
-
-    .hero-search input:focus::after {
-        content: '';
-        position: absolute;
-        bottom: 0;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: linear-gradient(to right, var(--accent-primary), var(--accent-hover));
-        animation: expand-border 0.5s forwards;
-    }
-
-    @keyframes expand-border {
-        from { width: 0; }
-        to { width: 100%; }
-    }
 </style>
 
 <body class="public-site">
+<!-- Card Detail Modal -->
+<div class="card-modal-overlay" id="cardModal" onclick="closeCardModal(event)">
+    <div class="card-modal-content" onclick="event.stopPropagation()">
+        <button class="card-modal-close" onclick="closeCardModal()">&times;</button>
+        
+        <div class="card-modal-image-container">
+            <img class="card-modal-image" id="modalCardImage" src="" alt="">
+        </div>
+        
+        <div class="card-modal-info">
+            <h3 id="modalCardName"></h3>
+            
+            <div class="card-modal-details">
+                <div class="card-modal-detail-item" id="modalTypeContainer">
+                    <div class="card-modal-detail-label">Tipo</div>
+                    <div class="card-modal-detail-value" id="modalCardType"></div>
+                </div>
+                <div class="card-modal-detail-item" id="modalColorContainer">
+                    <div class="card-modal-detail-label">Cor</div>
+                    <div class="card-modal-detail-value" id="modalCardColor"></div>
+                </div>
+                <div class="card-modal-detail-item" id="modalCostContainer">
+                    <div class="card-modal-detail-label">Custo</div>
+                    <div class="card-modal-detail-value" id="modalCardCost"></div>
+                </div>
+                <div class="card-modal-detail-item" id="modalPowerContainer">
+                    <div class="card-modal-detail-label">Poder</div>
+                    <div class="card-modal-detail-value" id="modalCardPower"></div>
+                </div>
+            </div>
+            
+            <div class="card-modal-ability" id="modalAbilityContainer">
+                <div class="card-modal-ability-label">Habilidade</div>
+                <div class="card-modal-ability-text" id="modalCardAbility"></div>
+            </div>
+            
+            <div class="card-modal-price" id="modalCardPrice"></div>
+            
+            <div class="card-modal-actions">
+                <a id="modalCardLink" href="#" class="btn btn-primary" style="width: 100%;">Ver Página Completa</a>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container">
     <main>

@@ -39,13 +39,23 @@ async function showDashboard(req, res) {
       }
     });
 
+    // Buscar pedidos com taxa pendente (split manual)
+    const pendingFeeOrders = await Order.find({
+      status: { $in: ['Paid', 'Delivered'] },
+      'items.balanceProcessed': false
+    })
+    .populate('user')
+    .populate('items.seller')
+    .sort({ createdAt: -1 });
+
     res.render('admin/dashboard', {
-      layout: 'layouts/admin', // Assuming an admin layout
+      layout: 'layouts/admin',
       totalUsers,
       totalOrders,
-      activeUsers, // Pass active users count to the view
-      historicalVisitors, // Pass historical unique visitor data to the view
+      activeUsers,
+      historicalVisitors,
       totalMarketplaceRevenue: totalMarketplaceRevenue.toFixed(2),
+      pendingFeeOrders,
       pageTitle: 'Admin Dashboard'
     });
   } catch (error) {
