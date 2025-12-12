@@ -1,25 +1,33 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const DailyVisitorCountSchema = new mongoose.Schema({
+const DailyVisitorCount = sequelize.define('DailyVisitorCount', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   date: {
-    type: Date,
-    required: true,
-    unique: true,
-    // Ensure date is stored at the beginning of the day for consistent daily tracking
-    set: function(date) {
-      const d = new Date(date);
-      d.setUTCHours(0, 0, 0, 0);
-      return d;
-    }
+    type: DataTypes.DATEONLY,
+    allowNull: false,
+    unique: true
   },
   count: {
-    type: Number,
-    required: true,
-    default: 0
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
+}, {
+  tableName: 'daily_visitor_counts',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    { fields: ['date'] }
+  ]
 });
 
-// Add an index to the date field for faster queries
-DailyVisitorCountSchema.index({ date: 1 });
-
-module.exports = mongoose.model('DailyVisitorCount', DailyVisitorCountSchema);
+module.exports = DailyVisitorCount;

@@ -35,12 +35,12 @@ const registerUser = async (req, res) => {
     }
 
 
-    const existingUserByUsername = await User.findOne({ username });
+    const existingUserByUsername = await User.findOne({ where: { username } });
     if (existingUserByUsername) {
       errors.username = 'Este nome de usuário já está em uso.';
     }
 
-    const existingUserByEmail = await User.findOne({ email });
+    const existingUserByEmail = await User.findOne({ where: { email } });
     if (existingUserByEmail) {
       errors.email = 'Este email já está cadastrado.';
     }
@@ -59,7 +59,7 @@ const registerUser = async (req, res) => {
     const verificationTokenExpires = Date.now() + 3600000; // 1 hora
 
     // --- CRIAÇÃO DO NOVO USUÁRIO (SEMPRE PESSOA FÍSICA) ---
-    const newUser = new User({
+    const newUser = await User.create({
       username,
       email,
       phone: cleanedPhone, // Usar o número de telefone limpo
@@ -72,9 +72,7 @@ const registerUser = async (req, res) => {
       documentNumber,
     });
 
-    await newUser.save();
-
-    logger.info(`New user created: ${newUser.username} (ID: ${newUser._id}, Email: ${newUser.email})`);
+    logger.info(`New user created: ${newUser.username} (ID: ${newUser.id}, Email: ${newUser.email})`);
 
     // Enviar email de verificação
     await sendVerificationEmail(newUser.email, verificationToken);

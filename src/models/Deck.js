@@ -1,50 +1,54 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const cardInDeckSchema = new mongoose.Schema({
-    card: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'Card'
-    },
-    // ghostCard: { tempId, opcgId?, name, rarity?, color?, image? }
-    // For now, we'll just store the name for ghost cards
-    ghostCard: {
-        name: String,
-        opcgId: String,
-        image: String,
-    },
-    quantity: {
-        type: Number,
-        required: true,
-        min: 1,
-        default: 1
+const Deck = sequelize.define('Deck', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  title: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
     }
-}, { _id: false });
-
-const deckSchema = new mongoose.Schema({
-    title: {
-        type: String,
-        required: true,
-        trim: true
-    },
-    description: {
-        type: String,
-        trim: true
-    },
-    isPublic: {
-        type: Boolean,
-        default: false
-    },
-    owner: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: 'User',
-        required: true
-    },
-    leader: cardInDeckSchema,
-    main: [cardInDeckSchema],
-    //side: [cardInDeckSchema], // Future feature
-    //extra: [cardInDeckSchema], // Future feature
-}, { timestamps: true });
-
-const Deck = mongoose.model('Deck', deckSchema);
+  },
+  description: {
+    type: DataTypes.TEXT
+  },
+  isPublic: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  ownerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  leader: {
+    type: DataTypes.JSON,
+    allowNull: true
+  },
+  main: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'decks',
+  timestamps: true
+});
 
 module.exports = Deck;

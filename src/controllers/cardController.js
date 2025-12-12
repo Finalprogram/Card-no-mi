@@ -168,12 +168,12 @@ const showCardDetailPage = async (req, res) => {
   try {
 
     const cardId = req.params.id;
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    if (!cardId || isNaN(cardId)) {
       return res.status(400).send('ID de carta inválido');
     }
 
     // Busca a carta principal
-    const mainCard = await Card.findById(cardId).lean();
+    const mainCard = await Card.findByPk(cardId);
     if (!mainCard) {
       return res.status(404).send('Carta não encontrada');
     }
@@ -183,10 +183,15 @@ const showCardDetailPage = async (req, res) => {
     let allVersions = [];
     if (mainCard.api_id) {
       const baseApiId = mainCard.api_id.split('_')[0];
-      allVersions = await Card.find({
-        api_id: { $regex: `^${baseApiId}` },
-        set_name: mainCard.set_name
-      }).lean();
+      const { Op } = require('sequelize');
+      allVersions = await Card.findAll({
+        where: {
+          api_id: {
+            [Op.iLike]: `${baseApiId}%`
+          },
+          set_name: mainCard.set_name
+        }
+      });
     }
  11   // Ordena por api_id para manter ordem: normal, _p1, _p2, _p3
     allVersions = allVersions.sort((a, b) => {
@@ -229,15 +234,18 @@ const searchCardsForSale = async (req, res) => {
     let searchResults = [];
 
     if (searchQuery && searchQuery.length > 2) {
-      searchResults = await Card.find({
-        game: 'onepiece',
-        $or: [
-          { name: { $regex: searchQuery, $options: 'i' } },
-          { code: { $regex: searchQuery, $options: 'i' } },
-          { api_id: { $regex: searchQuery, $options: 'i' } }
-        ]
-      })
-      .select('name set_name image_url api_id code'); // Remove o .limit(10)
+      const { Op } = require('sequelize');
+      searchResults = await Card.findAll({
+        where: {
+          game: 'onepiece',
+          [Op.or]: [
+            { name: { [Op.iLike]: `%${searchQuery}%` } },
+            { code: { [Op.iLike]: `%${searchQuery}%` } },
+            { api_id: { [Op.iLike]: `%${searchQuery}%` } }
+          ]
+        },
+        attributes: ['name', 'set_name', 'image_url', 'api_id', 'code']
+      });
     }
     res.json(searchResults);
     
@@ -253,16 +261,22 @@ const searchAvailableCards = async (req, res) => {
 
     if (searchQuery && searchQuery.length > 2) {
       // 1. Descobre quais cartas estão à venda
-      const distinctCardIds = await Listing.distinct('card');
+      const { sequelize } = require('../database/connection');
+      const distinctCardIds = await Listing.findAll({
+        attributes: [[sequelize.fn('DISTINCT', sequelize.col('cardId')), 'cardId']]
+      }).then(results => results.map(r => r.dataValues.cardId));
       
-      // 2. Busca apenas DENTRO dessas cartas usando o índice de texto
-      searchResults = await Card.find({
-        _id: { $in: distinctCardIds },
-        game: 'onepiece',
-        $text: { $search: searchQuery }
-      })
-      .select('name set_name image_url')
-      .limit(10);
+      // 2. Busca apenas DENTRO dessas cartas
+      const { Op } = require('sequelize');
+      searchResults = await Card.findAll({
+        where: {
+          id: { [Op.in]: distinctCardIds },
+          game: 'onepiece',
+          name: { [Op.iLike]: `%${searchQuery}%` }
+        },
+        attributes: ['name', 'set_name', 'image_url'],
+        limit: 10
+      });
     }
     res.json(searchResults);
     
@@ -370,16 +384,21 @@ const getLeaders = async (req, res) => {
     };
 
     if (q) {
-      filter.name = { $regex: q, $options: 'i' };
+      filter.name = { [Op.iLike]: `%${q}%` };
     }
     if (color) {
-      filter.colors = { $regex: color, $options: 'i' };
+      // Assuming colors is JSON array, but for simplicity, use string match
+      filter.colors = { [Op.contains]: [color] };
     }
     if (set) {
-      filter.set_name = { $regex: set, $options: 'i' };
+      filter.set_name = { [Op.iLike]: `%${set}%` };
     }
 
-    const leaders = await Card.find(filter).select('_id name image_url colors set_name rarity power ability').sort({ name: 1 });
+    const leaders = await Card.findAll({
+      where: filter,
+      attributes: ['id', 'name', 'image_url', 'colors', 'set_name', 'rarity', 'power', 'ability'],
+      order: [['name', 'ASC']]
+    });
     res.json(leaders);
   } catch (error) {
     console.error("Erro ao buscar líderes:", error);
@@ -396,18 +415,21 @@ const getAllCards = async (req, res) => {
     // Constrói a query de filtro, excluindo cartas com nome inválido
     const filterQuery = { 
       game: 'onepiece',
-      name: { $exists: true, $ne: null, $ne: '', $ne: 'undefined' }
+      name: { [Op.ne]: null },
+      [Op.and]: [
+        sequelize.where(sequelize.fn('length', sequelize.col('name')), { [Op.gt]: 0 }),
+        sequelize.where(sequelize.col('name'), { [Op.ne]: 'undefined' })
+      ]
     };
     if (req.query.rarity) filterQuery.rarity = req.query.rarity;
-    if (req.query.color) filterQuery.colors = new RegExp(req.query.color, 'i');
+    if (req.query.color) filterQuery.colors = { [Op.contains]: [req.query.color] };
     if (req.query.type) filterQuery.type_line = req.query.type;
-    if (req.query.set) filterQuery.set_name = req.query.set;
+    if (req.query.set) filterQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
     
     if (req.query.q) {
-      const searchQuery = new RegExp(req.query.q, 'i');
-      filterQuery.$or = [
-        { name: searchQuery },
-        { code: searchQuery }
+      filterQuery[Op.or] = [
+        { name: { [Op.iLike]: `%${req.query.q}%` } },
+        { code: { [Op.iLike]: `%${req.query.q}%` } }
       ];
     }
 
@@ -416,7 +438,10 @@ const getAllCards = async (req, res) => {
     let hasMore = false;
 
     // Sempre retorna todos os resultados, sem paginação ou limite
-    cards = await Card.find(filterQuery).sort({ name: 1 });
+    cards = await Card.findAll({
+      where: filterQuery,
+      order: [['name', 'ASC']]
+    });
     totalCards = cards.length;
 
     res.json({
@@ -434,7 +459,7 @@ const getAllCards = async (req, res) => {
 const debugCardSearch = async (req, res) => {
   try {
     const cardApiId = req.params.name; // Renomeado para refletir a busca por api_id
-    const card = await Card.findOne({ api_id: cardApiId, game: 'onepiece' }); // Busca por api_id
+    const card = await Card.findOne({ where: { api_id: cardApiId, game: 'onepiece' } }); // Busca por api_id
 
     if (card) {
       console.log('DEBUG: Card found in DB:', card);
@@ -533,11 +558,11 @@ const getCardById = async (req, res) => {
     const cardId = req.params.id;
 
     // Validação do ID
-    if (!mongoose.Types.ObjectId.isValid(cardId)) {
+    if (!cardId || isNaN(cardId)) {
       return res.status(400).json({ error: 'ID de carta inválido' });
     }
 
-    const card = await Card.findById(cardId).lean();
+    const card = await Card.findByPk(cardId);
 
     if (!card) {
       return res.status(404).json({ error: 'Carta não encontrada' });

@@ -1,63 +1,90 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const CardSchema = new mongoose.Schema({
-  // ID da API de origem (ex: One Piece API)
-  api_id: { 
-    type: String, 
-    required: false 
+const Card = sequelize.define('Card', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  code: { type: String },
-  rarity: { type: String },
-  type: { type: String },
-  name: { type: String, required: true, index: 'text' },
-  images: {
-    small: { type: String },
-    large: { type: String }
+  api_id: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
-  cost: { type: Number },
-  attribute: {
-    name: { type: String },
-    image: { type: String }
+  code: {
+    type: DataTypes.STRING
   },
-  power: { type: Number },
-  counter: { type: String }, // Can be "-"
-  color: { type: String }, // e.g., "Red/Green"
-  family: { type: String },
-  ability: { type: String },
-  trigger: { type: String },
-  set: {
-    name: { type: String }
+  rarity: {
+    type: DataTypes.STRING
   },
-  notes: { type: Array },
-
-  // Jogo ao qual a carta pertence
+  type: {
+    type: DataTypes.STRING
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false
+  },
+  cost: {
+    type: DataTypes.INTEGER
+  },
+  power: {
+    type: DataTypes.INTEGER
+  },
+  counter: {
+    type: DataTypes.STRING
+  },
+  color: {
+    type: DataTypes.STRING
+  },
+  family: {
+    type: DataTypes.STRING
+  },
+  ability: {
+    type: DataTypes.STRING
+  },
+  trigger: {
+    type: DataTypes.STRING
+  },
   game: {
-    type: String,
-    enum: ['onepiece'],
-    required: true,
-    index: true
+    type: DataTypes.ENUM('onepiece'),
+    allowNull: false
   },
-  
-  // Campos de dados legados/internos
-  set_name: { type: String }, // Mantido para possível retrocompatibilidade
-  image_url: { type: String }, // Mantido para possível retrocompatibilidade
-  colors: { type: Array }, // Mantido para possível retrocompatibilidade
-  type_line: { type: String }, // Mantido para possível retrocompatibilidade
-  legalities: { type: Object },
+  set_name: {
+    type: DataTypes.STRING
+  },
+  image_url: {
+    type: DataTypes.STRING
+  },
+  type_line: {
+    type: DataTypes.STRING
+  },
   price_trend: {
-    type: String,
-    enum: ['up', 'down', 'stable'],
-    default: 'stable'
+    type: DataTypes.ENUM('up', 'down', 'stable'),
+    defaultValue: 'stable'
   },
-  averagePrice: {
-    type: Number,
-    default: 0
+  images: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  attribute: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  set: {
+    type: DataTypes.JSON,
+    defaultValue: {}
+  },
+  notes: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  colors: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  },
+  legalities: {
+    type: DataTypes.JSON,
+    defaultValue: {}
   }
-});
 
-// Índice composto: Garante que api_id + game seja uma combinação única
-// Ignora documentos que não tenham um api_id
-CardSchema.index({ api_id: 1, game: 1 }, { unique: true, sparse: true });
-
-
-module.exports = mongoose.model('Card', CardSchema);
+module.exports = Card;
