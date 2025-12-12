@@ -49,11 +49,11 @@ if (missingEnv.length > 0) {
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
-const MongoStore = require('connect-mongo');
+const SequelizeStore = require('connect-session-sequelize')(session.Store);
 const methodOverride = require('method-override');
 const flash = require('connect-flash');
 const rateLimit = require('express-rate-limit');
-const connectDB = require('./src/database/connection');
+const { sequelize, connectDB } = require('./src/database/connection');
 const pagesRoutes = require('./src/routes/pagesRoutes');
 const cardRoutes = require('./src/routes/cardRoutes');
 const listRoutes = require('./src/routes/listRoutes');
@@ -122,12 +122,13 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'um_segredo_muito_forte_aqui',
   resave: false,
   saveUninitialized: true,
-  store: MongoStore.create({
-    mongoUrl: process.env.MONGODB_URI,
-    collectionName: 'sessions',
-    ttl: 14 * 24 * 60 * 60, // 14 days
-    autoRemove: 'interval',
-    autoRemoveInterval: 10, // In minutes. Removes expired sessions every 10 minutes
+  store: new SequelizeStore({
+    db: sequelize,
+    tableName: 'sessions',
+    extendDefaultFields: (defaults, session) => ({
+      data: defaults.data,
+      expires: defaults.expires
+    })
   }),
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production

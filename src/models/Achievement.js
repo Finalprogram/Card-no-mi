@@ -1,77 +1,107 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const AchievementSchema = new mongoose.Schema({
+const Achievement = sequelize.define('Achievement', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   key: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
   },
   name: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   description: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   icon: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
   category: {
-    type: String,
-    enum: ['posts', 'threads', 'reactions', 'faction', 'special', 'trading'],
-    required: true
+    type: DataTypes.ENUM('posts', 'threads', 'reactions', 'faction', 'special', 'trading'),
+    allowNull: false
   },
   tier: {
-    type: String,
-    enum: ['bronze', 'silver', 'gold', 'platinum', 'diamond'],
-    default: 'bronze'
+    type: DataTypes.ENUM('bronze', 'silver', 'gold', 'platinum', 'diamond'),
+    defaultValue: 'bronze'
   },
   requirement: {
-    type: Number,
-    required: true
+    type: DataTypes.INTEGER,
+    allowNull: false
   },
   rewardPoints: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   isHidden: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
   order: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
+}, {
+  tableName: 'achievements',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    { fields: ['key'] }
+  ]
 });
 
-const UserAchievementSchema = new mongoose.Schema({
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true
+const UserAchievement = sequelize.define('UserAchievement', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  achievement: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Achievement',
-    required: true
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  achievementId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'achievements',
+      key: 'id'
+    }
   },
   unlockedAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   },
   progress: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
+}, {
+  tableName: 'user_achievements',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    { fields: ['userId', 'achievementId'], unique: true }
+  ]
 });
-
-UserAchievementSchema.index({ user: 1, achievement: 1 }, { unique: true });
-
-const Achievement = mongoose.model('Achievement', AchievementSchema);
-const UserAchievement = mongoose.model('UserAchievement', UserAchievementSchema);
 
 module.exports = { Achievement, UserAchievement };

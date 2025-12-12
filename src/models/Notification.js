@@ -1,156 +1,118 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const NotificationSchema = new mongoose.Schema({
-  recipient: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true
+const Notification = sequelize.define('Notification', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  
-  sender: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  recipientId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
-  
+  senderId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
   type: {
-    type: String,
-    enum: [
-      'reply',           // Alguém respondeu ao seu tópico
-      'mention',         // Alguém mencionou você com @username
-      'quote',           // Alguém citou seu post
-      'pm',              // Nova mensagem privada (futuro)
-      'thread_moved',    // Seu tópico foi movido
-      'thread_locked',   // Seu tópico foi travado
-      'thread_pinned',   // Seu tópico foi fixado
-      'post_liked',      // Alguém curtiu seu post (futuro)
-      'badge_earned',    // Você ganhou um badge (futuro)
-      'reputation',      // Mudança na reputação
-      'sale',            // Você vendeu uma carta
-      'order_status'     // Status do seu pedido mudou
-    ],
-    required: true
+    type: DataTypes.ENUM(
+      'reply',
+      'mention',
+      'quote',
+      'pm',
+      'thread_moved',
+      'thread_locked',
+      'thread_pinned',
+      'post_liked',
+      'badge_earned',
+      'reputation',
+      'sale',
+      'order_status'
+    ),
+    allowNull: false
   },
-  
   title: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  
   message: {
-    type: String,
-    required: true
+    type: DataTypes.TEXT,
+    allowNull: false
   },
-  
-  // Referências aos objetos relacionados
-  thread: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumThread'
+  threadId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'forum_threads',
+      key: 'id'
+    }
   },
-  
-  post: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumPost'
+  postId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'forum_posts',
+      key: 'id'
+    }
   },
-  
-  category: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumCategory'
+  categoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'forum_categories',
+      key: 'id'
+    }
   },
-  
-  // Link direto para onde a notificação deve levar
   link: {
-    type: String,
-    required: true
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  
-  // Status da notificação
   isRead: {
-    type: Boolean,
-    default: false,
-    index: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  
   readAt: {
-    type: Date
+    type: DataTypes.DATE
   },
-  
-  // Ícone para exibir na notificação
   icon: {
-    type: String,
-    default: 'fa-bell'
+    type: DataTypes.STRING,
+    defaultValue: 'fa-bell'
   },
-  
-  // Cor para destacar a notificação (opcional)
   color: {
-    type: String,
-    default: '#3b82f6'
+    type: DataTypes.STRING,
+    defaultValue: '#3b82f6'
   },
-  
-  // Metadados adicionais (JSON livre)
   metadata: {
-    type: mongoose.Schema.Types.Mixed,
-    default: {}
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: {}
   },
-  
-  createdAt: {
-    type: Date,
-    default: Date.now,
-    index: true
-  },
-  
   expiresAt: {
-    type: Date,
-    default: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
+    type: DataTypes.DATE,
+    defaultValue: () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 dias
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
+}, {
+  tableName: 'notifications',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    { fields: ['recipientId', 'isRead', 'createdAt'] },
+    { fields: ['recipientId', 'type'] },
+    { fields: ['expiresAt'] }
+  ]
 });
 
-// Índice composto para consultas eficientes
-NotificationSchema.index({ recipient: 1, isRead: 1, createdAt: -1 });
-NotificationSchema.index({ recipient: 1, type: 1 });
-
-// TTL Index - Remove notificações antigas automaticamente
-NotificationSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
-
-// Métodos estáticos
-NotificationSchema.statics.createNotification = async function(data) {
-  try {
-    const notification = new this(data);
-    await notification.save();
-    return notification;
-  } catch (error) {
-    console.error('Erro ao criar notificação:', error);
-    throw error;
-  }
-};
-
-NotificationSchema.statics.markAsRead = async function(notificationId, userId) {
-  return this.findOneAndUpdate(
-    { _id: notificationId, recipient: userId },
-    { isRead: true, readAt: new Date() },
-    { new: true }
-  );
-};
-
-NotificationSchema.statics.markAllAsRead = async function(userId) {
-  return this.updateMany(
-    { recipient: userId, isRead: false },
-    { isRead: true, readAt: new Date() }
-  );
-};
-
-NotificationSchema.statics.getUnreadCount = async function(userId) {
-  return this.countDocuments({ recipient: userId, isRead: false });
-};
-
-NotificationSchema.statics.getUserNotifications = async function(userId, limit = 20, skip = 0) {
-  return this.find({ recipient: userId })
-    .populate('sender', 'username avatar role')
-    .sort({ createdAt: -1 })
-    .limit(limit)
-    .skip(skip)
-    .lean();
-};
-
-module.exports = mongoose.model('Notification', NotificationSchema);
+module.exports = Notification;

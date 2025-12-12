@@ -28,10 +28,10 @@ const bulkCreateListings = async (req, res) => {
       }
     }
 
-    // Prepara os dados: mapeia o cardId para o campo 'card' e adiciona o vendedor
+    // Prepara os dados: mapeia o cardId para o campo 'cardId' e adiciona o vendedor
     const listingsToSave = listingsData.map(listing => ({
-      card: listing.cardId, // Mapeamento de cardId -> card
-      seller: sellerId,
+      cardId: listing.cardId,
+      sellerId: sellerId,
       price: listing.price,
       quantity: listing.quantity,
       condition: listing.condition,
@@ -39,8 +39,8 @@ const bulkCreateListings = async (req, res) => {
       // Adicione outros campos que seu formulário envia, como is_foil, se houver
     }));
 
-    // Usa 'insertMany' do Mongoose para salvar todos os anúncios de uma vez. É super eficiente!
-    const createdListings = await Listing.insertMany(listingsToSave);
+    // Usa 'bulkCreate' do Sequelize para salvar todos os anúncios de uma vez.
+    const createdListings = await Listing.bulkCreate(listingsToSave);
 
     // Responde com sucesso
     res.status(201).json({ 
@@ -58,12 +58,14 @@ const bulkCreateListings = async (req, res) => {
 
 const showEditListingPage = async (req, res) => {
   try {
-    const listing = await Listing.findById(req.params.id).populate('card');
+    const listing = await Listing.findByPk(req.params.id);
     if (!listing) {
       return res.status(404).send('Anúncio não encontrado.');
     }
+    const card = await Card.findByPk(listing.cardId);
+    listing.card = card; // Attach for template
     // Authorization: Check if the logged-in user is the seller
-    if (listing.seller.toString() !== req.session.user.id.toString()) {
+    if (listing.sellerId !== req.session.user.id) {
       return res.status(403).send('Você não tem permissão para editar este anúncio.');
     }
     res.render('pages/edit-listing', { listing });
@@ -82,24 +84,24 @@ const updateListing = async (req, res) => {
       return res.redirect(`/listings/${req.params.id}/edit`);
     }
 
-    const listing = await Listing.findById(req.params.id);
+    const listing = await Listing.findByPk(req.params.id);
 
     if (!listing) {
       return res.status(404).send('Anúncio não encontrado.');
     }
 
     // Authorization: Check if the logged-in user is the seller
-    if (listing.seller.toString() !== req.session.user.id.toString()) {
+    if (listing.sellerId !== req.session.user.id) {
       return res.status(403).send('Você não tem permissão para editar este anúncio.');
     }
 
-    listing.price = price;
-    listing.quantity = quantity;
-    listing.condition = condition;
-    listing.language = language;
-    listing.is_foil = is_foil === 'on' || is_foil === true || is_foil === 'true';
-
-    await listing.save();
+    await listing.update({
+      price,
+      quantity,
+      condition,
+      language,
+      is_foil: is_foil === 'on' || is_foil === true || is_foil === 'true'
+    });
 
     res.redirect('/meus-anuncios');
   } catch (error) {
@@ -113,7 +115,7 @@ const deleteListing = async (req, res) => {
     logger.info(`Attempting to delete listing with ID: ${req.params.id}`);
     logger.info(`User ID from session: ${req.session.user ? req.session.user.id : 'N/A'}`);
 
-    const listing = await Listing.findById(req.params.id);
+    const listing = await Listing.findByPk(req.params.id);
 
     if (!listing) {
       logger.warn(`Listing with ID ${req.params.id} not found.`);
@@ -121,17 +123,17 @@ const deleteListing = async (req, res) => {
       return res.status(404).redirect('/meus-anuncios');
     }
 
-    logger.info(`Listing found. Seller ID: ${listing.seller.toString()}`);
+    logger.info(`Listing found. Seller ID: ${listing.sellerId}`);
 
     // Authorization: Check if the logged-in user is the seller
-    if (!req.session.user || listing.seller.toString() !== req.session.user.id.toString()) {
+    if (!req.session.user || listing.sellerId !== req.session.user.id) {
       logger.warn(`User ${req.session.user ? req.session.user.id : 'N/A'} attempted to delete listing ${req.params.id} without permission.`);
       req.flash('error_msg', 'Você não tem permissão para deletar este anúncio.');
       return res.status(403).redirect('/meus-anuncios');
     }
 
-    const deleteResult = await listing.deleteOne();
-    logger.info(`Listing ${req.params.id} deleted. Result: ${JSON.stringify(deleteResult)}`);
+    await listing.destroy();
+    logger.info(`Listing ${req.params.id} deleted.`);
 
     req.flash('success_msg', 'Anúncio deletado com sucesso!');
     res.redirect('/meus-anuncios');

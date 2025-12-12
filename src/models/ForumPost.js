@@ -1,190 +1,157 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const forumPostSchema = new mongoose.Schema({
-  thread: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumThread',
-    required: true
+const ForumPost = sequelize.define('ForumPost', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  author: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
+  threadId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'forum_threads',
+      key: 'id'
+    }
+  },
+  authorId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   content: {
-    type: String,
-    required: true,
-    maxlength: 50000
-  },
-  // Imagens anexadas
-  images: [{
-    url: String,
-    filename: String,
-    uploadedAt: {
-      type: Date,
-      default: Date.now
+    type: DataTypes.TEXT,
+    allowNull: false,
+    validate: {
+      len: [1, 50000]
     }
-  }],
-  // Estrutura hierárquica estilo Reddit
-  parentPost: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumPost',
-    default: null
+  },
+  images: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  parentPostId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'forum_posts',
+      key: 'id'
+    }
   },
   depth: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   path: {
-    type: String,
-    default: ''
+    type: DataTypes.STRING,
+    defaultValue: ''
   },
-  // Citação de outro post
-  quotedPost: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumPost'
+  quotedPostId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'forum_posts',
+      key: 'id'
+    }
   },
-  quotedContent: String,
-  // Menções
-  mentions: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  // Sistema de votos estilo Reddit
-  upvotes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
-  downvotes: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
-  }],
+  quotedContent: {
+    type: DataTypes.TEXT
+  },
+  mentions: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  upvotes: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  downvotes: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
   score: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
-  // Status
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
-  inactivatedAt: Date,
-  inactivatedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  inactivatedAt: {
+    type: DataTypes.DATE
+  },
+  inactivatedById: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   isDeleted: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  deletedAt: Date,
-  deletedBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User'
+  deletedAt: {
+    type: DataTypes.DATE
+  },
+  deletedById: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   isEdited: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  editedAt: Date,
-  editHistory: [{
-    editedBy: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    editedAt: {
-      type: Date,
-      default: Date.now
-    },
-    previousContent: String
-  }],
-  // Moderação
-  moderationFlags: [{
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'User'
-    },
-    reason: String,
-    createdAt: {
-      type: Date,
-      default: Date.now
-    }
-  }],
-  // Anexos (futuro: imagens)
-  attachments: [{
-    type: String
-  }]
-}, { 
+  editedAt: {
+    type: DataTypes.DATE
+  },
+  editHistory: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  moderationFlags: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  attachments: {
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: []
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  }
+}, {
+  tableName: 'forum_posts',
   timestamps: true,
-  toJSON: { virtuals: true },
-  toObject: { virtuals: true }
+  indexes: [
+    { fields: ['threadId', 'createdAt'] },
+    { fields: ['threadId', 'path'] },
+    { fields: ['authorId', 'createdAt'] },
+    { fields: ['parentPostId'] },
+    { fields: ['isDeleted', 'threadId'] },
+    { fields: ['score', 'threadId'] }
+  ]
 });
-
-// Índices
-forumPostSchema.index({ thread: 1, createdAt: 1 });
-forumPostSchema.index({ thread: 1, path: 1 });
-forumPostSchema.index({ author: 1, createdAt: -1 });
-forumPostSchema.index({ parentPost: 1 });
-forumPostSchema.index({ mentions: 1 });
-forumPostSchema.index({ isDeleted: 1, thread: 1 });
-forumPostSchema.index({ content: 'text' });
-forumPostSchema.index({ score: -1, thread: 1 });
-
-// Virtual para contar respostas
-forumPostSchema.virtual('replyCount', {
-  ref: 'ForumPost',
-  localField: '_id',
-  foreignField: 'parentPost',
-  count: true
-});
-
-// Método para adicionar voto
-forumPostSchema.methods.addVote = function(userId, voteType) {
-  const userIdStr = userId.toString();
-  
-  // Remover voto anterior
-  this.upvotes = this.upvotes.filter(id => id.toString() !== userIdStr);
-  this.downvotes = this.downvotes.filter(id => id.toString() !== userIdStr);
-  
-  // Adicionar novo voto
-  if (voteType === 'upvote') {
-    this.upvotes.push(userId);
-  } else if (voteType === 'downvote') {
-    this.downvotes.push(userId);
-  }
-  
-  // Calcular score
-  this.score = this.upvotes.length - this.downvotes.length;
-  
-  return this.save();
-};
-
-// Método para remover voto
-forumPostSchema.methods.removeVote = function(userId) {
-  const userIdStr = userId.toString();
-  this.upvotes = this.upvotes.filter(id => id.toString() !== userIdStr);
-  this.downvotes = this.downvotes.filter(id => id.toString() !== userIdStr);
-  this.score = this.upvotes.length - this.downvotes.length;
-  return this.save();
-};
-
-// Middleware para extrair menções do conteúdo
-forumPostSchema.pre('save', function(next) {
-  if (this.isModified('content')) {
-    // Extrair @username do conteúdo
-    const mentionRegex = /@(\w+)/g;
-    const matches = [...this.content.matchAll(mentionRegex)];
-    
-    if (matches.length > 0) {
-      // Buscar IDs dos usuários mencionados
-      const usernames = matches.map(m => m[1]);
-      // Nota: Isso precisa ser implementado de forma assíncrona em um hook post-save
-      // ou no controller para buscar os IDs reais dos usuários
-    }
-  }
-  next();
-});
-
-const ForumPost = mongoose.model('ForumPost', forumPostSchema);
 
 module.exports = ForumPost;

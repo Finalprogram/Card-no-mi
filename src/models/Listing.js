@@ -1,17 +1,53 @@
-// src/models/Listing.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const ListingSchema = new mongoose.Schema({
-  // 'ref' diz ao Mongoose que este ID se refere a um documento na coleção 'Card'
-  card: { type: mongoose.Schema.Types.ObjectId, ref: 'Card', required: true },
-  seller: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  price: { type: Number, required: true },
-  quantity: { type: Number, required: true, default: 1 },
-  condition: { type: String, enum: ['NM', 'LP', 'MP', 'HP'], default: 'NM' }, // Near Mint, Lightly Played...
-  is_foil: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-   extras: [{ type: String }], 
-   language:{ type: String, default:'EN', required:true },
-});
+const Listing = sequelize.define('Listing', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  cardId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'cards',
+      key: 'id'
+    }
+  },
+  sellerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
+  },
+  quantity: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1
+  },
+  condition: {
+    type: DataTypes.ENUM('NM', 'LP', 'MP', 'HP'),
+    defaultValue: 'NM'
+  },
+  is_foil: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  },
+  language: {
+    type: DataTypes.STRING,
+    defaultValue: 'EN',
+    allowNull: false
+  },
+  extras: {
+    type: DataTypes.JSON,
+    defaultValue: []
+  }
 
-module.exports = mongoose.model('Listing', ListingSchema);
+module.exports = Listing;

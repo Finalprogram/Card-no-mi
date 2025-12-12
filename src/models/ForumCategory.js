@@ -1,110 +1,87 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const forumCategorySchema = new mongoose.Schema({
+const ForumCategory = sequelize.define('ForumCategory', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   name: {
-    type: String,
-    required: true,
-    trim: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      notEmpty: true
+    }
   },
   slug: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true
   },
   icon: {
-    type: String,
-    default: '💬'
+    type: DataTypes.STRING,
+    defaultValue: '💬'
   },
   description: {
-    type: String,
-    required: true
+    type: DataTypes.TEXT,
+    allowNull: false
   },
   order: {
-    type: Number,
-    default: 0
+    type: DataTypes.INTEGER,
+    defaultValue: 0
   },
   color: {
-    type: String,
-    default: '#A259FF'
+    type: DataTypes.STRING,
+    defaultValue: '#A259FF'
   },
   isActive: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
-  // Hierarquia de categorias/subcategorias
-  parentCategory: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumCategory',
-    default: null
+  parentCategoryId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'forum_categories',
+      key: 'id'
+    }
   },
   isSubforum: {
-    type: Boolean,
-    default: false
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  // Controle de exibição
   showInHome: {
-    type: Boolean,
-    default: true
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   },
   permissions: {
-    canView: {
-      type: [String],
-      default: ['guest', 'user', 'moderator', 'admin']
-    },
-    canPost: {
-      type: [String],
-      default: ['user', 'moderator', 'admin']
-    },
-    canModerate: {
-      type: [String],
-      default: ['moderator', 'admin']
+    type: DataTypes.JSON,
+    allowNull: false,
+    defaultValue: {
+      canView: ['guest', 'user', 'moderator', 'admin'],
+      canPost: ['user', 'moderator', 'admin'],
+      canModerate: ['moderator', 'admin']
     }
+  },
+  createdAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
+  },
+  updatedAt: {
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW
   }
-}, { timestamps: true });
-
-// Índices
-forumCategorySchema.index({ slug: 1 });
-forumCategorySchema.index({ order: 1 });
-forumCategorySchema.index({ isActive: 1 });
-forumCategorySchema.index({ parentCategory: 1 });
-forumCategorySchema.index({ isSubforum: 1 });
-
-// Virtual para contar threads
-forumCategorySchema.virtual('threadCount', {
-  ref: 'ForumThread',
-  localField: '_id',
-  foreignField: 'category',
-  count: true
+}, {
+  tableName: 'forum_categories',
+  timestamps: true,
+  indexes: [
+    { fields: ['slug'] },
+    { fields: ['order'] },
+    { fields: ['isActive'] },
+    { fields: ['parentCategoryId'] },
+    { fields: ['isSubforum'] }
+  ]
 });
-
-// Virtual para subcategorias
-forumCategorySchema.virtual('subforums', {
-  ref: 'ForumCategory',
-  localField: '_id',
-  foreignField: 'parentCategory'
-});
-
-// Métodos
-forumCategorySchema.methods.getFullPath = async function() {
-  const path = [this.name];
-  let current = this;
-  
-  while (current.parentCategory) {
-    current = await mongoose.model('ForumCategory').findById(current.parentCategory);
-    if (current) {
-      path.unshift(current.name);
-    } else {
-      break;
-    }
-  }
-  
-  return path;
-};
-
-forumCategorySchema.set('toJSON', { virtuals: true });
-forumCategorySchema.set('toObject', { virtuals: true });
-
-const ForumCategory = mongoose.model('ForumCategory', forumCategorySchema);
 
 module.exports = ForumCategory;
