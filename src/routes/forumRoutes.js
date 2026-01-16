@@ -29,8 +29,7 @@ router.get('/moderation/history', forumController.getModerationHistory);
 // Busca
 router.get('/search', forumController.searchForum);
 
-// Perfil de usuário no fórum
-router.get('/user/:username', forumController.getUserProfile);
+
 
 // Leaderboard de facções
 router.get('/leaderboard', forumController.getLeaderboard);

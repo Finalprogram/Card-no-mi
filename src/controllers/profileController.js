@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const User = require('../models/User');
 const ForumThread = require('../models/ForumThread');
 const ForumPost = require('../models/ForumPost');
@@ -10,13 +11,11 @@ const logger = require('../config/logger');
 exports.getUserProfile = async (req, res) => {
   try {
     const { username } = req.params;
-    // Log para debug
-    console.log('Sessão username:', req.session.user ? req.session.user.username : null);
-    console.log('URL username:', username);
     
-    const user = await User.findOne({ username })
-      .select('-password -verificationToken -verificationTokenExpires')
-      .lean();
+    const user = await User.findOne({ 
+        where: { username },
+        attributes: { exclude: ['password', 'verificationToken', 'verificationTokenExpires'] }
+    });
     
     if (!user) {
       return res.status(404).render('pages/error', {
@@ -25,61 +24,44 @@ exports.getUserProfile = async (req, res) => {
       });
     }
     
-    // Buscar estatísticas do usuário
-    const threadCount = await ForumThread.countDocuments({
-      author: user._id,
-      isDeleted: false
+    const threadCount = await ForumThread.count({
+      where: { authorId: user.id, isDeleted: false }
     });
     
-    const postCount = await ForumPost.countDocuments({
-      author: user._id,
-      isDeleted: false
+    const postCount = await ForumPost.count({
+      where: { authorId: user.id, isDeleted: false }
     });
     
-    // Buscar reputação
-    const reputation = await UserReputation.findOne({ user: user._id });
-    const reputationScore = reputation ? reputation.score : 0;
-    const reputationLevel = reputation ? reputation.level : 'Novato';
+    const reputation = await UserReputation.findOne({ where: { userId: user.id } });
+    const reputationScore = reputation ? reputation.totalPoints : 0;
+    const reputationLevel = reputation ? reputation.title : 'Novato';
     
-    // Últimos threads do usuário
-    const recentThreads = await ForumThread.find({
-      author: user._id,
-      isDeleted: false,
-      isActive: true
-    })
-      .populate('category', 'name slug icon color')
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
+    const recentThreads = await ForumThread.findAll({
+      where: { authorId: user.id, isDeleted: false, isActive: true },
+      include: [{ model: ForumCategory, as: 'category', attributes: ['name', 'slug', 'icon', 'color'] }],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
     
-    // Últimos posts do usuário
-    const recentPosts = await ForumPost.find({
-      author: user._id,
-      isDeleted: false,
-      isActive: true
-    })
-      .populate('thread', 'title slug')
-      .populate({
-        path: 'thread',
-        populate: {
-          path: 'category',
-          select: 'slug'
-        }
-      })
-      .sort({ createdAt: -1 })
-      .limit(10)
-      .lean();
+    const recentPosts = await ForumPost.findAll({
+      where: { authorId: user.id, isDeleted: false, isActive: true },
+      include: [{ 
+          model: ForumThread, 
+          as: 'thread', 
+          attributes: ['title', 'slug'],
+          include: [{ model: ForumCategory, as: 'category', attributes: ['slug'] }]
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: 10
+    });
     
-    // Data de registro formatada
     const memberSince = new Date(user.createdAt).toLocaleDateString('pt-BR', {
       year: 'numeric',
       month: 'long'
     });
     
-    // Verificar se é o próprio usuário
     const isOwnProfile = req.session.user && req.session.user.username === username;
     
-    // Buscar informações de rank da facção
     let factionRankInfo = null;
     if (user.faction) {
       const { getCurrentRank } = require('../config/factionSystem');
@@ -116,9 +98,9 @@ exports.getEditProfile = async (req, res) => {
       return res.redirect('/auth/login');
     }
     
-    const user = await User.findById(req.session.user._id)
-      .select('-password')
-      .lean();
+    const user = await User.findByPk(req.session.user.id, {
+        attributes: { exclude: ['password'] }
+    });
     
     res.render('pages/forum/edit-profile', {
       profileUser: user,
@@ -153,57 +135,44 @@ exports.updateProfile = async (req, res) => {
       twitch
     } = req.body;
     
-    // Validações
     if (bio && bio.length > 500) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Biografia muito longa (máximo 500 caracteres)' 
-      });
+      return res.status(400).json({ success: false, message: 'Biografia muito longa (máximo 500 caracteres)' });
     }
-    
     if (signature && signature.length > 200) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Assinatura muito longa (máximo 200 caracteres)' 
-      });
+      return res.status(400).json({ success: false, message: 'Assinatura muito longa (máximo 200 caracteres)' });
     }
-    
     if (forumTitle && forumTitle.length > 50) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Título muito longo (máximo 50 caracteres)' 
-      });
+      return res.status(400).json({ success: false, message: 'Título muito longo (máximo 50 caracteres)' });
     }
     
-    // Atualizar usuário
-    const updatedUser = await User.findByIdAndUpdate(
-      req.session.user._id,
-      {
+    const user = await User.findByPk(req.session.user.id);
+
+    await user.update({
         bio: bio || '',
         signature: signature || '',
         forumTitle: forumTitle || '',
         website: website || '',
         location: location || '',
-        'socialLinks.twitter': twitter || '',
-        'socialLinks.instagram': instagram || '',
-        'socialLinks.youtube': youtube || '',
-        'socialLinks.twitch': twitch || ''
-      },
-      { new: true, runValidators: true }
-    ).select('-password');
+        socialLinks: {
+            ...user.socialLinks,
+            twitter: twitter || '',
+            instagram: instagram || '',
+            youtube: youtube || '',
+            twitch: twitch || ''
+        }
+    });
     
-    // Atualizar sessão
     req.session.user = {
       ...req.session.user,
-      bio: updatedUser.bio,
-      signature: updatedUser.signature,
-      forumTitle: updatedUser.forumTitle
+      bio: user.bio,
+      signature: user.signature,
+      forumTitle: user.forumTitle
     };
     
     res.json({ 
       success: true, 
       message: 'Perfil atualizado com sucesso!',
-      redirect: `/forum/user/${updatedUser.username}`
+      redirect: `/forum/user/${user.username}`
     });
     
   } catch (error) {
@@ -225,21 +194,14 @@ exports.uploadAvatar = async (req, res) => {
     }
     
     if (!req.file) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Nenhuma imagem enviada' 
-      });
+      return res.status(400).json({ success: false, message: 'Nenhuma imagem enviada' });
     }
     
     const avatarUrl = `/uploads/avatars/${req.file.filename}`;
     
-    // Atualizar usuário
-    await User.findByIdAndUpdate(
-      req.session.user._id,
-      { avatar: avatarUrl }
-    );
+    const user = await User.findByPk(req.session.user.id);
+    await user.update({ avatar: avatarUrl });
     
-    // Atualizar sessão
     req.session.user.avatar = avatarUrl;
     
     res.json({ 

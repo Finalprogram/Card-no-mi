@@ -1,8 +1,9 @@
+const { Op } = require('sequelize');
 const Card = require('../models/Card');
 const Listing = require('../models/Listing');
+const User = require('../models/User');
 const logger = require('../config/logger');
 
-// src/controllers/listController.js
 const addToList = (req, res) => {
   try {
     const { cardId, quantity } = req.body;
@@ -17,11 +18,9 @@ const addToList = (req, res) => {
       req.session.list.push({ cardId, quantity: parseInt(quantity, 10) });
     }
 
-    // Calcula o total de itens na lista (somando as quantidades)
     const totalItems = req.session.list.reduce((sum, item) => sum + item.quantity, 0);
 
     logger.info('Sessão da Lista atualizada:', req.session.list);
-    // Envia o total de itens na resposta
     res.status(200).json({ success: true, totalItems: totalItems });
 
   } catch (error) {
@@ -29,7 +28,6 @@ const addToList = (req, res) => {
     res.status(500).json({ success: false, message: 'Erro no servidor' });
   }
 };
-// ... sua função addToList ...
 
 const showListPage = async (req, res) => {
   try {
@@ -40,14 +38,16 @@ const showListPage = async (req, res) => {
     }
 
     const cardIds = userList.map(item => item.cardId);
-    const cards = await Card.find({ '_id': { $in: cardIds } }).lean();
-    const listings = await Listing.find({ 'card': { $in: cardIds } })
-                                  .sort({ price: 1 })
-                                  .populate('seller', 'username accountType');
+    const cards = await Card.findAll({ where: { id: { [Op.in]: cardIds } } });
+    const listings = await Listing.findAll({ 
+        where: { cardId: { [Op.in]: cardIds } },
+        order: [['price', 'ASC']],
+        include: [{ model: User, as: 'seller', attributes: ['username', 'accountType'] }]
+    });
 
     const wantList = cards.map(card => {
-      const listItem = userList.find(item => item.cardId.toString() === card._id.toString());
-      const cardListings = listings.filter(listing => listing.card.toString() === card._id.toString());
+      const listItem = userList.find(item => item.cardId.toString() === card.id.toString());
+      const cardListings = listings.filter(listing => listing.cardId.toString() === card.id.toString());
       
       return {
         card: card,
@@ -63,24 +63,23 @@ const showListPage = async (req, res) => {
     res.status(500).send('Erro no servidor');
   }
 };
+
 const filterSellers = async (req, res) => {
   try {
-    const { cardId, filters } = req.body; // ex: filters = { condition: 'NM', language: 'pt' }
+    const { cardId, filters } = req.body;
 
-    // Monta a query de busca no banco
-    const matchQuery = { card: cardId };
+    const matchQuery = { cardId: cardId };
 
     if (filters.condition) matchQuery.condition = filters.condition;
     if (filters.language) matchQuery.language = filters.language;
     if (filters.is_foil !== undefined) matchQuery.is_foil = filters.is_foil;
-    // (Adicionar lógica para 'extras' e 'edição' aqui no futuro)
 
-    // Busca os anúncios filtrados
-    const listings = await Listing.find(matchQuery)
-                                  .sort({ price: 1 })
-                                  .populate('seller', 'username');
+    const listings = await Listing.findAll({
+        where: matchQuery,
+        order: [['price', 'ASC']],
+        include: [{ model: User, as: 'seller', attributes: ['username'] }]
+    });
 
-    // Retorna a lista de vendedores em JSON
     res.json(listings);
 
   } catch (error) {
@@ -95,7 +94,6 @@ const removeFromList = (req, res) => {
     if (!req.session.list) {
       req.session.list = [];
     }
-    // Filtra a lista, mantendo apenas os itens que NÃO têm o cardId a ser removido
     req.session.list = req.session.list.filter(item => item.cardId !== cardId);
     
     const totalItems = req.session.list.reduce((sum, item) => sum + item.quantity, 0);
@@ -105,6 +103,7 @@ const removeFromList = (req, res) => {
     res.status(500).json({ success: false, message: 'Erro no servidor' });
   }
 };
+
 module.exports = {
   addToList,
   showListPage,

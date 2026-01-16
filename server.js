@@ -94,12 +94,7 @@ app.locals.formatPrice = function(price) {
 
 // 3. Conexão com o Banco de Dados
 connectDB();
-// Ensure Mongoose indexes are created/updated
-Card.createIndexes().then(() => {
-  logger.info('Mongoose indexes ensured for Card model.');
-}).catch(err => {
-  logger.error('Error ensuring Mongoose indexes for Card model:', err);
-});
+
 
 // Start the post-payment worker
 require('./src/workers/postPaymentWorker.js');
@@ -148,11 +143,13 @@ app.use(async (req, res, next) => {
   if (req.session.user && req.session.user.id) {
     try {
       const User = require('./src/models/User');
-      const updatedUser = await User.findById(req.session.user.id).select('username email avatar accountType').lean();
+      const updatedUser = await User.findByPk(req.session.user.id, {
+          attributes: ['id', 'username', 'email', 'avatar', 'accountType']
+      });
       if (updatedUser) {
         // Atualizar sessão com dados mais recentes
         req.session.user = {
-          id: updatedUser._id,
+          id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
           avatar: updatedUser.avatar,

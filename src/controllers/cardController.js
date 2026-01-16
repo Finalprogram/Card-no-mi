@@ -1,7 +1,8 @@
-const mongoose = require('mongoose');
+const { Op, fn, col, literal } = require('sequelize');
 const Card = require('../models/Card');
 const Listing = require('../models/Listing');
 const onePieceService = require('../services/onepieceService');
+const { sequelize } = require('../database/connection');
 
 // --- FUNÇÃO ÚNICA PARA A PÁGINA DE BUSCA ---
 const showCardsPage = async (req, res) => {
@@ -9,126 +10,80 @@ const showCardsPage = async (req, res) => {
     const currentPage = parseInt(req.query.p) || 1;
     const limit = 50;
     
-    // Define a busca base para 'onepiece'
     const cardMatchQuery = { game: 'onepiece' };
 
-    // Adiciona os filtros de One Piece se eles existirem na URL e não forem vazios
     if (req.query.rarity && req.query.rarity !== '') cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color && req.query.color !== '') cardMatchQuery.colors = new RegExp(req.query.color, 'i');
+    if (req.query.color && req.query.color !== '') cardMatchQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
     if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
     if (req.query.set && req.query.set !== '') {
-      // Aceita qualquer tipo de edição (OP, ST, PRB, P, etc)
       const setCode = req.query.set.replace(/-/g, '-?');
-      cardMatchQuery.set_name = new RegExp(setCode, 'i');
+      cardMatchQuery.set_name = { [Op.iLike]: `%${setCode}%` };
     }
-    if (req.query.q && req.query.q !== '') cardMatchQuery.name = new RegExp(req.query.q, 'i');
+    if (req.query.q && req.query.q !== '') cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
 
-    // Busca no banco de dados - apenas cartas COM anúncios ativos
-    const distinctCardIds = await Listing.distinct('card', { quantity: { $gt: 0 } });
-    const totalCards = await Card.countDocuments({ _id: { $in: distinctCardIds }, ...cardMatchQuery });
+    const distinctCardIdsResult = await Listing.findAll({ 
+        attributes: [[fn('DISTINCT', col('cardId')), 'cardId']],
+        where: { quantity: { [Op.gt]: 0 } }
+    });
+    const distinctCardIds = distinctCardIdsResult.map(item => item.cardId);
 
-    const cards = await Card.aggregate([
-      { $match: { _id: { $in: distinctCardIds }, game: 'onepiece', ...cardMatchQuery }},
-      { $lookup: {
-          from: 'listings',
-          localField: '_id',
-          foreignField: 'card',
-          pipeline: [
-            { $match: { quantity: { $gt: 0 } } }
-          ],
-          as: 'listings'
-      }},
-      { $addFields: {
-          lowestAvailablePrice: { $min: '$listings.price' },
-          hasFoil: { $anyElementTrue: [ '$listings.is_foil' ] }
-      }},
-      { $project: {
-          _id: 1,
-          name: 1,
-          image_url: 1,
-          set_name: 1,
-          rarity: 1,
-          type_line: 1,
-          averagePrice: 1,
-          price_trend: 1,
-          lowestAvailablePrice: 1,
-          ability: 1,
-          hasFoil: 1
-      }},
-      { $sort: { name: 1 }},
-      { $skip: (currentPage - 1) * limit },
-      { $limit: limit }
-    ]);
-    const formattedCards = cards; // No need for further mapping, use as is
+    const { count, rows: cards } = await Card.findAndCountAll({
+        where: { id: { [Op.in]: distinctCardIds }, ...cardMatchQuery },
+        include: [{
+            model: Listing,
+            as: 'listings',
+            attributes: [],
+            where: { quantity: { [Op.gt]: 0 } },
+            required: true
+        }],
+        attributes: [
+            'id',
+            'name',
+            'image_url',
+            'set_name',
+            'rarity',
+            'type_line',
+            'price_trend',
+            'ability',
+            [fn('MIN', col('listings.price')), 'lowestAvailablePrice'],
+            [fn('MAX', col('listings.is_foil')), 'hasFoil']
+        ],
+        group: ['Card.id'],
+        order: [['name', 'ASC']],
+        offset: (currentPage - 1) * limit,
+        limit: limit,
+        subQuery: false
+    });
 
-    // Busca as opções de filtro dinamicamente do banco de dados (todas as cartas, não só as com listings)
-    const rarities = await Card.distinct('rarity', { game: 'onepiece' });
-    const colors = await Card.distinct('colors', { game: 'onepiece' });
-    const types = await Card.distinct('type_line', { game: 'onepiece' });
+    const totalCards = count.length;
 
-    // Busca TODAS as edições do jogo (OP, ST, PRB, P, etc)
-    const rawSets = await Card.distinct('set_name', { game: 'onepiece' });
+    const rarities = await Card.findAll({ attributes: [[fn('DISTINCT', col('rarity')), 'rarity']], where: { game: 'onepiece' } }).then(r => r.map(i => i.rarity));
+    const colors = await Card.findAll({ attributes: [[fn('DISTINCT', col('colors')), 'colors']], where: { game: 'onepiece' } }).then(r => r.map(i => i.colors));
+    const types = await Card.findAll({ attributes: [[fn('DISTINCT', col('type_line')), 'type_line']], where: { game: 'onepiece' } }).then(r => r.map(i => i.type_line));
+    const rawSets = await Card.findAll({ attributes: [[fn('DISTINCT', col('set_name')), 'set_name']], where: { game: 'onepiece' } }).then(r => r.map(i => i.set_name));
 
-    // Normaliza e organiza as edições
-    const setsByType = {
-      op: [],      // Edições principais (OP01, OP02, etc)
-      st: [],      // Starter Decks (ST01, ST02, etc)
-      prb: [],     // Prize Cards
-      p: [],       // Promotional
-      other: []    // Outras edições
-    };
-
+    const setsByType = { op: [], st: [], prb: [], p: [], other: [] };
     rawSets.forEach(rawSet => {
       if (!rawSet) return;
-      
-      // Tenta identificar o tipo de edição
       const opMatch = rawSet.match(/OP-?(\d+)/i);
       const stMatch = rawSet.match(/ST-?(\d+)/i);
       const prbMatch = rawSet.match(/PRB-?(\d+)/i);
       const pMatch = rawSet.match(/P-?(\d+)/i);
-      
-      if (opMatch) {
-        const setCode = 'OP' + opMatch[1].padStart(2, '0');
-        if (!setsByType.op.includes(setCode)) setsByType.op.push(setCode);
-      } else if (stMatch) {
-        const setCode = 'ST' + stMatch[1].padStart(2, '0');
-        if (!setsByType.st.includes(setCode)) setsByType.st.push(setCode);
-      } else if (prbMatch) {
-        const setCode = 'PRB-' + prbMatch[1].padStart(3, '0');
-        if (!setsByType.prb.includes(setCode)) setsByType.prb.push(setCode);
-      } else if (pMatch) {
-        const setCode = 'P-' + pMatch[1].padStart(3, '0');
-        if (!setsByType.p.includes(setCode)) setsByType.p.push(setCode);
-      } else {
-        // Outras edições que não se encaixam nos padrões acima
-        if (!setsByType.other.includes(rawSet)) setsByType.other.push(rawSet);
-      }
+      if (opMatch) { setsByType.op.push('OP' + opMatch[1].padStart(2, '0')); }
+      else if (stMatch) { setsByType.st.push('ST' + stMatch[1].padStart(2, '0')); }
+      else if (prbMatch) { setsByType.prb.push('PRB-' + prbMatch[1].padStart(3, '0')); }
+      else if (pMatch) { setsByType.p.push('P-' + pMatch[1].padStart(3, '0')); }
+      else { setsByType.other.push(rawSet); }
     });
-
-    // Ordena cada tipo numericamente
-    const sortNumerically = (a, b) => {
-      const numA = parseInt(a.match(/\d+/)?.[0] || 0);
-      const numB = parseInt(b.match(/\d+/)?.[0] || 0);
-      return numA - numB;
-    };
-
+    const sortNumerically = (a, b) => (parseInt(a.match(/\d+/)?.[0] || 0) - parseInt(b.match(/\d+/)?.[0] || 0));
     setsByType.op.sort(sortNumerically);
     setsByType.st.sort(sortNumerically);
     setsByType.prb.sort(sortNumerically);
     setsByType.p.sort(sortNumerically);
     setsByType.other.sort();
+    const sortedSets = [...new Set([...setsByType.op, ...setsByType.st, ...setsByType.prb, ...setsByType.p, ...setsByType.other])];
 
-    // Combina todas as edições: OP primeiro, depois ST, PRB, P e outras
-    const sortedSets = [
-      ...setsByType.op,
-      ...setsByType.st,
-      ...setsByType.prb,
-      ...setsByType.p,
-      ...setsByType.other
-    ];
-
-    // Define os filtros que serão enviados para a view (com opção "Todas")
-    const dons = await Card.distinct('don', { game: 'onepiece' });
+    const dons = await Card.findAll({ attributes: [[fn('DISTINCT', col('don')), 'don']], where: { game: 'onepiece' } }).then(r => r.map(i => i.don));
     const filterGroups = [
       { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
       { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
@@ -141,7 +96,7 @@ const showCardsPage = async (req, res) => {
       title: 'Explorar Cartas de One Piece',
       game: 'onepiece',
       filterGroups: filterGroups,
-      cards: formattedCards,
+      cards: cards,
       currentPage,
       hasMore: (currentPage * limit) < totalCards,
       totalCards,
@@ -150,76 +105,46 @@ const showCardsPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro na página de busca de One Piece:", error);
-    res.render('pages/cardSearchPage', { 
-        title: 'Erro', 
-        game: 'onepiece', 
-        filterGroups: [],
-        cards: [], 
-        filters: {}, 
-        currentPage: 1, 
-        hasMore: false, 
-        totalCards: 0 
-    });
+    res.render('pages/cardSearchPage', { title: 'Erro', game: 'onepiece', filterGroups: [], cards: [], filters: {}, currentPage: 1, hasMore: false, totalCards: 0 });
   }
 };
 
 // --- FUNÇÃO PARA A PÁGINA DE DETALHES DA CARTA ---
 const showCardDetailPage = async (req, res) => {
   try {
-
     const cardId = req.params.id;
     if (!cardId || isNaN(cardId)) {
       return res.status(400).send('ID de carta inválido');
     }
 
-    // Busca a carta principal
     const mainCard = await Card.findByPk(cardId);
     if (!mainCard) {
       return res.status(404).send('Carta não encontrada');
     }
 
-
-    // Busca todas as versões (pelo base do api_id), incluindo a principal
     let allVersions = [];
     if (mainCard.api_id) {
       const baseApiId = mainCard.api_id.split('_')[0];
-      const { Op } = require('sequelize');
       allVersions = await Card.findAll({
         where: {
-          api_id: {
-            [Op.iLike]: `${baseApiId}%`
-          },
+          api_id: { [Op.iLike]: `${baseApiId}%` },
           set_name: mainCard.set_name
         }
       });
     }
- 11   // Ordena por api_id para manter ordem: normal, _p1, _p2, _p3
-    allVersions = allVersions.sort((a, b) => {
-      if (a.api_id === mainCard.api_id) return -1;
-      if (b.api_id === mainCard.api_id) return 1;
-      return a.api_id.localeCompare(b.api_id);
+    allVersions.sort((a, b) => a.api_id.localeCompare(b.api_id));
+
+    const listings = await Listing.findAll({ 
+        where: { cardId: mainCard.id },
+        order: [['price', 'ASC']],
+        include: [{ model: User, as: 'seller', attributes: ['username', 'accountType', 'avatar'] }]
     });
 
-    // Busca os anúncios (listings) para essa carta
-    const listings = await Listing.find({ card: mainCard._id })
-      .sort({ price: 1 })
-      .populate({
-        path: 'seller',
-        select: 'username accountType avatar'
-      })
-      .lean();
-
-    // Calcula menor/maior preço
     const prices = listings.map(l => l.price);
     mainCard.lowestPrice = prices.length ? Math.min(...prices) : null;
     mainCard.highestPrice = prices.length ? Math.max(...prices) : null;
 
-    res.render('pages/card-detail', {
-      card: mainCard,
-      listings,
-      allVersions
-    });
-
+    res.render('pages/card-detail', { card: mainCard, listings, allVersions });
   } catch (error) {
     console.error("Erro ao buscar detalhes da carta:", error);
     res.status(500).send('Erro no servidor');
@@ -230,11 +155,8 @@ const showCardDetailPage = async (req, res) => {
 const searchCardsForSale = async (req, res) => {
   try {
     const searchQuery = req.query.q;
-    console.log('DEBUG searchCardsForSale: searchQuery:', searchQuery);
     let searchResults = [];
-
     if (searchQuery && searchQuery.length > 2) {
-      const { Op } = require('sequelize');
       searchResults = await Card.findAll({
         where: {
           game: 'onepiece',
@@ -248,26 +170,19 @@ const searchCardsForSale = async (req, res) => {
       });
     }
     res.json(searchResults);
-    
   } catch (error) {
     console.error("Erro na API de busca de cartas:", error);
     res.status(500).json({ message: 'Erro no servidor' });
   }
 };
+
 const searchAvailableCards = async (req, res) => {
   try {
     const searchQuery = req.query.q;
     let searchResults = [];
-
     if (searchQuery && searchQuery.length > 2) {
-      // 1. Descobre quais cartas estão à venda
-      const { sequelize } = require('../database/connection');
-      const distinctCardIds = await Listing.findAll({
-        attributes: [[sequelize.fn('DISTINCT', sequelize.col('cardId')), 'cardId']]
-      }).then(results => results.map(r => r.dataValues.cardId));
-      
-      // 2. Busca apenas DENTRO dessas cartas
-      const { Op } = require('sequelize');
+      const distinctCardIdsResult = await Listing.findAll({ attributes: [[fn('DISTINCT', col('cardId')), 'cardId']] });
+      const distinctCardIds = distinctCardIdsResult.map(r => r.cardId);
       searchResults = await Card.findAll({
         where: {
           id: { [Op.in]: distinctCardIds },
@@ -279,7 +194,6 @@ const searchAvailableCards = async (req, res) => {
       });
     }
     res.json(searchResults);
-    
   } catch (error) {
     console.error("Erro na API de busca de cartas disponíveis:", error);
     res.status(500).json({ message: 'Erro no servidor' });
@@ -293,87 +207,54 @@ const searchForDeckBuilder = async (req, res) => {
       return res.json([]);
     }
 
-    // Verifica se a busca é por código de edição (ex: OP13, OP-13, op13)
     const setPattern = /^OP-?(\d+)$/i;
     const setMatch = searchQuery.match(setPattern);
     
-    let matchQuery;
+    let whereClause;
     if (setMatch) {
-      // Busca por edição: todas as cartas que começam com OP13 (ex: OP13-001, OP13-002, etc)
-      const setNumber = setMatch[1].padStart(2, '0'); // Garante 2 dígitos (ex: 01, 13)
-      matchQuery = {
+      const setNumber = setMatch[1].padStart(2, '0');
+      whereClause = {
         game: 'onepiece',
-        $or: [
-          { api_id: { $regex: `^OP-?${setNumber}`, $options: 'i' } },
-          { code: { $regex: `^OP-?${setNumber}`, $options: 'i' } }
+        [Op.or]: [
+          { api_id: { [Op.iLike]: `OP-${setNumber}%` } },
+          { code: { [Op.iLike]: `OP-${setNumber}%` } }
         ]
       };
     } else {
-      // Busca normal por nome ou código
-      matchQuery = {
+      whereClause = {
         game: 'onepiece',
-        $or: [
-          { name: { $regex: searchQuery, $options: 'i' } },
-          { code: { $regex: searchQuery, $options: 'i' } },
-          { api_id: { $regex: searchQuery, $options: 'i' } }
+        [Op.or]: [
+          { name: { [Op.iLike]: `%${searchQuery}%` } },
+          { code: { [Op.iLike]: `%${searchQuery}%` } },
+          { api_id: { [Op.iLike]: `%${searchQuery}%` } }
         ]
       };
     }
 
-    const cards = await Card.aggregate([
-      { $match: matchQuery },
-      {
-        $lookup: {
-          from: 'listings',
-          localField: '_id',
-          foreignField: 'card',
-          pipeline: [
-            { $match: { quantity: { $gt: 0 } } }
-          ],
-          as: 'availableListings'
-        }
-      },
-      {
-        $addFields: {
-          status: {
-            $cond: { if: { $gt: [{ $size: '$availableListings' }, 0] }, then: 'available', else: 'out_of_stock' }
-          },
-          price: { $min: '$availableListings.price' }
-        }
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          set_name: 1,
-          image_url: 1,
-          images: 1,
-          api_id: 1,
-          code: 1,
-          status: 1,
-          rarity: 1,
-          type_line: 1,
-          colors: 1,
-          color: 1,
-          ability: 1,
-          cost: 1,
-          power: 1,
-          opcg_id: '$card_id',
-          price: 1
-        }
-      },
-      { $sort: { code: 1, name: 1 } } // Ordena por código primeiro
-    ]);
+    const cards = await Card.findAll({
+        where: whereClause,
+        include: [{
+            model: Listing,
+            as: 'listings',
+            attributes: [],
+            where: { quantity: { [Op.gt]: 0 } },
+            required: false
+        }],
+        attributes: [
+            'id', 'name', 'set_name', 'image_url', 'images', 'api_id', 'code', 'rarity', 'type_line', 'colors', 'color', 'ability', 'cost', 'power',
+            [literal('CASE WHEN COUNT("listings"."id") > 0 THEN \'available\' ELSE \'out_of_stock\' END'), 'status'],
+            [fn('MIN', col('listings.price')), 'price']
+        ],
+        group: ['Card.id'],
+        order: [['code', 'ASC'], ['name', 'ASC']]
+    });
 
     res.json(cards);
-
   } catch (error) {
     console.error("Error in deck builder search:", error);
     res.status(500).json({ message: 'Erro no servidor' });
   }
 };
-
-// --- EXPORTAÇÃO CORRIGIDA ---
 
 const getLeaders = async (req, res) => {
   try {
@@ -382,17 +263,9 @@ const getLeaders = async (req, res) => {
       game: 'onepiece',
       type_line: 'LEADER'
     };
-
-    if (q) {
-      filter.name = { [Op.iLike]: `%${q}%` };
-    }
-    if (color) {
-      // Assuming colors is JSON array, but for simplicity, use string match
-      filter.colors = { [Op.contains]: [color] };
-    }
-    if (set) {
-      filter.set_name = { [Op.iLike]: `%${set}%` };
-    }
+    if (q) filter.name = { [Op.iLike]: `%${q}%` };
+    if (color) filter.colors = { [Op.iLike]: `%${color}%` };
+    if (set) filter.set_name = { [Op.iLike]: `%${set}%` };
 
     const leaders = await Card.findAll({
       where: filter,
@@ -406,26 +279,22 @@ const getLeaders = async (req, res) => {
   }
 };
 
-// --- FUNÇÃO PARA A ENCICLOPÉDIA ---
 const getAllCards = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = 52; // 4 linhas de 13 cartas
+    const limit = 52;
 
-    // Constrói a query de filtro, excluindo cartas com nome inválido
     const filterQuery = { 
       game: 'onepiece',
-      name: { [Op.ne]: null },
+      name: { [Op.ne]: null, [Op.ne]: 'undefined' },
       [Op.and]: [
-        sequelize.where(sequelize.fn('length', sequelize.col('name')), { [Op.gt]: 0 }),
-        sequelize.where(sequelize.col('name'), { [Op.ne]: 'undefined' })
+        literal('length(name) > 0'),
       ]
     };
     if (req.query.rarity) filterQuery.rarity = req.query.rarity;
-    if (req.query.color) filterQuery.colors = { [Op.contains]: [req.query.color] };
+    if (req.query.color) filterQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
     if (req.query.type) filterQuery.type_line = req.query.type;
     if (req.query.set) filterQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
-    
     if (req.query.q) {
       filterQuery[Op.or] = [
         { name: { [Op.iLike]: `%${req.query.q}%` } },
@@ -433,23 +302,18 @@ const getAllCards = async (req, res) => {
       ];
     }
 
-    let cards;
-    let totalCards;
-    let hasMore = false;
-
-    // Sempre retorna todos os resultados, sem paginação ou limite
-    cards = await Card.findAll({
+    const { count, rows: cards } = await Card.findAndCountAll({
       where: filterQuery,
-      order: [['name', 'ASC']]
+      order: [['name', 'ASC']],
+      offset: (page - 1) * limit,
+      limit: limit
     });
-    totalCards = cards.length;
 
     res.json({
       cards,
-      hasMore,
-      currentPage: req.query.q ? 1 : page,
+      hasMore: (page * limit) < count,
+      currentPage: page,
     });
-
   } catch (error) {
     console.error("Erro ao buscar todas as cartas de One Piece do banco de dados:", error);
     res.status(500).json({ message: 'Erro no servidor' });
@@ -458,14 +322,11 @@ const getAllCards = async (req, res) => {
 
 const debugCardSearch = async (req, res) => {
   try {
-    const cardApiId = req.params.name; // Renomeado para refletir a busca por api_id
-    const card = await Card.findOne({ where: { api_id: cardApiId, game: 'onepiece' } }); // Busca por api_id
-
+    const cardApiId = req.params.name;
+    const card = await Card.findOne({ where: { api_id: cardApiId, game: 'onepiece' } });
     if (card) {
-      console.log('DEBUG: Card found in DB:', card);
       res.json({ success: true, message: 'Card found', card: card });
     } else {
-      console.log('DEBUG: Card not found in DB for api_id:', cardApiId); // Log de api_id
       res.json({ success: false, message: 'Card not found' });
     }
   } catch (error) {
@@ -474,101 +335,67 @@ const debugCardSearch = async (req, res) => {
   }
 };
 
-// Nova função para a API de cartas disponíveis (com filtros)
 const getAvailableCards = async (req, res) => {
   try {
-    console.log('📦 getAvailableCards chamado com query:', req.query);
     const currentPage = parseInt(req.query.p) || 1;
     const limit = 50;
     
-    // Define a busca base para 'onepiece'
     const cardMatchQuery = { game: 'onepiece' };
-
-    // Adiciona os filtros de One Piece se eles existirem na URL e não forem vazios
-    if (req.query.rarity && req.query.rarity !== '') cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color && req.query.color !== '') cardMatchQuery.colors = new RegExp(req.query.color, 'i');
-    if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
-    if (req.query.set && req.query.set !== '') {
-      // Aceita qualquer tipo de edição (OP, ST, PRB, P, etc)
-      const setCode = req.query.set.replace(/-/g, '-?');
-      cardMatchQuery.set_name = new RegExp(setCode, 'i');
-    }
-    if (req.query.q && req.query.q !== '') cardMatchQuery.name = new RegExp(req.query.q, 'i');
+    if (req.query.rarity) cardMatchQuery.rarity = req.query.rarity;
+    if (req.query.color) cardMatchQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
+    if (req.query.type) cardMatchQuery.type_line = req.query.type;
+    if (req.query.set) cardMatchQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
+    if (req.query.q) cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
     
-    console.log('🔍 Query construída:', cardMatchQuery);
+    const distinctCardIdsResult = await Listing.findAll({ 
+        attributes: [[fn('DISTINCT', col('cardId')), 'cardId']],
+        where: { quantity: { [Op.gt]: 0 } }
+    });
+    const distinctCardIds = distinctCardIdsResult.map(item => item.cardId);
 
-    // Busca no banco de dados - apenas cartas COM anúncios ativos
-    const distinctCardIds = await Listing.distinct('card', { quantity: { $gt: 0 } });
-    const totalCards = await Card.countDocuments({ _id: { $in: distinctCardIds }, ...cardMatchQuery });
-
-    const cards = await Card.aggregate([
-      { $match: { _id: { $in: distinctCardIds }, game: 'onepiece', ...cardMatchQuery }},
-      { $lookup: {
-          from: 'listings',
-          localField: '_id',
-          foreignField: 'card',
-          pipeline: [
-            { $match: { quantity: { $gt: 0 } } }
-          ],
-          as: 'listings'
-      }},
-      { $addFields: {
-          lowestAvailablePrice: { $min: '$listings.price' },
-          hasFoil: { $anyElementTrue: [ '$listings.is_foil' ] }
-      }},
-      { $project: {
-          _id: 1,
-          name: 1,
-          image_url: 1,
-          set_name: 1,
-          rarity: 1,
-          type_line: 1,
-          averagePrice: 1,
-          price_trend: 1,
-          lowestAvailablePrice: 1,
-          ability: 1,
-          hasFoil: 1
-      }},
-      { $sort: { name: 1 }},
-      { $skip: (currentPage - 1) * limit },
-      { $limit: limit }
-    ]);
-
-    console.log(`✅ Retornando ${cards.length} cartas (página ${currentPage} de ${Math.ceil(totalCards/limit)})`);
-    
-    res.json({
-      cards: cards,
-      hasMore: (currentPage * limit) < totalCards,
-      currentPage: currentPage,
-      totalCards: totalCards
+    const { count, rows: cards } = await Card.findAndCountAll({
+        where: { id: { [Op.in]: distinctCardIds }, ...cardMatchQuery },
+        include: [{
+            model: Listing,
+            as: 'listings',
+            attributes: [],
+            where: { quantity: { [Op.gt]: 0 } },
+            required: true
+        }],
+        attributes: [
+            'id', 'name', 'image_url', 'set_name', 'rarity', 'type_line', 'price_trend', 'ability',
+            [fn('MIN', col('listings.price')), 'lowestAvailablePrice'],
+            [fn('MAX', col('listings.is_foil')), 'hasFoil']
+        ],
+        group: ['Card.id'],
+        order: [['name', 'ASC']],
+        offset: (currentPage - 1) * limit,
+        limit: limit,
+        subQuery: false
     });
 
+    res.json({
+      cards: cards,
+      hasMore: (currentPage * limit) < count.length,
+      currentPage: currentPage,
+      totalCards: count.length
+    });
   } catch (error) {
     console.error("❌ Erro na API de cartas disponíveis:", error);
     res.status(500).json({ message: 'Erro no servidor', cards: [], hasMore: false, currentPage: 1, totalCards: 0 });
   }
 };
 
-/**
- * Obtém detalhes de uma carta específica por ID (para API)
- * @route GET /api/cards/:id
- */
 const getCardById = async (req, res) => {
   try {
     const cardId = req.params.id;
-
-    // Validação do ID
     if (!cardId || isNaN(cardId)) {
       return res.status(400).json({ error: 'ID de carta inválido' });
     }
-
     const card = await Card.findByPk(cardId);
-
     if (!card) {
       return res.status(404).json({ error: 'Carta não encontrada' });
     }
-
-    // Retornar dados da carta em JSON
     res.json(card);
   } catch (error) {
     console.error("Erro ao buscar carta por ID:", error);
@@ -586,5 +413,5 @@ module.exports = {
   debugCardSearch,
   getLeaders,
   getAvailableCards,
-  getCardById, // Nova função
+  getCardById,
 };

@@ -1,43 +1,57 @@
-// src/models/Review.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
+const User = require('./User');
+const Order = require('./Order');
 
-const reviewSchema = new mongoose.Schema({
-  order: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order',
-    required: true,
+const Review = sequelize.define('Review', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  // O item específico do pedido que está sendo avaliado
-  orderItemId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
+  orderId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'orders',
+      key: 'id'
+    }
   },
-  seller: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true,
+  sellerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
-  buyer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+  buyerId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   rating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1,
+      max: 5
+    }
   },
   comment: {
-    type: String,
-    trim: true,
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
-}, { timestamps: true });
+}, {
+  tableName: 'reviews',
+  timestamps: true
+});
 
-// Garante que um comprador só possa avaliar um item de um pedido uma única vez
-reviewSchema.index({ order: 1, orderItemId: 1, buyer: 1 }, { unique: true });
-
-const Review = mongoose.model('Review', reviewSchema);
+Review.belongsTo(User, { as: 'seller', foreignKey: 'sellerId' });
+Review.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
+Review.belongsTo(Order, { as: 'order', foreignKey: 'orderId' });
 
 module.exports = Review;

@@ -1,47 +1,61 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const couponSchema = new mongoose.Schema({
+const Coupon = sequelize.define('Coupon', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   code: {
-    type: String,
-    required: true,
+    type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
-    uppercase: true,
-    trim: true,
+    validate: {
+      isUppercase: true,
+    }
   },
   discountType: {
-    type: String,
-    enum: ['percentage', 'fixed'],
-    required: true,
+    type: DataTypes.ENUM('percentage', 'fixed'),
+    allowNull: false,
   },
   discountValue: {
-    type: Number,
-    required: true,
-    min: 0,
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false,
+    validate: {
+      min: 0,
+    }
   },
   expirationDate: {
-    type: Date,
-    required: true,
+    type: DataTypes.DATE,
+    allowNull: false,
   },
   usageLimit: {
-    type: Number,
-    min: 0,
-    default: 1,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 1,
+    validate: {
+      min: 0,
+    }
   },
   usedCount: {
-    type: Number,
-    default: 0,
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
   },
   isActive: {
-    type: Boolean,
-    default: true,
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
   },
   minimumOrderAmount: {
-    type: Number,
-    min: 0,
-    default: 0,
+    type: DataTypes.DECIMAL(10, 2),
+    defaultValue: 0,
+    validate: {
+      min: 0,
+    }
   },
-}, { timestamps: true });
-
-const Coupon = mongoose.model('Coupon', couponSchema);
+}, {
+  tableName: 'coupons',
+  timestamps: true
+});
 
 module.exports = Coupon;

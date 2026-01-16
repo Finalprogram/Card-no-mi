@@ -49,5 +49,6 @@ const Listing = sequelize.define('Listing', {
     type: DataTypes.JSON,
     defaultValue: []
   }
+});
 
 module.exports = Listing;

@@ -1,21 +1,27 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
 
-const SettingSchema = new mongoose.Schema({
-  // A "chave" da configuração, ex: "fee_individual"
-  key: {
-    type: String,
-    required: true,
-    unique: true,
-    index: true,
+const Setting = sequelize.define('Setting', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  // O "valor" da configuração. 'Mixed' permite guardar qualquer tipo de dado (número, texto, etc.)
+  key: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    unique: true,
+  },
   value: {
-    type: mongoose.Schema.Types.Mixed,
-    required: true,
+    type: DataTypes.JSON,
+    allowNull: false,
   },
   description: {
-    type: String,
+    type: DataTypes.TEXT,
   }
+}, {
+  tableName: 'settings',
+  timestamps: true
 });
 
-module.exports = mongoose.model('Setting', SettingSchema);
+module.exports = Setting;
