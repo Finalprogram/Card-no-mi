@@ -1,60 +1,82 @@
-const mongoose = require('mongoose');
+const { DataTypes, Model, Op } = require('sequelize');
+const { sequelize } = require('../database/connection');
+const User = require('./User');
+const ForumPost = require('./ForumPost');
 
-const ReactionSchema = new mongoose.Schema({
-  post: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'ForumPost',
-    required: true,
-    index: true
+class Reaction extends Model {
+  static async toggleReaction(postId, userId, emoji) {
+    const existing = await this.findOne({ where: { postId, userId, emoji } });
+
+    if (existing) {
+      await existing.destroy();
+      return { action: 'removed', reaction: null };
+    } else {
+      const reaction = await this.create({ postId, userId, emoji });
+      return { action: 'added', reaction };
+    }
+  }
+
+  static async getReactionCounts(postId) {
+    return this.findAll({
+      attributes: ['emoji', [sequelize.fn('COUNT', sequelize.col('emoji')), 'count']],
+      where: { postId },
+      group: ['emoji']
+    });
+  }
+
+  static async getUserReactions(postId, userId) {
+    const reactions = await this.findAll({
+      attributes: ['emoji'],
+      where: { postId, userId }
+    });
+    return reactions.map(r => r.emoji);
+  }
+}
+
+Reaction.init({
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true
+  postId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'forum_posts',
+      key: 'id'
+    }
+  },
+  userId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'users',
+      key: 'id'
+    }
   },
   emoji: {
-    type: String,
-    required: true,
-    enum: ['👍', '👎', '❤️', '😂', '🔥', '👀', '🎉', '😮']
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+    type: DataTypes.STRING,
+    allowNull: false,
+    validate: {
+      isIn: [['👍', '👎', '❤️', '😂', '🔥', '👀', '🎉', '😮']]
+    }
   }
+}, {
+  sequelize,
+  modelName: 'Reaction',
+  tableName: 'reactions',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    {
+      unique: true,
+      fields: ['postId', 'userId', 'emoji']
+    }
+  ]
 });
 
-// Índice composto para evitar reações duplicadas
-ReactionSchema.index({ post: 1, user: 1, emoji: 1 }, { unique: true });
+Reaction.belongsTo(ForumPost, { as: 'post', foreignKey: 'postId' });
+Reaction.belongsTo(User, { as: 'user', foreignKey: 'userId' });
 
-// Método para alternar reação (add/remove)
-ReactionSchema.statics.toggleReaction = async function(postId, userId, emoji) {
-  const existing = await this.findOne({ post: postId, user: userId, emoji });
-  
-  if (existing) {
-    await existing.deleteOne();
-    return { action: 'removed', reaction: null };
-  } else {
-    const reaction = await this.create({ post: postId, user: userId, emoji });
-    return { action: 'added', reaction };
-  }
-};
-
-// Método para obter contagem de reações por tipo
-ReactionSchema.statics.getReactionCounts = async function(postId) {
-  const reactions = await this.aggregate([
-    { $match: { post: new mongoose.Types.ObjectId(postId) } },
-    { $group: { _id: '$emoji', count: { $sum: 1 } } },
-    { $project: { emoji: '$_id', count: 1, _id: 0 } }
-  ]);
-  
-  return reactions;
-};
-
-// Método para obter reações do usuário em um post
-ReactionSchema.statics.getUserReactions = async function(postId, userId) {
-  const reactions = await this.find({ post: postId, user: userId }).select('emoji');
-  return reactions.map(r => r.emoji);
-};
-
-module.exports = mongoose.model('Reaction', ReactionSchema);
+module.exports = Reaction;

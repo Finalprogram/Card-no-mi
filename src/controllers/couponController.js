@@ -8,7 +8,7 @@ const applyCoupon = async (req, res) => {
   }
 
   try {
-    const coupon = await Coupon.findOne({ code: couponCode });
+    const coupon = await Coupon.findOne({ where: { code: couponCode } });
 
     if (!coupon) {
       return res.status(404).json({ success: false, message: 'Cupom inválido ou não encontrado.' });
@@ -46,7 +46,7 @@ const applyCoupon = async (req, res) => {
     req.session.coupon = {
       code: coupon.code,
       discountAmount: discountAmount,
-      couponId: coupon._id,
+      couponId: coupon.id,
     };
 
     res.json({

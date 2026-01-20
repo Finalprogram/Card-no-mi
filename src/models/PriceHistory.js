@@ -1,24 +1,39 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
+const Card = require('./Card');
 
-const PriceHistorySchema = new mongoose.Schema({
-  card: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Card',
-    required: true,
-    index: true
+const PriceHistory = sequelize.define('PriceHistory', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
+  cardId: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'cards',
+      key: 'id'
+    }
   },
   price: {
-    type: Number,
-    required: true
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: false
   },
   date: {
-    type: Date,
-    default: Date.now,
-    required: true
+    type: DataTypes.DATE,
+    defaultValue: DataTypes.NOW,
+    allowNull: false
   }
+}, {
+  tableName: 'price_histories',
+  timestamps: true,
+  updatedAt: false,
+  indexes: [
+    { fields: ['cardId', 'date'] }
+  ]
 });
 
-// To improve query performance for a specific card's history
-PriceHistorySchema.index({ card: 1, date: -1 });
+PriceHistory.belongsTo(Card, { as: 'card', foreignKey: 'cardId' });
 
-module.exports = mongoose.model('PriceHistory', PriceHistorySchema);
+module.exports = PriceHistory;

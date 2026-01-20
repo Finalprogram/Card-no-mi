@@ -4,6 +4,7 @@ const Payout = require('../models/Payout');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { sequelize } = require('../database/connection');
 
 /**
  * GET /seller/payouts
@@ -12,11 +13,13 @@ const logger = require('../config/logger');
 async function getSellerPayouts(req, res) {
   try {
     const sellerId = req.session.user.id;
-    const seller = await User.findById(sellerId);
+    const seller = await User.findByPk(sellerId);
     
-    const payouts = await Payout.find({ seller: sellerId })
-      .sort({ createdAt: -1 })
-      .limit(50);
+    const payouts = await Payout.findAll({ 
+      where: { sellerId: sellerId },
+      order: [['createdAt', 'DESC']],
+      limit: 50
+    });
 
     // Calcular saldo disponível
     const balance = seller.balance || {
@@ -47,8 +50,10 @@ async function getPayoutDetails(req, res) {
     const { id } = req.params;
     const sellerId = req.session.user.id;
 
-    const payout = await Payout.findOne({ _id: id, seller: sellerId })
-      .populate('orders.orderId');
+    const payout = await Payout.findOne({ 
+      where: { id: id, sellerId: sellerId },
+      include: [{ model: Order, as: 'orders' }]
+    });
 
     if (!payout) {
       return res.status(404).send('Repasse não encontrado');
@@ -66,12 +71,14 @@ async function getPayoutDetails(req, res) {
  * Solicitar um novo repasse (on-demand)
  */
 async function requestPayout(req, res) {
+  const t = await sequelize.transaction();
   try {
     const sellerId = req.session.user.id;
-    const seller = await User.findById(sellerId);
+    const seller = await User.findByPk(sellerId, { transaction: t });
 
     // Verificar se tem dados bancários configurados
     if (!seller.bankInfo?.pixKey && !seller.bankInfo?.accountNumber) {
+      await t.rollback();
       return res.status(400).json({
         ok: false,
         error: 'Configure seus dados bancários antes de solicitar um repasse'
@@ -80,6 +87,7 @@ async function requestPayout(req, res) {
 
     // Verificar saldo disponível
     if (seller.balance.available < seller.payoutSettings.minimumAmount) {
+      await t.rollback();
       return res.status(400).json({
         ok: false,
         error: `Saldo mínimo de R$ ${seller.payoutSettings.minimumAmount.toFixed(2)} não atingido`
@@ -87,13 +95,21 @@ async function requestPayout(req, res) {
     }
 
     // Buscar pedidos entregues que ainda não foram incluídos em um repasse
-    const eligibleOrders = await Order.find({
-      'items.seller': sellerId,
-      status: 'Delivered',
-      'items.includedInPayout': { $ne: true }
+    const eligibleOrders = await Order.findAll({
+      where: {
+        status: 'Delivered',
+        // This is tricky. We need to check a value in a JSON array.
+        // This might require a raw query depending on the database.
+        // For now, we'll assume a simple check works, but this may need revision.
+      },
+      transaction: t
     });
+    
+    const sellerEligibleOrders = eligibleOrders.filter(o => o.items.some(i => i.sellerId === sellerId && !i.includedInPayout));
 
-    if (eligibleOrders.length === 0) {
+
+    if (sellerEligibleOrders.length === 0) {
+      await t.rollback();
       return res.status(400).json({
         ok: false,
         error: 'Nenhum pedido elegível para repasse no momento'
@@ -106,37 +122,45 @@ async function requestPayout(req, res) {
 
     const payout = await Payout.createFromOrders(
       sellerId,
-      eligibleOrders.map(o => o._id),
+      sellerEligibleOrders.map(o => o.id),
       thirtyDaysAgo,
-      now
+      now,
+      { transaction: t }
     );
 
     // Agendar para processamento
     payout.status = 'Scheduled';
     payout.scheduledDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000); // +2 dias
-    await payout.save();
+    await payout.save({ transaction: t });
 
     // Atualizar saldo do vendedor
-    seller.balance.available -= payout.amount;
-    seller.balance.pending += payout.amount;
-    await seller.save();
+    const newAvailable = seller.balance.available - payout.amount;
+    const newPending = seller.balance.pending + payout.amount;
+    
+    await seller.update({ 
+        balance: { ...seller.balance, available: newAvailable, pending: newPending }
+    }, { transaction: t });
+
 
     // Marcar items como incluídos no repasse
-    for (const order of eligibleOrders) {
-      order.items.forEach(item => {
-        if (item.seller.toString() === sellerId.toString()) {
-          item.includedInPayout = true;
-          item.payoutId = payout._id;
-        }
-      });
-      await order.save();
+    for (const order of sellerEligibleOrders) {
+        const updatedItems = order.items.map(item => {
+            if (item.sellerId === sellerId) {
+                return { ...item, includedInPayout: true, payoutId: payout.id };
+            }
+            return item;
+        });
+        await order.update({ items: updatedItems }, { transaction: t });
     }
 
-    logger.info(`[payouts] Repasse ${payout._id} criado para vendedor ${sellerId} no valor de R$ ${payout.amount}`);
+    logger.info(`[payouts] Repasse ${payout.id} criado para vendedor ${sellerId} no valor de R$ ${payout.amount}`);
+    
+    await t.commit();
 
-    res.json({ ok: true, payoutId: payout._id, amount: payout.amount });
+    res.json({ ok: true, payoutId: payout.id, amount: payout.amount });
 
   } catch (error) {
+    await t.rollback();
     logger.error('[payouts] Erro ao solicitar repasse:', error);
     res.status(500).json({ ok: false, error: 'Erro ao processar solicitação' });
   }
@@ -147,17 +171,20 @@ async function requestPayout(req, res) {
  * Aprovar e processar um repasse (Admin)
  */
 async function approvePayout(req, res) {
+  const t = await sequelize.transaction();
   try {
     const { id } = req.params;
     const adminId = req.session.user.id;
 
-    const payout = await Payout.findById(id).populate('seller');
+    const payout = await Payout.findByPk(id, { include: 'seller', transaction: t });
     
     if (!payout) {
+      await t.rollback();
       return res.status(404).json({ ok: false, error: 'Repasse não encontrado' });
     }
 
     if (payout.status !== 'Scheduled' && payout.status !== 'Pending') {
+      await t.rollback();
       return res.status(400).json({ 
         ok: false, 
         error: `Repasse não pode ser aprovado no status ${payout.status}` 
@@ -165,36 +192,40 @@ async function approvePayout(req, res) {
     }
 
     // TODO: Integrar com gateway de pagamento real
-    // Exemplo com PIX via Mercado Pago, Asaas, ou outro provedor
     
     payout.status = 'Processing';
-    payout.lastModifiedBy = adminId;
-    await payout.save();
+    await payout.save({ transaction: t, userId: adminId });
 
-    // Simular processamento (remover em produção)
-    // Em produção, isso seria feito por um webhook do provedor de pagamento
+    // Simular processamento
     setTimeout(async () => {
+      const innerTransaction = await sequelize.transaction();
       try {
-        payout.status = 'Completed';
-        payout.completedDate = new Date();
-        payout.externalTransactionId = `MOCK_${Date.now()}`;
-        await payout.save();
+        const payoutToComplete = await Payout.findByPk(id, { transaction: innerTransaction });
+        payoutToComplete.status = 'Completed';
+        payoutToComplete.completedDate = new Date();
+        payoutToComplete.externalTransactionId = `MOCK_${Date.now()}`;
+        await payoutToComplete.save({ transaction: innerTransaction });
 
-        // Atualizar saldo do vendedor
-        const seller = await User.findById(payout.seller);
-        seller.balance.pending -= payout.amount;
-        seller.balance.lifetime += payout.amount;
-        await seller.save();
+        const seller = await User.findByPk(payoutToComplete.sellerId, { transaction: innerTransaction });
+        const newPending = seller.balance.pending - payoutToComplete.amount;
+        const newLifetime = seller.balance.lifetime + payoutToComplete.amount;
+        await seller.update({ 
+            balance: { ...seller.balance, pending: newPending, lifetime: newLifetime }
+        }, { transaction: innerTransaction });
 
-        logger.info(`[payouts] Repasse ${payout._id} concluído com sucesso`);
+        await innerTransaction.commit();
+        logger.info(`[payouts] Repasse ${payoutToComplete.id} concluído com sucesso`);
       } catch (err) {
+        await innerTransaction.rollback();
         logger.error('[payouts] Erro ao finalizar repasse:', err);
       }
     }, 5000);
 
+    await t.commit();
     res.json({ ok: true, message: 'Repasse em processamento' });
 
   } catch (error) {
+    await t.rollback();
     logger.error('[payouts] Erro ao aprovar repasse:', error);
     res.status(500).json({ ok: false, error: 'Erro ao processar aprovação' });
   }
@@ -210,23 +241,24 @@ async function getAdminPayouts(req, res) {
     const filter = {};
     
     if (status) filter.status = status;
-    if (seller) filter.seller = seller;
+    if (seller) filter.sellerId = seller;
 
-    const payouts = await Payout.find(filter)
-      .populate('seller', 'username email businessName')
-      .sort({ createdAt: -1 })
-      .limit(100);
+    const payouts = await Payout.findAll({
+      where: filter,
+      include: [{ model: User, as: 'seller', attributes: ['username', 'email', 'businessName'] }],
+      order: [['createdAt', 'DESC']],
+      limit: 100
+    });
 
     // Estatísticas
-    const stats = await Payout.aggregate([
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          total: { $sum: '$amount' }
-        }
-      }
-    ]);
+    const stats = await Payout.findAll({
+      attributes: [
+        'status',
+        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+        [sequelize.fn('SUM', sequelize.col('amount')), 'total']
+      ],
+      group: ['status']
+    });
 
     res.render('pages/admin-payouts', { payouts, stats });
 
@@ -241,74 +273,76 @@ async function getAdminPayouts(req, res) {
  * Deve ser chamada por um cron job diariamente
  */
 async function processAutomaticPayouts() {
-  try {
-    logger.info('[payouts] Iniciando processamento automático de repasses');
-
-    // Buscar vendedores com auto-payout ativado
-    const sellers = await User.find({
+  logger.info('[payouts] Iniciando processamento automático de repasses');
+  const sellers = await User.findAll({
+    where: {
       'payoutSettings.autoPayoutEnabled': true,
-      'balance.available': { $gte: 50 } // Valor mínimo padrão
-    });
-
-    for (const seller of sellers) {
-      try {
-        // Verificar se atingiu o valor mínimo
-        if (seller.balance.available < seller.payoutSettings.minimumAmount) {
-          continue;
-        }
-
-        // Buscar pedidos elegíveis
-        const eligibleOrders = await Order.find({
-          'items.seller': seller._id,
-          status: 'Delivered',
-          'items.includedInPayout': { $ne: true }
-        });
-
-        if (eligibleOrders.length === 0) continue;
-
-        // Criar repasse
-        const now = new Date();
-        const periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        
-        const payout = await Payout.createFromOrders(
-          seller._id,
-          eligibleOrders.map(o => o._id),
-          periodStart,
-          now
-        );
-
-        payout.status = 'Scheduled';
-        payout.scheduledDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
-        await payout.save();
-
-        // Atualizar saldo
-        seller.balance.available -= payout.amount;
-        seller.balance.pending += payout.amount;
-        await seller.save();
-
-        // Marcar items
-        for (const order of eligibleOrders) {
-          order.items.forEach(item => {
-            if (item.seller.toString() === seller._id.toString()) {
-              item.includedInPayout = true;
-              item.payoutId = payout._id;
-            }
-          });
-          await order.save();
-        }
-
-        logger.info(`[payouts] Repasse automático ${payout._id} criado para ${seller.username}`);
-
-      } catch (error) {
-        logger.error(`[payouts] Erro ao processar repasse para ${seller.username}:`, error);
-      }
+      'balance.available': { [sequelize.Op.gte]: 50 }
     }
+  });
 
-    logger.info('[payouts] Processamento automático concluído');
+  for (const seller of sellers) {
+    const t = await sequelize.transaction();
+    try {
+      if (seller.balance.available < seller.payoutSettings.minimumAmount) {
+        await t.rollback();
+        continue;
+      }
 
-  } catch (error) {
-    logger.error('[payouts] Erro no processamento automático:', error);
+      const eligibleOrders = await Order.findAll({
+        where: {
+          status: 'Delivered',
+        },
+        transaction: t
+      });
+      
+      const sellerEligibleOrders = eligibleOrders.filter(o => o.items.some(i => i.sellerId === seller.id && !i.includedInPayout));
+
+      if (sellerEligibleOrders.length === 0) {
+        await t.rollback();
+        continue;
+      }
+
+      const now = new Date();
+      const periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      
+      const payout = await Payout.createFromOrders(
+        seller.id,
+        sellerEligibleOrders.map(o => o.id),
+        periodStart,
+        now,
+        { transaction: t }
+      );
+
+      payout.status = 'Scheduled';
+      payout.scheduledDate = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+      await payout.save({ transaction: t });
+
+      const newAvailable = seller.balance.available - payout.amount;
+      const newPending = seller.balance.pending + payout.amount;
+      await seller.update({ 
+          balance: { ...seller.balance, available: newAvailable, pending: newPending }
+      }, { transaction: t });
+
+      for (const order of sellerEligibleOrders) {
+        const updatedItems = order.items.map(item => {
+            if (item.sellerId === seller.id) {
+                return { ...item, includedInPayout: true, payoutId: payout.id };
+            }
+            return item;
+        });
+        await order.update({ items: updatedItems }, { transaction: t });
+      }
+      
+      await t.commit();
+      logger.info(`[payouts] Repasse automático ${payout.id} criado para ${seller.username}`);
+
+    } catch (error) {
+      await t.rollback();
+      logger.error(`[payouts] Erro ao processar repasse para ${seller.username}:`, error);
+    }
   }
+  logger.info('[payouts] Processamento automático concluído');
 }
 
 module.exports = {
