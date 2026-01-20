@@ -1,43 +1,66 @@
-// src/models/Review.js
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const { sequelize } = require('../database/connection');
+const User = require('./User'); // Assuming User model is defined in User.js
+const Order = require('./Order'); // Assuming Order model is defined in Order.js
 
-const reviewSchema = new mongoose.Schema({
-  order: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Order',
-    required: true,
+const Review = sequelize.define('Review', {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
   },
-  // O item específico do pedido que está sendo avaliado
+  orderId: { // Changed from 'order' to 'orderId' for Sequelize convention
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Orders', // Assuming 'Orders' is the table name for the Order model
+      key: 'id'
+    }
+  },
   orderItemId: {
-    type: mongoose.Schema.Types.ObjectId,
-    required: true,
+    type: DataTypes.INTEGER, // Assuming orderItemId will be an integer ID
+    allowNull: false,
   },
-  seller: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    index: true,
+  sellerId: { // Changed from 'seller' to 'sellerId' for Sequelize convention
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users', // Assuming 'Users' is the table name for the User model
+      key: 'id'
+    }
   },
-  buyer: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
+  buyerId: { // Changed from 'buyer' to 'buyerId' for Sequelize convention
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'Users', // Assuming 'Users' is the table name for the User model
+      key: 'id'
+    }
   },
   rating: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5,
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    validate: {
+      min: 1,
+      max: 5
+    }
   },
   comment: {
-    type: String,
-    trim: true,
+    type: DataTypes.STRING,
   },
-}, { timestamps: true });
+}, {
+  timestamps: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['orderId', 'orderItemId', 'buyerId']
+    }
+  ]
+});
 
-// Garante que um comprador só possa avaliar um item de um pedido uma única vez
-reviewSchema.index({ order: 1, orderItemId: 1, buyer: 1 }, { unique: true });
-
-const Review = mongoose.model('Review', reviewSchema);
+// Define associations
+Review.belongsTo(Order, { foreignKey: 'orderId' });
+Review.belongsTo(User, { as: 'seller', foreignKey: 'sellerId' });
+Review.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
 
 module.exports = Review;

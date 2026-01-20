@@ -86,5 +86,6 @@ const Card = sequelize.define('Card', {
     type: DataTypes.JSON,
     defaultValue: {}
   }
+});
 
 module.exports = Card;

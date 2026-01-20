@@ -94,12 +94,6 @@ app.locals.formatPrice = function(price) {
 
 // 3. Conexão com o Banco de Dados
 connectDB();
-// Ensure Mongoose indexes are created/updated
-Card.createIndexes().then(() => {
-  logger.info('Mongoose indexes ensured for Card model.');
-}).catch(err => {
-  logger.error('Error ensuring Mongoose indexes for Card model:', err);
-});
 
 // Start the post-payment worker
 require('./src/workers/postPaymentWorker.js');

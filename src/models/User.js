@@ -123,5 +123,6 @@ const User = sequelize.define('User', {
     type: DataTypes.JSON,
     defaultValue: {}
   }
+});
 
 module.exports = User;

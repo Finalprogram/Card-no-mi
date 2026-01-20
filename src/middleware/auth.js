@@ -1,7 +1,6 @@
 // src/middleware/auth.js
 
-const mongoose = require('mongoose');
-const User = mongoose.model('User'); // Import the User model
+const User = require('../models/User'); // Import the Sequelize User model
 
 // In-memory object to store last activity update times for debouncing
 const lastActivityUpdate = {};
@@ -16,7 +15,7 @@ const isAuthPage = async (req, res, next) => {
 
     if (!lastActivityUpdate[userId] || (now - lastActivityUpdate[userId] > DEBOUNCE_TIME_MS)) {
       try {
-        await User.findByIdAndUpdate(userId, { lastActivityAt: now });
+        await User.update({ lastActivityAt: now }, { where: { id: userId } });
         lastActivityUpdate[userId] = now; // Update debounce timestamp
       } catch (error) {
         console.error('Error updating lastActivityAt for user:', userId, error);
