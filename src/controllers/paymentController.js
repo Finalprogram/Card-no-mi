@@ -5,6 +5,7 @@ const User = require('../models/User');
 const Listing = require('../models/Listing');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
 const logger = require('../config/logger');
+const { Op } = require('sequelize');
 const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
 const { addPostPaymentJob } = require('../services/postPaymentQueue');
@@ -15,7 +16,7 @@ async function getSellerOriginCep(sellerId) {
   const globalCepOrigem = process.env.MELHOR_ENVIO_CEP_ORIGEM;
   if (sellerId === 'sem-vendedor') return globalCepOrigem;
 
-  const seller = await User.findById(sellerId);
+  const seller = await User.findByPk(sellerId);
   if (seller && seller.address && seller.address.cep) {
     return seller.address.cep;
   }
@@ -47,7 +48,7 @@ async function createMercadoPagoPreference(req, res) {
     }
 
     // Fetch the user to get payer details
-    const user = await User.findById(userId);
+    const user = await User.findByPk(userId);
     if (!user) {
       return res.status(404).json({ message: 'Usuário não encontrado.' });
     }
@@ -68,7 +69,8 @@ async function createMercadoPagoPreference(req, res) {
     const shippingAddress = req.session.shippingAddress;
     const shippingSelections = req.session.shippingSelections || [];
 
-    const orderItems = cart.items.map(item => ({
+    const orderItems = cart.items.map((item, index) => ({
+      id: `${item.listingId || item.listing || item.cardId || item.card || 'item'}-${index}`,
       card: item.cardId,
       listing: item.listingId, // Assumindo que você tenha listingId no carrinho
       seller: item.vendorId,
@@ -81,17 +83,15 @@ async function createMercadoPagoPreference(req, res) {
     }));
 
     // Cria o pedido no banco de dados com status 'PendingPayment'
-    const newOrder = new Order({
-      user: userId,
+    const newOrder = await Order.create({
+      userId: userId,
       items: orderItems,
       totals: totals,
       shippingAddress: shippingAddress,
       shippingSelections: shippingSelections, // Store shipping selections
       status: 'PendingPayment', 
     });
-
-    await newOrder.save();
-    logger.info(`[Order Creation] Order #${newOrder._id} created for user ${userId} with total ${totals.grand}. Status: PendingPayment.`);
+    logger.info(`[Order Creation] Order #${newOrder.id} created for user ${userId} with total ${totals.grand}. Status: PendingPayment.`);
 
     const items = cart.items.map(item => ({
       title: item.meta.cardName,
@@ -106,7 +106,7 @@ async function createMercadoPagoPreference(req, res) {
 
     const preferenceBody = {
       items,
-      external_reference: newOrder._id.toString(),
+      external_reference: newOrder.id.toString(),
       back_urls: {
         success: `${baseUrl}/payment/mercadopago/success`,
         pending: `${baseUrl}/payment/mercadopago/pending`,
@@ -164,7 +164,7 @@ async function createMercadoPagoPreference(req, res) {
     delete req.session.shippingAddress;
     delete req.session.shippingSelections;
 
-    res.json({ init_point: response.init_point, orderId: newOrder._id });
+    res.json({ init_point: response.init_point, orderId: newOrder.id });
 
   } catch (error) {
     // Log de erro melhorado para capturar o objeto completo
@@ -180,7 +180,7 @@ async function handleMercadoPagoSuccess(req, res) {
   try {
     let order = null;
     if (external_reference) {
-      order = await Order.findById(external_reference);
+      order = await Order.findByPk(external_reference);
       // We don't change the status here. The webhook is the source of truth.
       // We just need the order to display totals on the success page.
     }
@@ -208,7 +208,7 @@ async function handleMercadoPagoPending(req, res) {
   try {
     let order = null;
     if (external_reference) {
-      order = await Order.findById(external_reference);
+      order = await Order.findByPk(external_reference);
       // We DO NOT change the status here. The webhook is the source of truth.
       // This handler is purely for user feedback on redirect.
     }
@@ -230,7 +230,7 @@ async function handleMercadoPagoFailure(req, res) {
   try {
     let order = null;
     if (external_reference) {
-      order = await Order.findById(external_reference);
+      order = await Order.findByPk(external_reference);
       // We DO NOT change the status here. The webhook is the source of truth.
     }
     res.render('pages/checkout-success', {
@@ -300,16 +300,22 @@ async function processWebhookLogic(status, external_reference, res) {
     if (status === 'approved') {
       // Use an atomic update to prevent race conditions.
       // Find an order that matches the ID and is NOT already Processing or Paid.
-      const order = await Order.findOneAndUpdate(
-        { _id: external_reference, status: { $nin: ['Processing', 'Paid'] } },
-        { $set: { status: 'Processing' } },
-        { new: true } // Return the updated document
+      const [updatedCount, updatedRows] = await Order.update(
+        { status: 'Processing' },
+        {
+          where: {
+            id: external_reference,
+            status: { [Op.notIn]: ['Processing', 'Paid'] }
+          },
+          returning: true
+        }
       );
 
-      if (order) {
+      const order = updatedRows && updatedRows[0];
+      if (updatedCount > 0 && order) {
         // If an order was found and updated, it means this is the first 'approved' webhook to be processed.
-        logger.info(`[payment] Webhook: Order ${order._id} status atomically updated to Processing. Enqueueing job.`);
-        await addPostPaymentJob(order._id.toString());
+        logger.info(`[payment] Webhook: Order ${order.id} status atomically updated to Processing. Enqueueing job.`);
+        await addPostPaymentJob(order.id.toString());
       } else {
         // If no order was found/updated, it means another process already handled it.
         logger.info(`[payment] Webhook: Order ${external_reference} is already being processed or is paid. Ignoring duplicate 'approved' webhook.`);
@@ -322,15 +328,14 @@ async function processWebhookLogic(status, external_reference, res) {
       else if (status === 'rejected' || status === 'cancelled') newOrderStatus = 'Cancelled';
 
       if (newOrderStatus) {
-        const order = await Order.findByIdAndUpdate(
-          external_reference, 
-          { $set: { status: newOrderStatus } },
-          { new: true }
+        const [updatedCount, updatedRows] = await Order.update(
+          { status: newOrderStatus },
+          { where: { id: external_reference }, returning: true }
         );
-        
-        if (order) {
+        const order = updatedRows && updatedRows[0];
+        if (updatedCount > 0 && order) {
           // Notificar comprador sobre mudança de status
-          await notificationService.notifyOrderStatus(order.user, external_reference, newOrderStatus);
+          await notificationService.notifyOrderStatus(order.userId, external_reference, newOrderStatus);
           logger.info(`[payment] Webhook: Order ${external_reference} status updated to ${newOrderStatus}.`);
         }
       }

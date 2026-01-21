@@ -84,4 +84,10 @@ const ForumCategory = sequelize.define('ForumCategory', {
   ]
 });
 
+Object.defineProperty(ForumCategory.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
+
 module.exports = ForumCategory;

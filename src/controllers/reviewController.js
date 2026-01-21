@@ -2,6 +2,30 @@
 const Order = require('../models/Order');
 const Review = require('../models/Review');
 
+async function ensureOrderItemIds(order) {
+  const items = order.items || [];
+  let changed = false;
+
+  const normalized = items.map((item, index) => {
+    if (item.id || item._id) {
+      return { ...item, id: item.id || item._id, _id: item._id || item.id };
+    }
+
+    const itemId = item.listing || item.card || `${order.id}-${index}`;
+    changed = true;
+    return { ...item, id: itemId, _id: itemId };
+  });
+
+  if (changed) {
+    await Order.update(
+      { items: normalized },
+      { where: { id: order.id } }
+    );
+  }
+
+  return normalized;
+}
+
 const showReviewForm = async (req, res) => {
   try {
     const { orderId, itemId } = req.params;
@@ -13,7 +37,8 @@ const showReviewForm = async (req, res) => {
       return res.status(404).send('Pedido não encontrado ou não pertence a você.');
     }
 
-    const itemToReview = order.items.find(item => item.id.toString() === itemId);
+    const normalizedItems = await ensureOrderItemIds(order);
+    const itemToReview = normalizedItems.find(item => item.id.toString() === itemId);
 
     if (!itemToReview) {
       return res.status(404).send('Item não encontrado neste pedido.');
@@ -47,7 +72,8 @@ const submitReview = async (req, res) => {
             return res.status(403).send('Você não tem permissão para avaliar este pedido.');
         }
 
-        const itemInOrder = order.items.find(item => item.id.toString() === itemId);
+        const normalizedItems = await ensureOrderItemIds(order);
+        const itemInOrder = normalizedItems.find(item => item.id.toString() === itemId);
         if (!itemInOrder) {
             return res.status(404).send('Item não encontrado no pedido.');
         }
@@ -59,6 +85,7 @@ const submitReview = async (req, res) => {
         // Cria a nova avaliação
         await Review.create({
             orderId: orderId,
+            orderItemId: itemId,
             sellerId: sellerId,
             buyerId: buyerId,
             rating: parseInt(rating, 10),
@@ -66,7 +93,7 @@ const submitReview = async (req, res) => {
         });
 
         // Marca o item como avaliado no pedido
-        const updatedItems = order.items.map(item => {
+        const updatedItems = normalizedItems.map(item => {
             if (item.id.toString() === itemId) {
                 return { ...item, isReviewed: true };
             }

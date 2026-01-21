@@ -5,21 +5,34 @@
 
 const ForumThread = require('../models/ForumThread');
 const ForumPost = require('../models/ForumPost');
+const { Op } = require('sequelize');
 
 const addReportCount = async (req, res, next) => {
     try {
         // Só executar para moderadores/admins logados
         if (req.session.user && (req.session.user.role === 'moderator' || req.session.user.role === 'admin')) {
             // Contar threads com flags
-            const flaggedThreadsCount = await ForumThread.countDocuments({
-                'moderationFlags.0': { $exists: true },
-                isDeleted: false
+            const threadHasFlags = ForumThread.sequelize.where(
+                ForumThread.sequelize.fn('jsonb_array_length', ForumThread.sequelize.col('moderationFlags')),
+                { [Op.gt]: 0 }
+            );
+            const flaggedThreadsCount = await ForumThread.count({
+                where: {
+                    isDeleted: false,
+                    [Op.and]: threadHasFlags
+                }
             });
 
             // Contar posts com flags
-            const flaggedPostsCount = await ForumPost.countDocuments({
-                'moderationFlags.0': { $exists: true },
-                isDeleted: false
+            const postHasFlags = ForumPost.sequelize.where(
+                ForumPost.sequelize.fn('jsonb_array_length', ForumPost.sequelize.col('moderationFlags')),
+                { [Op.gt]: 0 }
+            );
+            const flaggedPostsCount = await ForumPost.count({
+                where: {
+                    isDeleted: false,
+                    [Op.and]: postHasFlags
+                }
             });
 
             const totalReports = flaggedThreadsCount + flaggedPostsCount;

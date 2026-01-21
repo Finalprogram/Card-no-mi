@@ -49,6 +49,15 @@ const Listing = sequelize.define('Listing', {
     type: DataTypes.JSON,
     defaultValue: []
   }
+}, {
+  tableName: 'listings',
+  timestamps: true
+});
+
+Object.defineProperty(Listing.prototype, '_id', {
+  get() {
+    return this.id;
+  }
 });
 
 module.exports = Listing;

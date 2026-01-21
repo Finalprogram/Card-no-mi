@@ -23,7 +23,7 @@ async function calculateCartFees(cartItems) {
   const processedItems = [];
 
   for (const item of cartItems) {
-    const seller = await User.findById(item.vendorId);
+    const seller = await User.findByPk(item.vendorId);
     if (!seller) {
       console.warn(`Vendedor ${item.vendorId} não encontrado para o item ${item.cardId}.`);
       item.marketplaceFee = 0;
@@ -38,7 +38,7 @@ async function calculateCartFees(cartItems) {
 
     if (feePercentage === null || feePercentage === undefined) {
       const settingKey = `fee_${seller.accountType}_percentage`;
-      const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+      const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
       feePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0; // Fallback to 8% if setting not found
     }
 
@@ -73,7 +73,7 @@ async function calculateCartFees(cartItems) {
 /** GET /checkout */
 async function showCheckout(req, res) {
   const cart = getCart(req);
-  const user = await User.findById(req.session.user.id);
+  const user = await User.findByPk(req.session.user.id);
   const items = (cart.items || []).map(it => ({
     key: it.key,
     cardId: it.cardId,
@@ -135,7 +135,7 @@ async function showCheckout(req, res) {
 /** POST /checkout/quote-detailed */
 async function quoteDetailed(req, res) {
   try {
-    const user = await User.findById(req.session.user.id);
+    const user = await User.findByPk(req.session.user.id);
     const zip = user.address.cep;
     if (!zip) return res.json({ ok: false, error: 'zip required' });
 
@@ -161,7 +161,7 @@ async function quoteDetailed(req, res) {
       // Buscar CEP do vendedor no banco de dados
       let cepOrigem = globalCepOrigem;
       if (sellerId !== 'sem-vendedor') {
-        const seller = await User.findById(sellerId);
+        const seller = await User.findByPk(sellerId);
         if (seller && seller.address && seller.address.cep) {
           cepOrigem = seller.address.cep;
         } else {
@@ -231,7 +231,7 @@ async function quoteDetailed(req, res) {
 async function confirm(req, res) {
   try {
     const { shippingSelections } = req.body;
-    const user = await User.findById(req.session.user.id);
+    const user = await User.findByPk(req.session.user.id);
     const address = `${user.address.street}, ${user.address.number}, ${user.address.complement}, ${user.address.city} - ${user.address.state}`;
     const cart = getCart(req);
     if (!cart || !cart.items || cart.items.length === 0) {
@@ -248,7 +248,7 @@ async function confirm(req, res) {
     const processedItems = [];
 
     for (const item of cart.items) {
-      const seller = await User.findById(item.vendorId);
+      const seller = await User.findByPk(item.vendorId);
       if (!seller) {
         console.warn(`Vendedor ${item.vendorId} não encontrado para o item ${item.cardId}.`);
         item.marketplaceFee = 0;
@@ -262,7 +262,7 @@ async function confirm(req, res) {
 
       if (feePercentage === null || feePercentage === undefined) {
         const settingKey = `fee_${seller.accountType}_percentage`;
-        const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+        const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
         feePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
       }
 
@@ -298,7 +298,7 @@ async function confirm(req, res) {
       grandTotal = grandTotal - couponDiscountAmount;
 
       // Increment coupon usage count
-      const coupon = await Coupon.findById(req.session.coupon.couponId);
+      const coupon = await Coupon.findByPk(req.session.coupon.couponId);
       if (coupon) {
         coupon.usedCount += 1;
         await coupon.save();
@@ -332,7 +332,7 @@ async function getUpdatedTotals(req, res) {
   console.log('getUpdatedTotals called');
   try {
     const cart = getCart(req);
-    const user = await User.findById(req.session.user.id);
+    const user = await User.findByPk(req.session.user.id);
     const items = (cart.items || []).map(it => ({
       key: it.key,
       cardId: it.cardId,

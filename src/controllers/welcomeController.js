@@ -21,7 +21,10 @@ const handleStep1 = async (req, res) => {
             return res.redirect('/welcome/step1?error=cpfInvalid');
         }
 
-        await User.findByIdAndUpdate(userId, { $set: { fullName, phone, documentType: 'CPF', documentNumber } });
+        await User.update(
+            { fullName, phone, documentType: 'CPF', documentNumber },
+            { where: { id: userId } }
+        );
 
         res.redirect('/welcome/step2');
     } catch (error) {
@@ -55,7 +58,10 @@ const handleStep2 = async (req, res) => {
             state,
         };
 
-        await User.findByIdAndUpdate(userId, { $set: { address, firstLogin: false } });
+        await User.update(
+            { address, firstLogin: false },
+            { where: { id: userId } }
+        );
 
         res.redirect('/'); // Redireciona para a home page após a finalização
     } catch (error) {

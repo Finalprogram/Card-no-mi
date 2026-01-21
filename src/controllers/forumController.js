@@ -1456,3 +1456,109 @@ exports.getLeaderboard = async (req, res) => {
         res.status(500).send('Erro interno do servidor');
     }
 };
+
+// @desc    Vote on post
+// @route   POST /forum/post/:postId/vote
+// @access  Private
+exports.votePost = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ success: false, message: 'Nao autorizado' });
+        }
+
+        const { postId } = req.params;
+        const { voteType } = req.body;
+
+        if (!['upvote', 'downvote', 'remove'].includes(voteType)) {
+            return res.status(400).json({ success: false, message: 'Tipo de voto invalido' });
+        }
+
+        const post = await ForumPost.findByPk(postId);
+        if (!post) {
+            return res.status(404).json({ success: false, message: 'Post nao encontrado' });
+        }
+
+        const userId = req.session.user.id;
+        const userIdStr = userId.toString();
+        const removeUser = (arr) => (arr || []).filter(id => id != null && id.toString() !== userIdStr);
+
+        let upvotes = Array.isArray(post.upvotes) ? post.upvotes.slice() : [];
+        let downvotes = Array.isArray(post.downvotes) ? post.downvotes.slice() : [];
+
+        if (voteType === 'remove') {
+            upvotes = removeUser(upvotes);
+            downvotes = removeUser(downvotes);
+        } else if (voteType === 'upvote') {
+            downvotes = removeUser(downvotes);
+            if (!upvotes.some(id => id != null && id.toString() === userIdStr)) {
+                upvotes.push(userId);
+            }
+        } else {
+            upvotes = removeUser(upvotes);
+            if (!downvotes.some(id => id != null && id.toString() === userIdStr)) {
+                downvotes.push(userId);
+            }
+        }
+
+        const score = upvotes.length - downvotes.length;
+        await post.update({ upvotes, downvotes, score });
+
+        return res.json({
+            success: true,
+            score,
+            upvotes: upvotes.length,
+            downvotes: downvotes.length
+        });
+    } catch (error) {
+        logger.error('Erro ao votar no post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao votar' });
+    }
+};
+
+// @desc    React to thread
+// @route   POST /forum/thread/:threadId/react
+// @access  Private
+exports.reactToThread = async (req, res) => {
+    try {
+        if (!req.session.user) {
+            return res.status(401).json({ success: false, message: 'Nao autorizado' });
+        }
+
+        const { threadId } = req.params;
+        const { reactionType } = req.body;
+        const allowedReactions = ['like', 'love', 'wow', 'haha', 'sad', 'angry'];
+
+        if (!allowedReactions.includes(reactionType)) {
+            return res.status(400).json({ success: false, message: 'Reacao invalida' });
+        }
+
+        const thread = await ForumThread.findByPk(threadId);
+        if (!thread) {
+            return res.status(404).json({ success: false, message: 'Thread nao encontrada' });
+        }
+
+        const userId = req.session.user.id;
+        const userIdStr = userId.toString();
+        const reactions = Array.isArray(thread.reactions) ? thread.reactions.slice() : [];
+
+        const existingIndex = reactions.findIndex(r => r && r.user != null && r.user.toString() === userIdStr);
+        let action = 'added';
+
+        if (existingIndex >= 0 && reactions[existingIndex].type === reactionType) {
+            reactions.splice(existingIndex, 1);
+            action = 'removed';
+        } else {
+            if (existingIndex >= 0) {
+                reactions.splice(existingIndex, 1);
+            }
+            reactions.push({ user: userId, type: reactionType, createdAt: new Date() });
+        }
+
+        await thread.update({ reactions });
+
+        return res.json({ success: true, action, reactionsCount: reactions.length });
+    } catch (error) {
+        logger.error('Erro ao reagir na thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao reagir' });
+    }
+};

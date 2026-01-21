@@ -2,19 +2,23 @@ const Listing = require('../models/Listing');
 const Card = require('../models/Card');
 const PriceHistory = require('../models/PriceHistory');
 const logger = require('../config/logger');
+const { Op } = require('sequelize');
 
 const recordPriceHistory = async () => {
   try {
     logger.info('Starting price history recording...');
 
-    const listings = await Listing.find({ quantity: { $gt: 0 } }).populate('card');
+    const listings = await Listing.findAll({
+      where: { quantity: { [Op.gt]: 0 } },
+      include: [{ model: Card, as: 'card' }]
+    });
     logger.info(`${listings.length} active listings found.`);
 
     const cardPrices = new Map();
 
     listings.forEach(listing => {
       if (listing.card) {
-        const cardId = listing.card._id.toString();
+        const cardId = listing.card.id.toString();
         if (!cardPrices.has(cardId)) {
           cardPrices.set(cardId, { prices: [], card: listing.card });
         }
@@ -27,17 +31,20 @@ const recordPriceHistory = async () => {
     for (const [cardId, data] of cardPrices.entries()) {
       const avgPrice = data.prices.reduce((a, b) => a + b, 0) / data.prices.length;
 
-      const newPriceHistory = new PriceHistory({
-        card: cardId,
+      const newPriceHistory = await PriceHistory.create({
+        cardId: cardId,
         price: avgPrice,
         date: new Date()
       });
-      await newPriceHistory.save();
       logger.info(`PriceHistory saved for card ${cardId}: price=${avgPrice.toFixed(2)}, date=${newPriceHistory.date.toISOString()}`);
 
       data.card.averagePrice = avgPrice;
 
-      const history = await PriceHistory.find({ card: cardId }).sort({ date: -1 }).limit(2);
+      const history = await PriceHistory.findAll({
+        where: { cardId: cardId },
+        order: [['date', 'DESC']],
+        limit: 2
+      });
       logger.info(`Price history for card ${cardId} (last 2 entries): ${JSON.stringify(history)}`);
 
       if (history.length < 2) {

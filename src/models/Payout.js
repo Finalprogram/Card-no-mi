@@ -17,7 +17,7 @@ class Payout extends Model {
     const payoutOrders = [];
 
     for (const order of orders) {
-      const sellerItems = order.items.filter(item => item.sellerId === sellerId);
+      const sellerItems = order.items.filter(item => item.seller.toString() === sellerId.toString());
 
       if (sellerItems.length === 0) continue;
 

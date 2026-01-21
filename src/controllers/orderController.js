@@ -7,13 +7,13 @@ const confirmReceipt = async (req, res) => {
     const { orderId } = req.params;
     const userId = req.session.user.id;
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findByPk(orderId);
 
     if (!order) {
       return res.status(404).send('Pedido não encontrado.');
     }
 
-    if (order.user.toString() !== userId) {
+    if (order.userId.toString() !== userId) {
       return res.status(403).send('Você não tem permissão para confirmar o recebimento deste pedido.');
     }
 

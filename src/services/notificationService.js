@@ -1,6 +1,13 @@
 const Notification = require('../models/Notification');
 const User = require('../models/User');
 const logger = require('../config/logger');
+const { Op } = require('sequelize');
+
+function getId(value) {
+  if (value && value.id != null) return value.id;
+  if (value && value._id != null) return value._id;
+  return value;
+}
 
 /**
  * Serviço para gerenciar notificações do fórum
@@ -14,39 +21,39 @@ class NotificationService {
     try {
       console.log('🔔 notifyThreadReply chamado:', {
         threadAuthor: thread.author,
-        replierId: replier._id,
-        threadId: thread._id
+        replierId: getId(replier),
+        threadId: getId(thread)
       });
 
       // Extrair ID do autor (pode estar populado ou não)
-      const threadAuthorId = thread.author?._id || thread.author;
+      const threadAuthorId = getId(thread.author);
       
       // Não notificar se o autor está respondendo o próprio tópico
-      if (threadAuthorId.toString() === replier._id.toString()) {
+      if (threadAuthorId.toString() === getId(replier).toString()) {
         console.log('⚠️ Não notificando: autor respondendo próprio tópico');
         return;
       }
 
       // Extrair dados da categoria (pode estar populada ou não)
       const categorySlug = thread.category?.slug || thread.category;
-      const categoryId = thread.category?._id || thread.category;
+      const categoryId = getId(thread.category);
 
       console.log('📧 Criando notificação de resposta...');
       await Notification.createNotification({
         recipient: threadAuthorId,
-        sender: replier._id,
+        sender: getId(replier),
         type: 'reply',
         title: 'Nova resposta no seu tópico',
         message: `${replier.username} respondeu ao seu tópico "${thread.title}"`,
-        thread: thread._id,
-        post: post._id,
+        thread: getId(thread),
+        post: getId(post),
         category: categoryId,
-        link: `/forum/${categorySlug}/${thread.slug}#post-${post._id}`,
+        link: `/forum/${categorySlug}/${thread.slug}#post-${getId(post)}`,
         icon: 'fa-comment',
         color: '#3b82f6'
       });
       
-      console.log(`✅ Notificação de resposta criada para thread ${thread._id}`);
+      console.log(`✅ Notificação de resposta criada para thread ${getId(thread)}`);
     } catch (error) {
       console.error('❌ Erro ao criar notificação de resposta:', error);
       logger.error('Erro ao criar notificação de resposta:', error);
@@ -73,31 +80,32 @@ class NotificationService {
       console.log('📧 Usernames mencionados:', uniqueUsernames);
       
       // Buscar usuários mencionados
-      const mentionedUsers = await User.find({
-        username: { $in: uniqueUsernames }
-      }).select('_id username');
+      const mentionedUsers = await User.findAll({
+        where: { username: { [Op.in]: uniqueUsernames } },
+        attributes: ['id', 'username']
+      });
 
       // Extrair dados da categoria
       const categorySlug = thread.category?.slug || thread.category;
-      const categoryId = thread.category?._id || thread.category;
+      const categoryId = getId(thread.category);
 
       // Criar notificação para cada usuário mencionado
       for (const mentionedUser of mentionedUsers) {
         // Não notificar se mencionou a si mesmo
-        if (mentionedUser._id.toString() === mentioner._id.toString()) {
+        if (getId(mentionedUser).toString() === getId(mentioner).toString()) {
           continue;
         }
 
         await Notification.createNotification({
-          recipient: mentionedUser._id,
-          sender: mentioner._id,
+          recipient: getId(mentionedUser),
+          sender: getId(mentioner),
           type: 'mention',
           title: 'Você foi mencionado',
           message: `${mentioner.username} mencionou você em "${thread.title}"`,
-          thread: thread._id,
-          post: post._id,
+          thread: getId(thread),
+          post: getId(post),
           category: categoryId,
-          link: `/forum/${categorySlug}/${thread.slug}#post-${post._id}`,
+          link: `/forum/${categorySlug}/${thread.slug}#post-${getId(post)}`,
           icon: 'fa-at',
           color: '#8b5cf6'
         });
@@ -116,7 +124,7 @@ class NotificationService {
   async notifyQuote(quotedPost, newPost, quoter) {
     try {
       // Não notificar se citou a si mesmo
-      if (quotedPost.author.toString() === quoter._id.toString()) {
+      if (getId(quotedPost.author).toString() === getId(quoter).toString()) {
         return;
       }
 
@@ -124,13 +132,13 @@ class NotificationService {
 
       await Notification.createNotification({
         recipient: quotedPost.author,
-        sender: quoter._id,
+        sender: getId(quoter),
         type: 'quote',
         title: 'Seu post foi citado',
         message: `${quoter.username} citou seu post em "${thread.title}"`,
-        thread: thread._id,
-        post: newPost._id,
-        link: `/forum/${thread.category.slug}/${thread.slug}#post-${newPost._id}`,
+        thread: getId(thread),
+        post: getId(newPost),
+        link: `/forum/${thread.category.slug}/${thread.slug}#post-${getId(newPost)}`,
         icon: 'fa-quote-left',
         color: '#10b981'
       });
@@ -148,12 +156,12 @@ class NotificationService {
     try {
       await Notification.createNotification({
         recipient: thread.author,
-        sender: moderator._id,
+        sender: getId(moderator),
         type: 'thread_moved',
         title: 'Seu tópico foi movido',
         message: `Seu tópico "${thread.title}" foi movido de ${oldCategory.name} para ${newCategory.name}`,
-        thread: thread._id,
-        category: newCategory._id,
+        thread: getId(thread),
+        category: getId(newCategory),
         link: `/forum/${newCategory.slug}/${thread.slug}`,
         icon: 'fa-exchange-alt',
         color: '#f59e0b'
@@ -172,11 +180,11 @@ class NotificationService {
     try {
       await Notification.createNotification({
         recipient: thread.author,
-        sender: moderator._id,
+        sender: getId(moderator),
         type: 'thread_locked',
         title: 'Seu tópico foi travado',
         message: `Seu tópico "${thread.title}" foi travado${reason ? ': ' + reason : ''}`,
-        thread: thread._id,
+        thread: getId(thread),
         link: `/forum/${thread.category.slug}/${thread.slug}`,
         icon: 'fa-lock',
         color: '#ef4444'
@@ -195,11 +203,11 @@ class NotificationService {
     try {
       await Notification.createNotification({
         recipient: thread.author,
-        sender: moderator._id,
+        sender: getId(moderator),
         type: 'thread_pinned',
         title: 'Seu tópico foi fixado',
         message: `Seu tópico "${thread.title}" foi fixado! Ele agora aparece no topo da categoria.`,
-        thread: thread._id,
+        thread: getId(thread),
         link: `/forum/${thread.category.slug}/${thread.slug}`,
         icon: 'fa-thumbtack',
         color: '#10b981'
@@ -219,8 +227,8 @@ class NotificationService {
       const isPositive = change > 0;
       
       await Notification.createNotification({
-        recipient: user._id,
-        sender: user._id, // Sistema
+        recipient: getId(user),
+        sender: getId(user), // Sistema
         type: 'reputation',
         title: isPositive ? 'Reputação aumentada!' : 'Reputação diminuída',
         message: `Sua reputação ${isPositive ? 'aumentou' : 'diminuiu'} em ${Math.abs(change)} pontos. ${reason}`,
@@ -230,7 +238,7 @@ class NotificationService {
         metadata: { change, reason }
       });
       
-      logger.info(`Notificação de reputação criada para usuário ${user._id}`);
+      logger.info(`Notificação de reputação criada para usuário ${getId(user)}`);
     } catch (error) {
       logger.error('Erro ao criar notificação de reputação:', error);
     }
@@ -271,7 +279,7 @@ class NotificationService {
         icon: achievement.icon || 'fa-trophy',
         color: '#FFB800',
         link: `/forum/achievements`,
-        metadata: { achievementId: achievement._id }
+        metadata: { achievementId: getId(achievement) }
       });
       
       logger.info(`🏆 Notificação de conquista criada para usuário ${userId}`);

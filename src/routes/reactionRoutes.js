@@ -16,7 +16,7 @@ router.post('/reactions', async (req, res) => {
     const userId = req.session.user.id;
 
     // Verificar se o post existe
-    const post = await ForumPost.findById(postId);
+    const post = await ForumPost.findByPk(postId);
     if (!post) {
       return res.status(404).json({ success: false, message: 'Post não encontrado' });
     }

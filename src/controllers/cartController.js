@@ -55,11 +55,11 @@ async function add(req, res) {
     }
 
     // --- VALIDAÇÃO DE ESTOQUE ---
-    const listing = await Listing.findById(listingId);
+    const listing = await Listing.findByPk(listingId);
     if (!listing) {
       return res.status(404).json({ error: 'Anúncio não encontrado ou removido.' });
     }
-    if (listing.stock < 1) {
+    if (listing.quantity < 1) {
       return res.status(400).json({ error: 'Produto sem estoque disponível.' });
     }
 
@@ -70,14 +70,14 @@ async function add(req, res) {
     let currentQtyInCart = found ? found.qty : 0;
     let requestedTotalQty = currentQtyInCart + q;
 
-    if (requestedTotalQty > listing.stock) {
-      return res.status(400).json({ error: `Quantidade solicitada excede o estoque disponível (${listing.stock}).` });
+    if (requestedTotalQty > listing.quantity) {
+      return res.status(400).json({ error: `Quantidade solicitada excede o estoque disponível (${listing.quantity}).` });
     }
     // --- FIM DA VALIDAÇÃO DE ESTOQUE ---
 
     // --- NOVA VALIDAÇÃO ---
     // Verifica se o vendedor realmente existe antes de adicionar ao carrinho
-    const seller = await User.findById(vendorId);
+    const seller = await User.findByPk(vendorId);
     if (!seller) {
       return res.status(404).json({ error: 'Vendedor não encontrado. O anúncio pode ter sido removido.' });
     }
@@ -91,7 +91,7 @@ async function add(req, res) {
     // --- FIM DA VALIDAÇÃO ---
 
     // Buscar dados da carta do banco de dados
-    const card = await Card.findById(cardId);
+    const card = await Card.findByPk(cardId);
     if (!card) {
       return res.status(404).json({ error: 'Carta não encontrada.' });
     }

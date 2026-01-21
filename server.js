@@ -54,6 +54,7 @@ const methodOverride = require('method-override');
 const flash = require('connect-flash');
 const rateLimit = require('express-rate-limit');
 const { sequelize, connectDB } = require('./src/database/connection');
+require('./src/models/associations');
 const pagesRoutes = require('./src/routes/pagesRoutes');
 const cardRoutes = require('./src/routes/cardRoutes');
 const listRoutes = require('./src/routes/listRoutes');
@@ -93,7 +94,7 @@ app.locals.formatPrice = function(price) {
 };
 
 // 3. Conexão com o Banco de Dados
-connectDB();
+// connectDB is called in async bootstrap at end of file
 
 // Start the post-payment worker
 require('./src/workers/postPaymentWorker.js');
@@ -112,18 +113,35 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.urlencoded({ extended: false }));
 app.use(methodOverride('_method'));
 // Configuração da Sessão
+const useMemoryStore = process.env.SESSION_STORE === 'memory';
+const sessionStore = useMemoryStore
+  ? new session.MemoryStore()
+  : new SequelizeStore({
+      db: sequelize,
+      tableName: 'sessions',
+      extendDefaultFields: (defaults, session) => ({
+        data: defaults.data,
+        expires: defaults.expires
+      })
+    });
+const syncSessionStore = async () => {
+  if (useMemoryStore) {
+    logger.warn('SESSION_STORE=memory - sessions will not persist across restarts.');
+    return;
+  }
+  try {
+    await sessionStore.sync();
+  } catch (error) {
+    logger.error('Failed to sync sessions table:', error);
+    throw error;
+  }
+};
+
 app.use(session({
   secret: process.env.SESSION_SECRET || 'um_segredo_muito_forte_aqui',
   resave: false,
   saveUninitialized: true,
-  store: new SequelizeStore({
-    db: sequelize,
-    tableName: 'sessions',
-    extendDefaultFields: (defaults, session) => ({
-      data: defaults.data,
-      expires: defaults.expires
-    })
-  }),
+  store: sessionStore,
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true, // Prevents client-side JS from accessing the cookie
@@ -142,11 +160,13 @@ app.use(async (req, res, next) => {
   if (req.session.user && req.session.user.id) {
     try {
       const User = require('./src/models/User');
-      const updatedUser = await User.findById(req.session.user.id).select('username email avatar accountType').lean();
+      const updatedUser = await User.findByPk(req.session.user.id, {
+        attributes: ['id', 'username', 'email', 'avatar', 'accountType']
+      });
       if (updatedUser) {
         // Atualizar sessão com dados mais recentes
         req.session.user = {
-          id: updatedUser._id,
+          id: updatedUser.id,
           username: updatedUser.username,
           email: updatedUser.email,
           avatar: updatedUser.avatar,
@@ -233,6 +253,17 @@ cron.schedule('0 0 * * *', async () => {
   logger.info(`Price history recording finished in ${(endTime - startTime).toFixed(2)}ms`);
 });
 
-app.listen(port, () => {
-  logger.info(`Servidor rodando em http://localhost:${port}`);
-});
+const startServer = async () => {
+  try {
+    await connectDB();
+    await syncSessionStore();
+    app.listen(port, () => {
+      logger.info(`Servidor rodando em http://localhost:${port}`);
+    });
+  } catch (error) {
+    logger.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();

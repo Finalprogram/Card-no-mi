@@ -13,19 +13,19 @@ const Review = sequelize.define('Review', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Orders', // Assuming 'Orders' is the table name for the Order model
+      model: 'orders',
       key: 'id'
     }
   },
   orderItemId: {
-    type: DataTypes.INTEGER, // Assuming orderItemId will be an integer ID
+    type: DataTypes.STRING,
     allowNull: false,
   },
   sellerId: { // Changed from 'seller' to 'sellerId' for Sequelize convention
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users', // Assuming 'Users' is the table name for the User model
+      model: 'users',
       key: 'id'
     }
   },
@@ -33,7 +33,7 @@ const Review = sequelize.define('Review', {
     type: DataTypes.INTEGER,
     allowNull: false,
     references: {
-      model: 'Users', // Assuming 'Users' is the table name for the User model
+      model: 'users',
       key: 'id'
     }
   },
@@ -49,6 +49,7 @@ const Review = sequelize.define('Review', {
     type: DataTypes.STRING,
   },
 }, {
+  tableName: 'reviews',
   timestamps: true,
   indexes: [
     {
@@ -62,5 +63,11 @@ const Review = sequelize.define('Review', {
 Review.belongsTo(Order, { foreignKey: 'orderId' });
 Review.belongsTo(User, { as: 'seller', foreignKey: 'sellerId' });
 Review.belongsTo(User, { as: 'buyer', foreignKey: 'buyerId' });
+
+Object.defineProperty(Review.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
 
 module.exports = Review;

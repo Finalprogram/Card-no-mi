@@ -5,6 +5,7 @@ const logger = require('../config/logger');
 const Order = require('../models/Order');
 const User = require('../models/User');
 const Listing = require('../models/Listing');
+const Card = require('../models/Card');
 const { addItemToCart, purchaseShipments, generateLabels, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
 const { sendEmail } = require('../services/emailService');
@@ -16,7 +17,7 @@ async function getSellerOriginCep(sellerId) {
   const globalCepOrigem = process.env.MELHOR_ENVIO_CEP_ORIGEM;
   if (sellerId === 'sem-vendedor') return globalCepOrigem;
 
-  const seller = await User.findById(sellerId);
+  const seller = await User.findByPk(sellerId);
   if (seller && seller.address && seller.address.cep) {
     return seller.address.cep;
   }
@@ -33,7 +34,9 @@ if (redisConnection && redisConnection.status === 'ready') {
     logger.info(`[worker] Processing job for order ${orderId}`);
 
     try {
-      const order = await Order.findById(orderId).populate('user');
+      const order = await Order.findByPk(orderId, {
+        include: [{ model: User, as: 'user' }]
+      });
 
     if (!order) {
       throw new Error(`Order ${orderId} not found.`);
@@ -61,13 +64,13 @@ if (redisConnection && redisConnection.status === 'ready') {
       const chosenShipping = order.shippingSelections.find(sel => sel.sellerId.toString() === sellerId);
 
       if (!chosenShipping) {
-        logger.warn(`[worker] No shipping option selected for seller ${sellerId} in order ${order._id}.`);
+        logger.warn(`[worker] No shipping option selected for seller ${sellerId} in order ${order.id}.`);
         continue;
       }
 
-      const seller = await User.findById(sellerId);
+      const seller = await User.findByPk(sellerId);
       if (!seller) {
-        logger.warn(`[worker] Seller ${sellerId} not found for order ${order._id}.`);
+        logger.warn(`[worker] Seller ${sellerId} not found for order ${order.id}.`);
         continue;
       }
 
@@ -125,14 +128,14 @@ if (redisConnection && redisConnection.status === 'ready') {
         melhorEnvioCartItems.push(addedToCart.id);
         orderMelhorEnvioIds.push(addedToCart.id);
       } else {
-        logger.error(`[worker] Failed to add item to Melhor Envio cart for order ${order._id}, seller ${sellerId}.`, addedToCart);
+        logger.error(`[worker] Failed to add item to Melhor Envio cart for order ${order.id}, seller ${sellerId}.`, addedToCart);
         // Optionally, you could throw an error here to force a retry of the job
       }
     }
 
     if (melhorEnvioCartItems.length > 0) {
       const purchasedShipments = await purchaseShipments(melhorEnvioCartItems);
-      logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order._id}:`, purchasedShipments);
+      logger.info(`[worker] Shipments purchased from Melhor Envio for order ${order.id}:`, purchasedShipments);
 
       // Add a check for the expected structure to prevent crash on unexpected API response
       if (!purchasedShipments || !purchasedShipments.purchase || !purchasedShipments.purchase.orders || !Array.isArray(purchasedShipments.purchase.orders)) {
@@ -144,34 +147,34 @@ if (redisConnection && redisConnection.status === 'ready') {
 
       // NEW STEP: Queue the labels for generation.
       await generateLabels(shipmentIdsToPrint);
-      logger.info(`[worker] Labels for order ${order._id} queued for generation.`);
+      logger.info(`[worker] Labels for order ${order.id} queued for generation.`);
 
       // Add a safety delay to allow Melhor Envio to process the generation queue.
       await new Promise(resolve => setTimeout(resolve, 2000)); // 2-second delay
 
       const printResponse = await printLabels(shipmentIdsToPrint);
-      logger.info(`[worker] Public print links from Melhor Envio for order ${order._id}:`, printResponse);
+      logger.info(`[worker] Public print links from Melhor Envio for order ${order.id}:`, printResponse);
 
       order.melhorEnvioShipmentId = shipmentIdsToPrint.join(',');
       order.melhorEnvioLabelUrl = printResponse.url; // Salva a URL pública
       order.melhorEnvioService = order.shippingSelections.map(s => s.name).join(', ');
       order.melhorEnvioTrackingUrl = purchasedShipments.purchase.orders[0]?.tracking;
 
-      logger.info(`[worker] Order #${order._id} updated with Melhor Envio data.`);
+      logger.info(`[worker] Order #${order.id} updated with Melhor Envio data.`);
 
       // Reduce stock AFTER successful Melhor Envio integration
       for (const item of order.items) {
-        const listing = await Listing.findById(item.listing);
+        const listing = await Listing.findByPk(item.listing);
         if (listing) {
           listing.quantity -= item.quantity;
           await listing.save();
-          logger.info(`[worker] Stock for listing ${listing._id} reduced by ${item.quantity}. New stock: ${listing.quantity}`);
+          logger.info(`[worker] Stock for listing ${listing.id} reduced by ${item.quantity}. New stock: ${listing.quantity}`);
         } else {
-          logger.warn(`[worker] Listing ${item.listing} not found to reduce stock for order ${order._id}.`);
+          logger.warn(`[worker] Listing ${item.listing} not found to reduce stock for order ${order.id}.`);
         }
       }
     } else {
-      logger.warn(`[worker] No items were added to Melhor Envio cart for order ${order._id}.`);
+      logger.warn(`[worker] No items were added to Melhor Envio cart for order ${order.id}.`);
     }
     // --- End of logic from processWebhookLogic ---
 
@@ -185,12 +188,14 @@ if (redisConnection && redisConnection.status === 'ready') {
     logger.info(`[worker] Seller balances updated for order ${orderId}`);
 
     // Notify buyer that order was confirmed
-    await notificationService.notifyOrderStatus(order.user._id, orderId, 'Paid');
+    await notificationService.notifyOrderStatus(order.user.id, orderId, 'Paid');
     
     // Notify each seller about their sales
     const buyerUsername = order.user.username || order.user.fullName;
     for (const item of order.items) {
-      const listing = await Listing.findById(item.listing).populate('card');
+      const listing = await Listing.findByPk(item.listing, {
+        include: [{ model: Card, as: 'card' }]
+      });
       if (listing) {
         const cardName = listing.card?.name || 'Carta';
         const totalPrice = item.price * item.quantity;

@@ -20,8 +20,8 @@ exports.getNotifications = async (req, res) => {
       skip
     );
     
-    const totalNotifications = await Notification.countDocuments({
-      recipient: req.session.user.id
+    const totalNotifications = await Notification.count({
+      where: { recipientId: req.session.user.id }
     });
     
     const totalPages = Math.ceil(totalNotifications / limit);
@@ -132,9 +132,11 @@ exports.deleteNotification = async (req, res) => {
     
     const { id } = req.params;
     
-    await Notification.findOneAndDelete({
-      _id: id,
-      recipient: req.session.user.id
+    await Notification.destroy({
+      where: {
+        id: id,
+        recipientId: req.session.user.id
+      }
     });
     
     res.json({ success: true });

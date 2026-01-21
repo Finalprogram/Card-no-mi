@@ -172,4 +172,10 @@ const ForumThread = sequelize.define('ForumThread', {
   ]
 });
 
+Object.defineProperty(ForumThread.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
+
 module.exports = ForumThread;

@@ -1,6 +1,7 @@
 const { Op, fn, col, literal } = require('sequelize');
 const Card = require('../models/Card');
 const Listing = require('../models/Listing');
+const User = require('../models/User');
 const onePieceService = require('../services/onepieceService');
 const { sequelize } = require('../database/connection');
 
@@ -27,6 +28,20 @@ const showCardsPage = async (req, res) => {
     });
     const distinctCardIds = distinctCardIdsResult.map(item => item.cardId);
 
+    if (distinctCardIds.length === 0) {
+      return res.render('pages/cardSearchPage', {
+        title: 'Explorar Cartas de One Piece',
+        game: 'onepiece',
+        filterGroups: [],
+        cards: [],
+        currentPage,
+        hasMore: false,
+        totalCards: 0,
+        totalPages: 1,
+        filters: req.query,
+      });
+    }
+
     const { count, rows: cards } = await Card.findAndCountAll({
         where: { id: { [Op.in]: distinctCardIds }, ...cardMatchQuery },
         include: [{
@@ -46,7 +61,7 @@ const showCardsPage = async (req, res) => {
             'price_trend',
             'ability',
             [fn('MIN', col('listings.price')), 'lowestAvailablePrice'],
-            [fn('MAX', col('listings.is_foil')), 'hasFoil']
+            [fn('BOOL_OR', col('listings.is_foil')), 'hasFoil']
         ],
         group: ['Card.id'],
         order: [['name', 'ASC']],
@@ -353,6 +368,15 @@ const getAvailableCards = async (req, res) => {
     });
     const distinctCardIds = distinctCardIdsResult.map(item => item.cardId);
 
+    if (distinctCardIds.length === 0) {
+      return res.json({
+        cards: [],
+        hasMore: false,
+        currentPage: currentPage,
+        totalCards: 0
+      });
+    }
+
     const { count, rows: cards } = await Card.findAndCountAll({
         where: { id: { [Op.in]: distinctCardIds }, ...cardMatchQuery },
         include: [{
@@ -365,7 +389,7 @@ const getAvailableCards = async (req, res) => {
         attributes: [
             'id', 'name', 'image_url', 'set_name', 'rarity', 'type_line', 'price_trend', 'ability',
             [fn('MIN', col('listings.price')), 'lowestAvailablePrice'],
-            [fn('MAX', col('listings.is_foil')), 'hasFoil']
+            [fn('BOOL_OR', col('listings.is_foil')), 'hasFoil']
         ],
         group: ['Card.id'],
         order: [['name', 'ASC']],

@@ -1,12 +1,36 @@
 // src/controllers/sellerController.js
-const mongoose = require('mongoose');
 const Order = require('../models/Order');
 const Listing = require('../models/Listing');
 const User = require('../models/User');
 const Setting = require('../models/Setting');
+const Card = require('../models/Card');
+const { Op } = require('sequelize');
 const melhorEnvioClient = require('../services/melhorEnvioClient'); // Importar o cliente do Melhor Envio
 const emailService = require('../services/emailService'); // Importar o serviço de e-mail
 const notificationService = require('../services/notificationService');
+
+function addIdAlias(value) {
+  if (value && value.id != null && value._id == null) {
+    value._id = value.id;
+  }
+  return value;
+}
+
+function toPlainWithId(modelInstance) {
+  if (!modelInstance) return null;
+  const data = modelInstance.toJSON ? modelInstance.toJSON() : modelInstance;
+  return addIdAlias(data);
+}
+
+function sellerItemMatches(item, sellerId) {
+  return item && item.seller != null && item.seller.toString() === sellerId.toString();
+}
+
+function filterOrderItemsForSeller(order, sellerId) {
+  const data = toPlainWithId(order);
+  data.items = (data.items || []).filter(item => sellerItemMatches(item, sellerId));
+  return data;
+}
 
 const getSalesData = async (sellerId, period) => {
   let startDate;
@@ -16,58 +40,58 @@ const getSalesData = async (sellerId, period) => {
     startDate = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
   }
 
-  const matchQuery = {
-    'items.seller': sellerId,
-    status: { $in: ['Paid', 'Shipped', 'Delivered'] } // Only count successful sales
+  const where = {
+    status: { [Op.in]: ['Paid', 'Shipped', 'Delivered'] }
   };
-
   if (startDate) {
-    matchQuery.createdAt = { $gte: startDate };
+    where.createdAt = { [Op.gte]: startDate };
   }
 
-  const salesData = await Order.aggregate([
-    { $match: matchQuery },
-    { $unwind: '$items' },
-    { $match: { 'items.seller': sellerId } }, // Ensure only seller's items are counted
-    { $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
-        dailySales: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
-        dailyOrders: { $sum: 1 }
-    }},
-    { $sort: { '_id': 1 } }
-  ]);
+  const orders = await Order.findAll({ where, order: [['createdAt', 'ASC']] });
+  const daily = new Map();
 
-  return salesData.map(data => ({
-    date: data._id,
-    totalSales: data.dailySales,
-    totalOrders: data.dailyOrders
+  orders.forEach(order => {
+    const items = order.items || [];
+    items.forEach(item => {
+      if (!sellerItemMatches(item, sellerId)) return;
+      const dateKey = new Date(order.createdAt).toISOString().slice(0, 10);
+      const current = daily.get(dateKey) || { totalSales: 0, totalOrders: 0 };
+      current.totalSales += Number(item.price || 0) * Number(item.quantity || 0);
+      current.totalOrders += 1;
+      daily.set(dateKey, current);
+    });
+  });
+
+  return Array.from(daily.entries()).map(([date, data]) => ({
+    date,
+    totalSales: data.totalSales,
+    totalOrders: data.totalOrders
   }));
 };
 
 const getSalesTotalForPeriod = async (sellerId, startDate, endDate) => {
-  const matchQuery = {
-    'items.seller': sellerId,
-    status: { $in: ['Paid', 'Shipped', 'Delivered'] },
-    createdAt: { $gte: startDate, $lt: endDate }
+  const where = {
+    status: { [Op.in]: ['Paid', 'Shipped', 'Delivered'] },
+    createdAt: { [Op.gte]: startDate, [Op.lt]: endDate }
   };
 
-  const result = await Order.aggregate([
-    { $match: matchQuery },
-    { $unwind: '$items' },
-    { $match: { 'items.seller': sellerId } },
-    { $group: {
-        _id: null,
-        totalSales: { $sum: { $multiply: ['$items.price', '$items.quantity'] } }
-    }}
-  ]);
+  const orders = await Order.findAll({ where });
+  let totalSales = 0;
 
-  return result.length > 0 ? result[0].totalSales : 0;
+  orders.forEach(order => {
+    (order.items || []).forEach(item => {
+      if (!sellerItemMatches(item, sellerId)) return;
+      totalSales += Number(item.price || 0) * Number(item.quantity || 0);
+    });
+  });
+
+  return totalSales;
 };
 
 const showSellerDashboard = async (req, res) => {
   try {
-    const sellerObjectId = new mongoose.Types.ObjectId(req.session.user.id);
-    const seller = await User.findById(sellerObjectId); // Fetch seller user object
+    const sellerId = req.session.user.id;
+    const seller = await User.findByPk(sellerId); // Fetch seller user object
 
     if (!seller) {
       return res.status(404).send('Vendedor não encontrado.');
@@ -76,7 +100,7 @@ const showSellerDashboard = async (req, res) => {
     // Calculate seller's fee percentage
     let sellerFeePercentage = seller.fee_override_percentage;
     const settingKey = `fee_${seller.accountType}_percentage`;
-    const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+    const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
     const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0; // Fallback to 8% if setting not found
 
     if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
@@ -84,49 +108,36 @@ const showSellerDashboard = async (req, res) => {
     }
 
     // 1. Contar anúncios ativos
-    const activeListingsCount = await Listing.countDocuments({ seller: sellerObjectId });
+    const activeListingsCount = await Listing.count({ where: { sellerId } });
 
-    // 2. Calcular métricas de vendas (Total Vendido e Itens Vendidos)
-    const salesData = await Order.aggregate([
-      // Encontra todos os pedidos que contenham pelo menos um item do vendedor
-      { $match: { 'items.seller': sellerObjectId } },
-      // "Desenrola" o array de itens, criando um documento para cada item
-      { $unwind: '$items' },
-      // Filtra novamente para manter apenas os itens do vendedor atual
-      { $match: { 'items.seller': sellerObjectId } },
-      // Agrupa os resultados para calcular a soma e a contagem
-      {
-        $group: {
-          _id: null, // Agrupa todos os itens do vendedor em um único resultado
-          totalRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
-          totalItemsSold: { $sum: '$items.quantity' }
-        }
-      }
-    ]);
+    // 2. Calcular m?tricas de vendas (Total Vendido e Itens Vendidos)
+    const orders = await Order.findAll({ order: [['createdAt', 'DESC']] });
+    const sellerOrders = orders.filter(order =>
+      (order.items || []).some(item => sellerItemMatches(item, sellerId))
+    );
 
-    // Calcular métricas apenas de pedidos PAGOS
-    const paidSalesData = await Order.aggregate([
-      // Encontra pedidos pagos que contenham pelo menos um item do vendedor
-      { $match: { 
-        'items.seller': sellerObjectId,
-        status: { $in: ['Paid', 'Processing', 'Shipped', 'Delivered'] }
-      }},
-      { $unwind: '$items' },
-      { $match: { 'items.seller': sellerObjectId } },
-      {
-        $group: {
-          _id: null,
-          totalPaidRevenue: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
-          totalPaidItemsSold: { $sum: '$items.quantity' }
-        }
-      }
-    ]);
+    let totalRevenue = 0;
+    let totalItemsSold = 0;
+    sellerOrders.forEach(order => {
+      (order.items || []).forEach(item => {
+        if (!sellerItemMatches(item, sellerId)) return;
+        totalRevenue += Number(item.price || 0) * Number(item.quantity || 0);
+        totalItemsSold += Number(item.quantity || 0);
+      });
+    });
 
-    // O aggregate agora retorna um único objeto com os totais, ou um array vazio se não houver vendas
-    const totalRevenue = salesData.length > 0 ? salesData[0].totalRevenue : 0;
-    const totalItemsSold = salesData.length > 0 ? salesData[0].totalItemsSold : 0;
-    const totalPaidRevenue = paidSalesData.length > 0 ? paidSalesData[0].totalPaidRevenue : 0;
-    const totalPaidItemsSold = paidSalesData.length > 0 ? paidSalesData[0].totalPaidItemsSold : 0;
+    const paidStatuses = ['Paid', 'Processing', 'Shipped', 'Delivered'];
+    let totalPaidRevenue = 0;
+    let totalPaidItemsSold = 0;
+    sellerOrders
+      .filter(order => paidStatuses.includes(order.status))
+      .forEach(order => {
+        (order.items || []).forEach(item => {
+          if (!sellerItemMatches(item, sellerId)) return;
+          totalPaidRevenue += Number(item.price || 0) * Number(item.quantity || 0);
+          totalPaidItemsSold += Number(item.quantity || 0);
+        });
+      });
 
     // Calculate sales comparison for the last 7 days vs previous 7 days
     const today = new Date();
@@ -138,8 +149,8 @@ const showSellerDashboard = async (req, res) => {
     const fourteenDaysAgo = new Date(today);
     fourteenDaysAgo.setDate(today.getDate() - 14);
 
-    const salesLast7Days = await getSalesTotalForPeriod(sellerObjectId, sevenDaysAgo, today);
-    const salesPrevious7Days = await getSalesTotalForPeriod(sellerObjectId, fourteenDaysAgo, sevenDaysAgo);
+    const salesLast7Days = await getSalesTotalForPeriod(sellerId, sevenDaysAgo, today);
+    const salesPrevious7Days = await getSalesTotalForPeriod(sellerId, fourteenDaysAgo, sevenDaysAgo);
 
     let salesComparisonPercentage = 0;
     if (salesPrevious7Days > 0) {
@@ -148,41 +159,26 @@ const showSellerDashboard = async (req, res) => {
       salesComparisonPercentage = 100; // Infinite growth if previous was 0 and current is > 0
     }
 
-    // 3. Buscar as últimas 5 vendas
-    const recentSales = await Order.find({ 'items.seller': sellerObjectId })
-      .sort({ createdAt: -1 })
-      .limit(5);
-
-    // Filtra os itens para mostrar apenas os do vendedor
-    const sellerRecentSales = recentSales.map(order => {
-        return {
-            ...order.toObject(),
-            items: order.items.filter(item => item.seller.toString() === sellerObjectId.toString())
-        };
-    });
+    // 3. Buscar as ?ltimas 5 vendas
+    const sellerRecentSales = sellerOrders
+      .slice(0, 5)
+      .map(order => filterOrderItemsForSeller(order, sellerId));
 
     // Fetch sales data for chart (default to 7 days)
-    const salesChartData = await getSalesData(sellerObjectId, '7days');
+    const salesChartData = await getSalesData(sellerId, '7days');
 
     // Fetch 'Next Actions' data
-    const pendingLabelGeneration = await Order.countDocuments({
-      'items.seller': sellerObjectId,
-      status: 'Paid',
-      melhorEnvioLabelUrl: { $exists: false } // No label generated yet
-    });
+    const pendingLabelGeneration = sellerOrders.filter(order =>
+      order.status === 'Paid' && !order.melhorEnvioLabelUrl
+    ).length;
 
-    const awaitingShipment = await Order.countDocuments({
-      'items.seller': sellerObjectId,
-      status: 'Processing',
-      melhorEnvioLabelUrl: { $exists: true }, // Label generated
-      trackingCode: { $exists: false } // But not yet shipped
-    });
+    const awaitingShipment = sellerOrders.filter(order =>
+      order.status === 'Processing' && order.melhorEnvioLabelUrl && !order.trackingCode
+    ).length;
 
-    const awaitingConfirmation = await Order.countDocuments({
-      'items.seller': sellerObjectId,
-      status: 'Shipped',
-    });
-
+    const awaitingConfirmation = sellerOrders.filter(order =>
+      order.status === 'Shipped'
+    ).length;
     res.render('pages/seller-dashboard', {
       stats: {
         totalRevenue,
@@ -213,18 +209,16 @@ const showSellerDashboard = async (req, res) => {
 
 const showSoldOrders = async (req, res) => {
   try {
-    const sellerObjectId = new mongoose.Types.ObjectId(req.session.user.id);
+    const sellerId = req.session.user.id;
 
-    const orders = await Order.find({ 'items.seller': sellerObjectId })
-      .sort({ createdAt: -1 })
-      .populate('user'); // Popula os dados do comprador
-
-    const sellerOrders = orders.map(order => {
-      return {
-        ...order.toObject(),
-        items: order.items.filter(item => item.seller.toString() === sellerObjectId.toString())
-      };
+    const orders = await Order.findAll({
+      include: [{ model: User, as: 'user' }],
+      order: [['createdAt', 'DESC']]
     });
+
+    const sellerOrders = orders
+      .filter(order => (order.items || []).some(item => sellerItemMatches(item, sellerId)))
+      .map(order => filterOrderItemsForSeller(order, sellerId));
 
     res.render('pages/my-sold-orders', { orders: sellerOrders });
 
@@ -246,7 +240,7 @@ const markAsShipped = async (req, res) => {
       return res.status(400).json({ message: 'Formato de código de rastreio inválido. O formato deve ser XX123456789BR.' });
     }
 
-    const order = await Order.findById(orderId);
+    const order = await Order.findByPk(orderId);
 
     if (!order) {
       return res.status(404).json({ message: 'Pedido não encontrado.' });
@@ -267,7 +261,7 @@ const markAsShipped = async (req, res) => {
     await order.save();
 
     // Notificar comprador que pedido foi enviado
-    await notificationService.notifyOrderStatus(order.user, order._id, 'Shipped');
+    await notificationService.notifyOrderStatus(order.userId, order.id, 'Shipped');
 
     res.status(200).json({ message: 'Pedido marcado como enviado com sucesso.' });
 
@@ -283,8 +277,10 @@ const generateMelhorEnvioLabel = async (req, res) => {
     const sellerId = req.session.user.id;
 
     // 1. Fetch all necessary data
-    const order = await Order.findById(orderId).populate('user'); // Populate buyer info
-    const seller = await User.findById(sellerId);
+    const order = await Order.findByPk(orderId, {
+      include: [{ model: User, as: 'user' }]
+    }); // Populate buyer info
+    const seller = await User.findByPk(sellerId);
 
     if (!order || !seller) {
       return res.status(404).json({ message: 'Pedido ou vendedor não encontrado.' });
@@ -418,13 +414,11 @@ const getSellerPage = async (req, res) => {
 
     // Buscar vendedor e seus anúncios em paralelo
     const [seller, listings] = await Promise.all([
-      User.findById(sellerId).lean(),
-      Listing.find({ seller: sellerId })
-        .populate({
-          path: 'card',
-          model: 'Card'
-        })
-        .lean()
+      User.findByPk(sellerId),
+      Listing.findAll({
+        where: { sellerId },
+        include: [{ model: Card, as: 'card' }]
+      })
     ]);
 
     if (!seller) {
@@ -432,8 +426,12 @@ const getSellerPage = async (req, res) => {
     }
 
     res.render('pages/seller-page', {
-      seller,
-      listings,
+      seller: toPlainWithId(seller),
+      listings: listings.map(listing => {
+        const data = toPlainWithId(listing);
+        if (data.card) data.card = addIdAlias(data.card);
+        return data;
+      }),
       page_name: 'seller-page' // Para CSS ou JS específico se necessário
     });
 
@@ -444,6 +442,7 @@ const getSellerPage = async (req, res) => {
 };
 
 module.exports = {
+  getSalesData,
   showSellerDashboard,
   showSoldOrders,
   markAsShipped,

@@ -2,6 +2,7 @@ const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 const logger = require('../config/logger');
 const crypto = require('crypto');
+const { Op } = require('sequelize');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
 const { validateCPF } = require('../utils/validation');
 
@@ -91,7 +92,7 @@ async function verifyEmail(req, res) {
     const { token } = req.query;
     logger.info(`[verifyEmail] Token recebido: ${token}`);
 
-    const user = await User.findOne({ verificationToken: token });
+    const user = await User.findOne({ where: { verificationToken: token } });
 
     if (!user) {
       logger.warn(`[verifyEmail] Token inválido ou não encontrado: ${token}`);
@@ -137,7 +138,7 @@ const loginUser = async (req, res) => {
     }
 
     // Encontra o usuário no banco de dados pelo email
-    const user = await User.findOne({ email }).select('+accountType');
+    const user = await User.findOne({ where: { email } });
     if (!user) {
       logger.warn(`[Login Attempt] Failed: User not found for email: ${email}. IP: ${clientIp}`);
       req.flash('error', 'Email ou senha inválidos.');
@@ -147,7 +148,7 @@ const loginUser = async (req, res) => {
     // Compara a senha digitada com a senha criptografada (hash) no banco
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      logger.warn(`[Login Attempt] Failed: Invalid password for user: ${user.username} (ID: ${user._id}). IP: ${clientIp}`);
+      logger.warn(`[Login Attempt] Failed: Invalid password for user: ${user.username} (ID: ${user.id}). IP: ${clientIp}`);
       req.flash('error', 'Email ou senha inválidos.');
       return res.redirect('/auth/login');
     }
@@ -155,7 +156,7 @@ const loginUser = async (req, res) => {
     // SUCESSO! A senha corresponde.
     // Verifica se o email do usuário foi verificado
     if (!user.isVerified) {
-      logger.warn(`[Login Attempt] Failed: Account not verified for user: ${user.username} (ID: ${user._id}). IP: ${clientIp}`);
+      logger.warn(`[Login Attempt] Failed: Account not verified for user: ${user.username} (ID: ${user.id}). IP: ${clientIp}`);
       req.flash('error', 'Por favor, verifique seu email para ativar sua conta.');
       return res.redirect('/auth/login');
     }
@@ -171,7 +172,7 @@ const loginUser = async (req, res) => {
       logger.debug(`[LOGIN DEBUG] user.accountType: ${user.accountType}`);
       // Salvamos as informações do usuário na nova sessão
       req.session.user = {
-        id: user._id,
+        id: user.id,
         username: user.username,
         accountType: user.accountType,
         email: user.email,
@@ -179,7 +180,7 @@ const loginUser = async (req, res) => {
         fullName: user.fullName
       };
       
-      logger.info(`[Login] Success: User ${user.username} (ID: ${user._id}) logged in. IP: ${clientIp}`);
+      logger.info(`[Login] Success: User ${user.username} (ID: ${user.id}) logged in. IP: ${clientIp}`);
       logger.debug(`[LOGIN DEBUG] req.session.user:`, req.session.user);
 
       if (user.firstLogin) {
@@ -239,21 +240,30 @@ const updateProfile = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Erro de validação', errors });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(userId, {
-      $set: {
-        fullName: fullName,
-        phone: phone,
-        'address.cep': cep,
-        'address.street': street,
-        'address.number': number,
-        'address.complement': complement,
-        'address.neighborhood': neighborhood,
-        'address.city': city,
-        'address.state': state,
-        documentType: documentType || 'CPF',
-        documentNumber: documentNumber,
-      }
-    }, { new: true });
+    const user = await User.findByPk(userId);
+    if (!user) {
+      logger.warn('[updateProfile] Nenhum usuário encontrado para atualizar.');
+      return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
+    }
+
+    const address = {
+      ...(user.address || {}),
+      cep,
+      street,
+      number,
+      complement,
+      neighborhood,
+      city,
+      state
+    };
+
+    const updatedUser = await user.update({
+      fullName,
+      phone,
+      address,
+      documentType: documentType || 'CPF',
+      documentNumber
+    });
 
     if (updatedUser) {
         logger.info(`[updateProfile] Profile updated successfully for user ID: ${userId}.`);
@@ -278,7 +288,7 @@ const updateProfile = async (req, res) => {
 const updateAvatar = async (req, res) => {
   try {
     const userId = req.session.user.id;
-    const user = await User.findById(userId);
+    const user = await User.findByPk(userId);
 
     if (!user) {
       return res.status(404).json({ success: false, message: 'Usuário não encontrado.' });
@@ -305,7 +315,7 @@ const showForgotPasswordPage = (req, res) => {
 const forgotPassword = async (req, res) => {
   try {
     const { email } = req.body;
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ where: { email } });
 
     if (!user) {
       req.flash('success_msg', 'Se um usuário com este email existir, um link de recuperação de senha será enviado.');
@@ -337,8 +347,10 @@ const showResetPasswordPage = async (req, res) => {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() },
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { [Op.gt]: Date.now() }
+      }
     });
 
     if (!user) {
@@ -360,8 +372,10 @@ const resetPassword = async (req, res) => {
     const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
     const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: Date.now() },
+      where: {
+        passwordResetToken: hashedToken,
+        passwordResetExpires: { [Op.gt]: Date.now() }
+      }
     });
 
     if (!user) {

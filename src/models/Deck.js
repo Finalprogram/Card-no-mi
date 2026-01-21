@@ -51,4 +51,10 @@ const Deck = sequelize.define('Deck', {
   timestamps: true
 });
 
+Object.defineProperty(Deck.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
+
 module.exports = Deck;

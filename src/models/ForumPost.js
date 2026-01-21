@@ -154,4 +154,10 @@ const ForumPost = sequelize.define('ForumPost', {
   ]
 });
 
+Object.defineProperty(ForumPost.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
+
 module.exports = ForumPost;

@@ -1,6 +1,7 @@
 const { Op } = require('sequelize');
 const User = require('../models/User');
 const Order = require('../models/Order');
+const Listing = require('../models/Listing');
 const Setting = require('../models/Setting');
 const Coupon = require('../models/Coupon');
 const DailyVisitorCount = require('../models/DailyVisitorCount');
@@ -20,7 +21,7 @@ async function showDashboard(req, res) {
       order: [['date', 'ASC']]
     });
 
-    const orders = await Order.findAll({ include: ['items'] });
+    const orders = await Order.findAll();
     let totalMarketplaceRevenue = 0;
     orders.forEach(order => {
       if (order.marketplaceFee) {
@@ -36,13 +37,9 @@ async function showDashboard(req, res) {
 
     const pendingFeeOrders = await Order.findAll({
       where: {
-        status: { [Op.in]: ['Paid', 'Delivered'] },
-        '$items.balanceProcessed$': false
+        status: { [Op.in]: ['Paid', 'Delivered'] }
       },
-      include: [
-          { model: User, as: 'user' },
-          { model: Listing, as: 'items', include: [{ model: User, as: 'seller' }] }
-      ],
+      include: [{ model: User, as: 'user' }],
       order: [['createdAt', 'DESC']]
     });
 

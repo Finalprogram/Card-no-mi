@@ -24,7 +24,7 @@ const sellerController = require('../controllers/sellerController');
  */
 const ensureAddress = async (req, res, next) => {
   try {
-    const user = await User.findById(req.session.user.id);
+    const user = await User.findByPk(req.session.user.id);
     if (user && user.address && user.address.cep) {
       return next(); // Endereço existe, pode prosseguir
     }

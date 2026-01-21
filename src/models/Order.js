@@ -66,4 +66,10 @@ const Order = sequelize.define('Order', {
   timestamps: true
 });
 
+Object.defineProperty(Order.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
+
 module.exports = Order;

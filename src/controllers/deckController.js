@@ -1,5 +1,48 @@
 const Deck = require('../models/Deck');
 const Card = require('../models/Card');
+const { Op } = require('sequelize');
+
+function addIdAlias(value) {
+    if (value && value.id != null && value._id == null) {
+        value._id = value.id;
+    }
+    return value;
+}
+
+function toPlainWithId(modelInstance) {
+    if (!modelInstance) return null;
+    const data = modelInstance.toJSON ? modelInstance.toJSON() : modelInstance;
+    return addIdAlias(data);
+}
+
+async function hydrateDecksWithCards(decks) {
+    const decksData = decks.map(toPlainWithId);
+    const cardIds = new Set();
+
+    decksData.forEach(deck => {
+        if (deck.leader && deck.leader.card) cardIds.add(Number(deck.leader.card));
+        (deck.main || []).forEach(item => {
+            if (item.card) cardIds.add(Number(item.card));
+        });
+    });
+
+    if (cardIds.size === 0) return decksData;
+
+    const cards = await Card.findAll({ where: { id: Array.from(cardIds) } });
+    const cardMap = new Map(cards.map(card => [card.id, addIdAlias(card.toJSON())]));
+
+    decksData.forEach(deck => {
+        if (deck.leader && deck.leader.card) {
+            deck.leader.card = cardMap.get(Number(deck.leader.card)) || null;
+        }
+        deck.main = (deck.main || []).map(item => ({
+            ...item,
+            card: cardMap.get(Number(item.card)) || null
+        }));
+    });
+
+    return decksData;
+}
 
 // @desc    Search for cards
 // @route   GET /api/decks/search-cards
@@ -14,11 +57,13 @@ exports.searchCards = async (req, res) => {
         }
 
         // Use a case-insensitive regex to find cards
-        const cards = await Card.find({
-            $or: [
-                { name: { $regex: query, $options: 'i' } },
-                { code: { $regex: query, $options: 'i' } }
-            ]
+        const cards = await Card.findAll({
+            where: {
+                [Op.or]: [
+                    { name: { [Op.iLike]: `%${query}%` } },
+                    { code: { [Op.iLike]: `%${query}%` } }
+                ]
+            }
         });
 
         console.log(`Found ${cards.length} cards for query "${query}"`);
@@ -35,13 +80,14 @@ exports.searchCards = async (req, res) => {
 // @access  Private
 exports.getDecks = async (req, res) => {
     try {
-        const decks = await Deck.find()
-            .populate('owner', 'username') // Populate owner's username
-            .populate('leader.card')   // Populate leader card details
-            .sort({ updatedAt: -1 });
+        const decks = await Deck.findAll({
+            include: [{ model: require('../models/User'), as: 'owner', attributes: ['id', 'username'] }],
+            order: [['updatedAt', 'DESC']]
+        });
+        const hydratedDecks = await hydrateDecksWithCards(decks);
         
         res.render('pages/decks', {
-            decks: decks,
+            decks: hydratedDecks,
             page_css: 'decks-ui.css' // Pass the new CSS file
         });
     } catch (error) {
@@ -56,13 +102,15 @@ exports.getDecks = async (req, res) => {
 exports.getMyDecks = async (req, res) => {
     try {
         const userId = req.session.user.id;
-        const decks = await Deck.find({ owner: userId })
-            .populate('owner', 'username') // Populate owner's username
-            .populate('leader.card')   // Populate leader card details
-            .sort({ updatedAt: -1 });
+        const decks = await Deck.findAll({
+            where: { ownerId: userId },
+            include: [{ model: require('../models/User'), as: 'owner', attributes: ['id', 'username'] }],
+            order: [['updatedAt', 'DESC']]
+        });
+        const hydratedDecks = await hydrateDecksWithCards(decks);
         
         res.render('pages/my-decks', {
-            decks: decks,
+            decks: hydratedDecks,
             page_css: 'decks-ui.css' // Pass the new CSS file
         });
     } catch (error) {
@@ -76,13 +124,15 @@ exports.getMyDecks = async (req, res) => {
 // @access  Public
 exports.getCommunityDecks = async (req, res) => {
     try {
-        const decks = await Deck.find({ isPublic: true })
-            .populate('owner', 'username')
-            .populate('leader.card')
-            .sort({ updatedAt: -1 });
+        const decks = await Deck.findAll({
+            where: { isPublic: true },
+            include: [{ model: require('../models/User'), as: 'owner', attributes: ['id', 'username'] }],
+            order: [['updatedAt', 'DESC']]
+        });
+        const hydratedDecks = await hydrateDecksWithCards(decks);
         
         res.render('pages/community-decks', {
-            decks: decks,
+            decks: hydratedDecks,
             page_css: 'decks-ui.css'
         });
     } catch (error) {
@@ -96,16 +146,16 @@ exports.getCommunityDecks = async (req, res) => {
 // @access  Private
 exports.getDeck = async (req, res) => {
     try {
-        const deck = await Deck.findById(req.params.id)
-            .populate('leader.card')
-            .populate('main.card')
-            .populate('owner', 'username');
+        const deck = await Deck.findByPk(req.params.id, {
+            include: [{ model: require('../models/User'), as: 'owner', attributes: ['id', 'username'] }]
+        });
 
         if (!deck) {
             return res.status(404).json({ message: 'Deck não encontrado.' });
         }
 
-        res.status(200).json(deck);
+        const [hydratedDeck] = await hydrateDecksWithCards([deck]);
+        res.status(200).json(hydratedDeck);
     } catch (error) {
         console.error('Erro ao buscar deck:', error);
         res.status(500).json({ message: 'Erro interno do servidor ao buscar deck.' });
@@ -124,18 +174,16 @@ exports.createDeck = async (req, res) => {
             return res.status(400).json({ message: 'O título do deck é obrigatório.' });
         }
 
-        const newDeck = new Deck({
+        const newDeck = await Deck.create({
             title,
             description,
-            owner,
+            ownerId: owner,
             leader,
             main,
             isPublic: isPublic // Assign directly, as it's already a boolean
         });
 
-        const savedDeck = await newDeck.save();
-
-        res.status(201).json(savedDeck);
+        res.status(201).json(toPlainWithId(newDeck));
 
     } catch (error) {
         console.error('Erro ao criar deck:', error);
@@ -152,13 +200,13 @@ exports.updateDeck = async (req, res) => {
         const deckId = req.params.id;
         const ownerId = req.session.user.id;
 
-        const deck = await Deck.findById(deckId);
+        const deck = await Deck.findByPk(deckId);
 
         if (!deck) {
             return res.status(404).json({ message: 'Deck não encontrado.' });
         }
 
-        if (deck.owner.toString() !== ownerId) {
+        if (deck.ownerId.toString() !== ownerId) {
             return res.status(403).json({ message: 'Você não tem permissão para editar este deck.' });
         }
 
@@ -169,7 +217,7 @@ exports.updateDeck = async (req, res) => {
         // Sanitize the leader and main deck to store only the necessary info
         if (leader && leader.card) {
             // Check if card is already an ID or an object
-            const leaderCardId = typeof leader.card === 'string' ? leader.card : leader.card._id;
+            const leaderCardId = typeof leader.card === 'string' ? leader.card : leader.card.id || leader.card._id;
             deck.leader = {
                 card: leaderCardId,
                 quantity: 1
@@ -181,7 +229,7 @@ exports.updateDeck = async (req, res) => {
         if (main && Array.isArray(main)) {
             deck.main = main.map(item => {
                 // Check if card is already an ID or an object
-                const cardId = typeof item.card === 'string' ? item.card : item.card._id;
+                const cardId = typeof item.card === 'string' ? item.card : item.card.id || item.card._id;
                 return {
                     card: cardId,
                     quantity: item.quantity
@@ -194,7 +242,7 @@ exports.updateDeck = async (req, res) => {
 
         const updatedDeck = await deck.save();
 
-        res.status(200).json(updatedDeck);
+        res.status(200).json(toPlainWithId(updatedDeck));
 
     } catch (error) {
         console.error('Erro ao atualizar deck:', error);
@@ -213,21 +261,21 @@ exports.deleteDeck = async (req, res) => {
         console.log(`Attempting to delete deck with ID: ${deckId}`);
         console.log(`User attempting deletion (ownerId): ${ownerId}`);
 
-        const deck = await Deck.findById(deckId);
+        const deck = await Deck.findByPk(deckId);
 
         if (!deck) {
             console.log(`Deck with ID ${deckId} not found.`);
             return res.status(404).json({ message: 'Deck não encontrado.' });
         }
 
-        console.log(`Found deck. Deck owner: ${deck.owner.toString()}`);
+        console.log(`Found deck. Deck owner: ${deck.ownerId.toString()}`);
 
-        if (deck.owner.toString() !== ownerId) {
-            console.log(`Authorization failed: deck owner (${deck.owner.toString()}) does not match user (${ownerId}).`);
+        if (deck.ownerId.toString() !== ownerId) {
+            console.log(`Authorization failed: deck owner (${deck.ownerId.toString()}) does not match user (${ownerId}).`);
             return res.status(403).json({ message: 'Você não tem permissão para excluir este deck.' });
         }
 
-        await deck.deleteOne();
+        await deck.destroy();
 
         res.status(200).json({ message: 'Deck excluído com sucesso.' });
     } catch (error) {
@@ -271,10 +319,12 @@ exports.parseDeck = async (req, res) => {
             if (!identifier) continue;
 
             const card = await Card.findOne({
-                $or: [
-                    { code: { $regex: new RegExp(`^${identifier}$`, 'i') } },
-                    { api_id: { $regex: new RegExp(`^${identifier}$`, 'i') } }
-                ]
+                where: {
+                    [Op.or]: [
+                        { code: { [Op.iLike]: identifier } },
+                        { api_id: { [Op.iLike]: identifier } }
+                    ]
+                }
             });
 
             if (!card) {
@@ -283,7 +333,7 @@ exports.parseDeck = async (req, res) => {
             }
 
             const deckItem = {
-                card: card.toObject(),
+                card: addIdAlias(card.toJSON()),
                 quantity: quantity,
             };
 

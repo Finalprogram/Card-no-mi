@@ -123,6 +123,15 @@ const User = sequelize.define('User', {
     type: DataTypes.JSON,
     defaultValue: {}
   }
+}, {
+  tableName: 'users',
+  timestamps: true
+});
+
+Object.defineProperty(User.prototype, '_id', {
+  get() {
+    return this.id;
+  }
 });
 
 module.exports = User;

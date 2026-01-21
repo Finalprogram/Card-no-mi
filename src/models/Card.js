@@ -86,6 +86,15 @@ const Card = sequelize.define('Card', {
     type: DataTypes.JSON,
     defaultValue: {}
   }
+}, {
+  tableName: 'cards',
+  timestamps: true
+});
+
+Object.defineProperty(Card.prototype, '_id', {
+  get() {
+    return this.id;
+  }
 });
 
 module.exports = Card;

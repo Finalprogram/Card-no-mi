@@ -27,14 +27,12 @@ const visitorTracker = async (req, res, next) => {
       dailyUniqueSessions.add(sessionId);
 
       try {
-        const today = new Date();
-        today.setUTCHours(0, 0, 0, 0); // Normalize to start of the day UTC
-
-        await DailyVisitorCount.findOneAndUpdate(
-          { date: today },
-          { $inc: { count: 1 } },
-          { upsert: true, new: true } // Create if not exists, return new document
-        );
+        const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+        const [row] = await DailyVisitorCount.findOrCreate({
+          where: { date: today },
+          defaults: { count: 0 }
+        });
+        await row.increment('count');
       } catch (error) {
         console.error('Error updating daily unique visitor count:', error);
         // Continue without blocking the request even if update fails

@@ -6,16 +6,100 @@ const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Deck = require('../models/Deck');
 const Setting = require('../models/Setting');
+const { Op, fn, col } = require('sequelize');
+
+function addIdAlias(value) {
+  if (value && value.id != null && value._id == null) {
+    value._id = value.id;
+  }
+  return value;
+}
+
+function toPlainWithId(modelInstance) {
+  if (!modelInstance) return null;
+  const data = modelInstance.toJSON ? modelInstance.toJSON() : modelInstance;
+  return addIdAlias(data);
+}
+
+async function hydrateOrdersWithCards(orders) {
+  const ordersData = orders.map(toPlainWithId);
+  const cardIds = new Set();
+  ordersData.forEach(order => {
+    (order.items || []).forEach(item => {
+      if (item.card) cardIds.add(Number(item.card));
+    });
+  });
+
+  if (cardIds.size === 0) return ordersData;
+
+  const cards = await Card.findAll({ where: { id: Array.from(cardIds) } });
+  const cardMap = new Map(cards.map(card => [card.id, addIdAlias(card.toJSON())]));
+
+  ordersData.forEach(order => {
+    order.items = (order.items || []).map((item, index) => {
+      const itemId = item.id || item._id || item.listing || item.card || `${order.id}-${index}`;
+      return {
+        ...item,
+        id: itemId,
+        _id: itemId,
+        card: cardMap.get(Number(item.card)) || null
+      };
+    });
+  });
+
+  return ordersData;
+}
+
+async function hydrateDeckWithCards(deck) {
+  if (!deck) return null;
+  const deckData = toPlainWithId(deck);
+  deckData.owner = addIdAlias(deckData.owner || null);
+
+  const cardIds = new Set();
+  if (deckData.leader && deckData.leader.card) cardIds.add(Number(deckData.leader.card));
+  (deckData.main || []).forEach(item => {
+    if (item.card) cardIds.add(Number(item.card));
+  });
+
+  if (cardIds.size === 0) return deckData;
+
+  const cards = await Card.findAll({ where: { id: Array.from(cardIds) } });
+  const cardMap = new Map(cards.map(card => [card.id, addIdAlias(card.toJSON())]));
+
+  if (deckData.leader && deckData.leader.card) {
+    deckData.leader.card = cardMap.get(Number(deckData.leader.card)) || null;
+  }
+  deckData.main = (deckData.main || []).map(item => ({
+    ...item,
+    card: cardMap.get(Number(item.card)) || null
+  }));
+
+  return deckData;
+}
+
+async function distinctValues(field, where) {
+  const rows = await Card.findAll({
+    attributes: [[fn('DISTINCT', col(field)), field]],
+    where,
+    raw: true
+  });
+  return rows.map(row => row[field]).filter(value => value != null && value !== '');
+}
 const showHomePage = async (req, res) => {
   try {
-    const recentListings = await Listing.find()
-                                        .sort({ createdAt: -1 })
-                                        .limit(10)
-                                        .populate('card');
+    const recentListings = await Listing.findAll({
+      order: [['createdAt', 'DESC']],
+      limit: 10,
+      include: [{ model: Card, as: 'card' }]
+    });
 
     res.render('pages/index', {
       title: 'Bem-vindo ao CardHub',
-      recentListings: recentListings,
+      recentListings: recentListings.map(listing => {
+        const data = toPlainWithId(listing);
+        if (data.card) data.card = addIdAlias(data.card);
+        return data;
+      }),
     });
   } catch (error) {
     console.error('Error fetching recent listings:', error);
@@ -34,7 +118,10 @@ const showProfilePage = async (req, res) => {
       userId = req.session.user.id;
     }
 
-    const profileUser = await User.findById(userId);
+    const isNumericId = String(userId).match(/^\d+$/);
+    const profileUser = isNumericId
+      ? await User.findByPk(userId)
+      : await User.findOne({ where: { username: userId } });
     console.log('DEBUG - profileUser.accountType:', profileUser ? profileUser.accountType : 'NÃO DEFINIDO');
   try {
     let userId = req.params.id;
@@ -47,16 +134,19 @@ const showProfilePage = async (req, res) => {
       userId = req.session.user.id;
     }
 
-    const profileUser = await User.findById(userId);
+    const isNumericId = String(userId).match(/^\d+$/);
+    const profileUser = isNumericId
+      ? await User.findByPk(userId)
+      : await User.findOne({ where: { username: userId } });
 
     if (!profileUser) {
       return res.status(404).send('Usuário não encontrado.');
     }
 
     // If the logged-in user is viewing their own profile, update the session with the latest data
-    if (req.session.user && req.session.user.id === profileUser._id.toString()) {
+    if (req.session.user && req.session.user.id === profileUser.id.toString()) {
       req.session.user = {
-        id: profileUser._id.toString(),
+        id: profileUser.id.toString(),
         username: profileUser.username,
         accountType: profileUser.accountType,
         email: profileUser.email,
@@ -71,10 +161,12 @@ const showProfilePage = async (req, res) => {
       };
     }
 
-    const listings = await Listing.find({ seller: profileUser._id })
-                                  .sort({ createdAt: -1 })
-                                  .limit(5)
-                                  .populate('card');
+    const listings = await Listing.findAll({
+      where: { sellerId: profileUser.id },
+      order: [['createdAt', 'DESC']],
+      limit: 5,
+      include: [{ model: Card, as: 'card' }]
+    });
 
     // Prepara uma mensagem de erro se a validação do endereço falhou
     let errorMessage = null;
@@ -82,9 +174,11 @@ const showProfilePage = async (req, res) => {
       errorMessage = 'Falha na validação. Por favor, preencha todos os campos de endereço obrigatórios.';
     }
 
-    const reviews = await Review.find({ seller: profileUser._id })
-                                .populate('buyer', 'fullName') // Popula apenas o fullName do comprador
-                                .sort({ createdAt: -1 });
+    const reviews = await Review.findAll({
+      where: { sellerId: profileUser.id },
+      include: [{ model: User, as: 'buyer', attributes: ['id', 'fullName'] }],
+      order: [['createdAt', 'DESC']]
+    });
 
     // Calcula a média das avaliações
     let averageRating = 0;
@@ -99,7 +193,7 @@ const showProfilePage = async (req, res) => {
     if (profileUser.accountType === 'shop' || profileUser.accountType === 'individual') {
       sellerFeePercentage = profileUser.fee_override_percentage;
       const settingKey = `fee_${profileUser.accountType}_percentage`;
-      const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+      const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
       defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
 
       if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
@@ -111,9 +205,17 @@ const showProfilePage = async (req, res) => {
     res.locals = res.locals || {};
     if (typeof res.locals.sellerFeePercentage === "undefined") res.locals.sellerFeePercentage = null;
     res.render('pages/profile', { 
-      profileUser,
-      listings, // Pass the listings to the view
-      reviews, // Pass the reviews to the view
+      profileUser: toPlainWithId(profileUser),
+      listings: listings.map(listing => {
+        const data = toPlainWithId(listing);
+        if (data.card) data.card = addIdAlias(data.card);
+        return data;
+      }),
+      reviews: reviews.map(review => {
+        const data = toPlainWithId(review);
+        if (data.buyer) data.buyer = addIdAlias(data.buyer);
+        return data;
+      }),
       averageRating, // Pass the average rating to the view
       error: errorMessage, // Passa a mensagem de erro para a view
       sellerFeePercentage, // Pass seller fee
@@ -129,15 +231,15 @@ const showProfilePage = async (req, res) => {
 
 const showSellPage = async (req, res) => {
   try {
-    const allCards = await Card.find({}); // Fetch all cards from the database
+    const allCards = await Card.findAll(); // Fetch all cards from the database
     
     // Buscar informações da taxa do vendedor
     const userId = req.session.user.id;
-    const seller = await User.findById(userId);
+    const seller = await User.findByPk(userId);
     
     let sellerFeePercentage = seller.fee_override_percentage;
     const settingKey = `fee_${seller.accountType}_percentage`;
-    const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+    const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
     const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
 
     if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
@@ -163,16 +265,19 @@ const showMyListingsPage = async (req, res) => {
     }
 
     const userId = req.session.user.id;
-    const listings = await Listing.find({ seller: userId }).populate('card');
+    const listings = await Listing.findAll({
+      where: { sellerId: userId },
+      include: [{ model: Card, as: 'card' }]
+    });
 
     // Buscar informações da taxa do vendedor
     const User = require('../models/User');
     const Setting = require('../models/Setting');
-    const seller = await User.findById(userId);
+    const seller = await User.findByPk(userId);
     
     let sellerFeePercentage = seller.fee_override_percentage;
     const settingKey = `fee_${seller.accountType}_percentage`;
-    const defaultFeeSetting = await Setting.findOne({ key: settingKey });
+    const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
     const defaultFeePercentage = defaultFeeSetting ? defaultFeeSetting.value : 8.0;
 
     if (sellerFeePercentage === null || sellerFeePercentage === undefined) {
@@ -180,7 +285,11 @@ const showMyListingsPage = async (req, res) => {
     }
 
     res.render('pages/my-listings', {
-      listings: listings,
+      listings: listings.map(listing => {
+        const data = toPlainWithId(listing);
+        if (data.card) data.card = addIdAlias(data.card);
+        return data;
+      }),
       sellerFeePercentage: sellerFeePercentage,
       defaultFeePercentage: defaultFeePercentage
     });
@@ -208,11 +317,13 @@ const showMyOrdersPage = async (req, res) => {
       return res.redirect('/login');
     }
 
-    const orders = await Order.find({ user: req.session.user.id })
-                              .populate('items.card') // Popula os dados dos cards nos itens do pedido
-                              .sort({ createdAt: -1 }); // Mais recentes primeiro
+    const orders = await Order.findAll({
+      where: { userId: req.session.user.id },
+      order: [['createdAt', 'DESC']]
+    });
+    const ordersWithCards = await hydrateOrdersWithCards(orders);
 
-    res.render('pages/my-orders', { orders });
+    res.render('pages/my-orders', { orders: ordersWithCards });
 
   } catch (error) {
     console.error('Erro ao buscar pedidos do usuário:', error);
@@ -229,15 +340,15 @@ const showOrderDetailPage = async (req, res) => {
     const orderId = req.params.id;
     const userId = req.session.user.id;
 
-    const order = await Order.findOne({ _id: orderId, user: userId })
-                             .populate('items.card');
+    const order = await Order.findOne({ where: { id: orderId, userId } });
 
     if (!order) {
       // Renderiza a página de detalhes com uma mensagem de não encontrado
       return res.status(404).render('pages/order-detail', { order: null });
     }
 
-    res.render('pages/order-detail', { order });
+    const [orderWithCards] = await hydrateOrdersWithCards([order]);
+    res.render('pages/order-detail', { order: orderWithCards });
 
   } catch (error) {
     console.error('Erro ao buscar detalhes do pedido:', error);
@@ -250,7 +361,11 @@ const getEncyclopediaPage = async (req, res) => {
     // Filtro base para excluir cartas inválidas
     const baseFilter = { 
       game: 'onepiece',
-      name: { $exists: true, $ne: null, $ne: '', $ne: 'undefined' }
+      [Op.and]: [
+        { name: { [Op.ne]: null } },
+        { name: { [Op.ne]: '' } },
+        { name: { [Op.ne]: 'undefined' } }
+      ]
     };
 
     // Filtros vindos da query
@@ -258,20 +373,20 @@ const getEncyclopediaPage = async (req, res) => {
     const limit = 50;
     const queryFilters = { ...baseFilter };
     if (req.query.rarity && req.query.rarity !== '') queryFilters.rarity = req.query.rarity;
-    if (req.query.color && req.query.color !== '') queryFilters.colors = new RegExp(req.query.color, 'i');
+    if (req.query.color && req.query.color !== '') queryFilters.color = { [Op.iLike]: `%${req.query.color}%` };
     if (req.query.type && req.query.type !== '') queryFilters.type_line = req.query.type;
-    if (req.query.set && req.query.set !== '') queryFilters.set_name = new RegExp(req.query.set, 'i');
-    if (req.query.q && req.query.q !== '') queryFilters.name = new RegExp(req.query.q, 'i');
-    if (req.query.don && req.query.don !== '') queryFilters.don = req.query.don;
+    if (req.query.set && req.query.set !== '') queryFilters.set_name = { [Op.iLike]: `%${req.query.set}%` };
+    if (req.query.q && req.query.q !== '') queryFilters.name = { [Op.iLike]: `%${req.query.q}%` };
+    if (req.query.don && req.query.don !== '' && Card.rawAttributes.don) queryFilters.don = req.query.don;
 
     // Busca as opções de filtro dinamicamente do banco de dados
-    const rarities = await Card.distinct('rarity', baseFilter);
-    const colors = await Card.distinct('colors', baseFilter);
-    const types = await Card.distinct('type_line', baseFilter);
-    const dons = await Card.distinct('don', baseFilter);
+    const rarities = await distinctValues('rarity', baseFilter);
+    const colors = await distinctValues('color', baseFilter);
+    const types = await distinctValues('type_line', baseFilter);
+    const dons = Card.rawAttributes.don ? await distinctValues('don', baseFilter) : [];
 
     // Busca e ordena todas as edições
-    const rawSets = await Card.distinct('set_name', baseFilter);
+    const rawSets = await distinctValues('set_name', baseFilter);
 
     function normalizeSetName(setName) {
       const squareBracketMatch = setName.match(/\[([^\]]+)\]/); // Changed to square brackets
@@ -301,11 +416,13 @@ const getEncyclopediaPage = async (req, res) => {
     ];
 
     // Paginação e busca de cartas
-    const totalCards = await Card.countDocuments(queryFilters);
-    const cards = await Card.find(queryFilters)
-      .sort({ name: 1 })
-      .skip((page - 1) * limit)
-      .limit(limit);
+    const totalCards = await Card.count({ where: queryFilters });
+    const cards = await Card.findAll({
+      where: queryFilters,
+      order: [['name', 'ASC']],
+      offset: (page - 1) * limit,
+      limit: limit
+    });
 
     res.render('pages/encyclopedia', {
       title: 'Enciclopédia de Cartas',
@@ -330,11 +447,13 @@ const getEncyclopediaPage = async (req, res) => {
 
 const showTimelinePage = async (req, res) => {
   try {
-    const sets = await Card.distinct('set_name', { game: 'onepiece' });
+    const sets = await distinctValues('set_name', { game: 'onepiece' });
 
     const timelineDataPromises = sets.map(async (setName) => {
-      const topCard = await Card.findOne({ set_name: setName, game: 'onepiece' })
-                                  .sort({ averagePrice: -1 });
+      const topCard = await Card.findOne({
+        where: { set_name: setName, game: 'onepiece' },
+        order: [['id', 'DESC']]
+      });
 
       // Extract set code like OP-01 from the set name
       const setCodeMatch = setName.match(/\[(.*?)\]/);
@@ -380,11 +499,14 @@ const showAboutPage = (req, res) => {
 
 const showDecksPage = async (req, res) => {
   try {
-    const decks = await Deck.find({}).populate('owner', 'username').sort({ createdAt: -1 });
+    const decks = await Deck.findAll({
+      include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }],
+      order: [['createdAt', 'DESC']]
+    });
 
     res.render('pages/decks', {
       title: 'Decks da Comunidade',
-      decks,
+      decks: decks.map(toPlainWithId),
     });
   } catch (error) {
     console.error('Erro ao buscar os decks:', error);
@@ -398,16 +520,16 @@ const showDeckBuilderPage = async (req, res) => {
     let isOwner = false;
 
     if (req.params.id) {
-      deck = await Deck.findById(req.params.id)
-        .populate('leader.card')
-        .populate('main.card')
-        .populate('owner', 'username'); // Populate owner's username
+      deck = await Deck.findByPk(req.params.id, {
+        include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }]
+      });
       
       if (!deck) {
         return res.status(404).send('Deck não encontrado.');
       }
 
-      if (req.session.user && deck.owner._id.toString() === req.session.user.id) {
+      deck = await hydrateDeckWithCards(deck);
+      if (req.session.user && deck.owner && deck.owner.id.toString() === req.session.user.id) {
         isOwner = true;
       }
     } else {
@@ -434,11 +556,14 @@ const showMyDecksPage = async (req, res) => {
       return res.redirect('/login');
     }
 
-    const decks = await Deck.find({ owner: req.session.user.id }).sort({ createdAt: -1 });
+    const decks = await Deck.findAll({
+      where: { ownerId: req.session.user.id },
+      order: [['createdAt', 'DESC']]
+    });
 
     res.render('pages/my-decks', {
       title: 'Meus Decks',
-      decks,
+      decks: decks.map(toPlainWithId),
     });
   } catch (error) {
     console.error('Erro ao buscar decks do usuário:', error);
@@ -448,36 +573,37 @@ const showMyDecksPage = async (req, res) => {
 
 const showDeckAnalyticsPage = async (req, res) => {
   try {
-    const deck = await Deck.findById(req.params.id)
-      .populate('leader.card')
-      .populate('main.card')
-      .populate('owner', 'username');
+    const deck = await Deck.findByPk(req.params.id, {
+      include: [{ model: User, as: 'owner', attributes: ['id', 'username'] }]
+    });
 
     if (!deck) {
       return res.status(404).send('Deck não encontrado.');
     }
 
+    const hydratedDeck = await hydrateDeckWithCards(deck);
+
     // Calculate statistics
-    const allCards = deck.main.map(item => item.card);
-    const cardCount = deck.main.reduce((sum, item) => sum + item.quantity, 0);
+    const allCards = hydratedDeck.main.map(item => item.card);
+    const cardCount = hydratedDeck.main.reduce((sum, item) => sum + item.quantity, 0);
     
     let totalCost = 0;
-    deck.main.forEach(item => {
+    hydratedDeck.main.forEach(item => {
       if (item.card && typeof item.card.cost === 'number') {
         totalCost += item.card.cost * item.quantity;
       }
     });
     const averageCost = cardCount > 0 ? totalCost / cardCount : 0;
 
-    const characterCount = deck.main.reduce((sum, item) => 
+    const characterCount = hydratedDeck.main.reduce((sum, item) => 
       item.card && item.card.type === 'CHARACTER' ? sum + item.quantity : sum, 0);
       
-    const eventCount = deck.main.reduce((sum, item) => 
+    const eventCount = hydratedDeck.main.reduce((sum, item) => 
       item.card && item.card.type === 'EVENT' ? sum + item.quantity : sum, 0);
 
     const colors = new Set();
     const colorCountMap = {};
-    deck.main.forEach(item => {
+    hydratedDeck.main.forEach(item => {
       if (item.card && item.card.color) {
         const cardColors = item.card.color.split('/');
         cardColors.forEach(color => {
@@ -486,8 +612,8 @@ const showDeckAnalyticsPage = async (req, res) => {
         });
       }
     });
-     if (deck.leader.card && deck.leader.card.color) {
-        const leaderColors = deck.leader.card.color.split('/');
+     if (hydratedDeck.leader.card && hydratedDeck.leader.card.color) {
+        const leaderColors = hydratedDeck.leader.card.color.split('/');
         leaderColors.forEach(color => colors.add(color));
     }
 
@@ -495,7 +621,7 @@ const showDeckAnalyticsPage = async (req, res) => {
     const colorCounts = Object.entries(colorCountMap).map(([color, count]) => `${color}: ${count}`).join(', ');
 
     const costDistribution = Array(11).fill(0); // Costs 0-10
-    deck.main.forEach(item => {
+    hydratedDeck.main.forEach(item => {
       if (item.card && typeof item.card.cost === 'number') {
         const cost = item.card.cost;
         if (cost >= costDistribution.length) {
@@ -510,7 +636,7 @@ const showDeckAnalyticsPage = async (req, res) => {
 
 
     const stats = {
-      name: deck.title,
+      name: hydratedDeck.title,
       cardCount: cardCount,
       maxCards: 50, // Assuming max 50 for now
       averageCost: averageCost,
@@ -523,8 +649,8 @@ const showDeckAnalyticsPage = async (req, res) => {
     };
 
     res.render('pages/deck-analytics', {
-      title: `Análise do Deck: ${deck.title}`,
-      deck,
+      title: `Análise do Deck: ${hydratedDeck.title}`,
+      deck: hydratedDeck,
       stats,
     });
   } catch (error) {

@@ -10,7 +10,7 @@ const logger = require('../config/logger');
  */
 async function updateSellerBalancesForOrder(orderId) {
   try {
-    const order = await Order.findById(orderId).populate('items.seller');
+    const order = await Order.findByPk(orderId);
     
     if (!order) {
       logger.error(`[balance] Pedido ${orderId} não encontrado`);
@@ -21,7 +21,7 @@ async function updateSellerBalancesForOrder(orderId) {
     const sellerMap = new Map();
     
     for (const item of order.items) {
-      const sellerId = item.seller._id.toString();
+      const sellerId = item.seller.toString();
       
       if (!sellerMap.has(sellerId)) {
         sellerMap.set(sellerId, {
@@ -38,7 +38,7 @@ async function updateSellerBalancesForOrder(orderId) {
 
     // Atualizar saldo de cada vendedor
     for (const [sellerId, data] of sellerMap) {
-      const seller = await User.findById(sellerId);
+      const seller = await User.findByPk(sellerId);
       
       if (!seller) {
         logger.warn(`[balance] Vendedor ${sellerId} não encontrado`);
@@ -99,16 +99,14 @@ async function updateSellerBalancesForOrder(orderId) {
  */
 async function recalculateSellerBalance(sellerId) {
   try {
-    const seller = await User.findById(sellerId);
+    const seller = await User.findByPk(sellerId);
     
     if (!seller) {
       throw new Error(`Vendedor ${sellerId} não encontrado`);
     }
 
     // Buscar todos os pedidos do vendedor
-    const orders = await Order.find({
-      'items.seller': sellerId
-    });
+    const orders = await Order.findAll();
 
     let pending = 0;
     let available = 0;
@@ -169,39 +167,55 @@ async function recalculateSellerBalance(sellerId) {
  */
 async function getSellerFinancialSummary(sellerId) {
   try {
-    const seller = await User.findById(sellerId);
+    const seller = await User.findByPk(sellerId);
     
     if (!seller) {
       throw new Error(`Vendedor ${sellerId} não encontrado`);
     }
 
     // Buscar estatísticas de pedidos
-    const orderStats = await Order.aggregate([
-      { $unwind: '$items' },
-      { $match: { 'items.seller': seller._id } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          totalNet: { $sum: '$items.sellerNet' },
-          totalGross: { $sum: { $multiply: ['$items.price', '$items.quantity'] } },
-          totalFee: { $sum: '$items.marketplaceFee' }
-        }
-      }
-    ]);
+    const orders = await Order.findAll();
+    const orderStatsMap = new Map();
+
+    orders.forEach(order => {
+      const sellerItems = (order.items || []).filter(item => item.seller.toString() === sellerId.toString());
+      if (!sellerItems.length) return;
+
+      const status = order.status || 'Unknown';
+      const entry = orderStatsMap.get(status) || {
+        _id: status,
+        count: 0,
+        totalNet: 0,
+        totalGross: 0,
+        totalFee: 0
+      };
+
+      sellerItems.forEach(item => {
+        entry.count += 1;
+        entry.totalNet += Number(item.sellerNet || 0);
+        entry.totalGross += Number(item.price || 0) * Number(item.quantity || 0);
+        entry.totalFee += Number(item.marketplaceFee || 0);
+      });
+
+      orderStatsMap.set(status, entry);
+    });
+
+    const orderStats = Array.from(orderStatsMap.values());
 
     // Buscar payouts
     const Payout = require('../models/Payout');
-    const payoutStats = await Payout.aggregate([
-      { $match: { seller: seller._id } },
-      {
-        $group: {
-          _id: '$status',
-          count: { $sum: 1 },
-          total: { $sum: '$amount' }
-        }
-      }
-    ]);
+    const payouts = await Payout.findAll({ where: { sellerId } });
+    const payoutStatsMap = new Map();
+
+    payouts.forEach(payout => {
+      const status = payout.status || 'Unknown';
+      const entry = payoutStatsMap.get(status) || { _id: status, count: 0, total: 0 };
+      entry.count += 1;
+      entry.total += Number(payout.amount || 0);
+      payoutStatsMap.set(status, entry);
+    });
+
+    const payoutStats = Array.from(payoutStatsMap.values());
 
     return {
       balance: seller.balance,

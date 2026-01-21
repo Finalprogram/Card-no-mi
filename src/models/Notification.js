@@ -115,4 +115,61 @@ const Notification = sequelize.define('Notification', {
   ]
 });
 
+Notification.createNotification = async (data) => {
+  return Notification.create({
+    recipientId: data.recipient,
+    senderId: data.sender,
+    type: data.type,
+    title: data.title,
+    message: data.message,
+    threadId: data.thread || null,
+    postId: data.post || null,
+    categoryId: data.category || null,
+    link: data.link,
+    icon: data.icon,
+    color: data.color,
+    metadata: data.metadata || {}
+  });
+};
+
+Notification.getUserNotifications = async (userId, limit = 20, offset = 0) => {
+  const notifications = await Notification.findAll({
+    where: { recipientId: userId },
+    order: [['createdAt', 'DESC']],
+    limit,
+    offset
+  });
+  return notifications.map(notification => {
+    const data = notification.toJSON();
+    data._id = data.id;
+    return data;
+  });
+};
+
+Notification.getUnreadCount = async (userId) => {
+  return Notification.count({
+    where: { recipientId: userId, isRead: false }
+  });
+};
+
+Notification.markAsRead = async (id, userId) => {
+  return Notification.update(
+    { isRead: true, readAt: new Date() },
+    { where: { id, recipientId: userId } }
+  );
+};
+
+Notification.markAllAsRead = async (userId) => {
+  return Notification.update(
+    { isRead: true, readAt: new Date() },
+    { where: { recipientId: userId, isRead: false } }
+  );
+};
+
+Object.defineProperty(Notification.prototype, '_id', {
+  get() {
+    return this.id;
+  }
+});
+
 module.exports = Notification;
