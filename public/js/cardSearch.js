@@ -74,8 +74,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card-item';
                 
-                const priceDisplay = card.lowestAvailablePrice ? 
-                    `R$ ${card.lowestAvailablePrice.toFixed(2).replace('.', ',')}` : 'N/A';
+                const lowestPrice = card.lowestAvailablePrice == null ? null : Number(card.lowestAvailablePrice);
+                const priceDisplay = lowestPrice != null && Number.isFinite(lowestPrice) ?
+                    `R$ ${lowestPrice.toFixed(2).replace('.', ',')}` : 'N/A';
                 
                 let trendIcon = '→';
                 let trendColor = '#555';
@@ -92,8 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
                     abilityBadge = `<div class="ability-badge">Foil</div>`;
                 }
 
+                const cardId = card._id || card.id;
                 cardElement.innerHTML = `
-                    <a href="/card/${card._id}" class="card-link">
+                    <a href="/card/${cardId}" class="card-link">
                         <div class="card-image-container">
                             <img src="${card.image_url}" alt="${card.name}">
                         </div>
@@ -103,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                             <span style="color: ${trendColor}; font-size: 1.5em;">${trendIcon}</span>
                         </p>
                     </a>
-                    <button class="add-to-list-btn" data-cardid="${card._id}">+ Lista</button>
+                    <button class="add-to-list-btn" data-cardid="${cardId}">+ Lista</button>
                 `;
                 cardList.appendChild(cardElement);
             });

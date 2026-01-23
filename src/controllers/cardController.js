@@ -73,7 +73,7 @@ const showCardsPage = async (req, res) => {
     const totalCards = count.length;
 
     const rarities = await Card.findAll({ attributes: [[fn('DISTINCT', col('rarity')), 'rarity']], where: { game: 'onepiece' } }).then(r => r.map(i => i.rarity));
-    const colors = await Card.findAll({ attributes: [[fn('DISTINCT', col('colors')), 'colors']], where: { game: 'onepiece' } }).then(r => r.map(i => i.colors));
+    const colors = await Card.findAll({ attributes: [[fn('DISTINCT', col('color')), 'color']], where: { game: 'onepiece' } }).then(r => r.map(i => i.color));
     const types = await Card.findAll({ attributes: [[fn('DISTINCT', col('type_line')), 'type_line']], where: { game: 'onepiece' } }).then(r => r.map(i => i.type_line));
     const rawSets = await Card.findAll({ attributes: [[fn('DISTINCT', col('set_name')), 'set_name']], where: { game: 'onepiece' } }).then(r => r.map(i => i.set_name));
 
@@ -98,7 +98,9 @@ const showCardsPage = async (req, res) => {
     setsByType.other.sort();
     const sortedSets = [...new Set([...setsByType.op, ...setsByType.st, ...setsByType.prb, ...setsByType.p, ...setsByType.other])];
 
-    const dons = await Card.findAll({ attributes: [[fn('DISTINCT', col('don')), 'don']], where: { game: 'onepiece' } }).then(r => r.map(i => i.don));
+    const dons = Card.rawAttributes.don
+      ? await Card.findAll({ attributes: [[fn('DISTINCT', col('don')), 'don']], where: { game: 'onepiece' } }).then(r => r.map(i => i.don))
+      : [];
     const filterGroups = [
       { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
       { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
@@ -172,7 +174,7 @@ const searchCardsForSale = async (req, res) => {
     const searchQuery = req.query.q;
     let searchResults = [];
     if (searchQuery && searchQuery.length > 2) {
-      searchResults = await Card.findAll({
+      const cards = await Card.findAll({
         where: {
           game: 'onepiece',
           [Op.or]: [
@@ -181,7 +183,12 @@ const searchCardsForSale = async (req, res) => {
             { api_id: { [Op.iLike]: `%${searchQuery}%` } }
           ]
         },
-        attributes: ['name', 'set_name', 'image_url', 'api_id', 'code']
+        attributes: ['id', 'name', 'set_name', 'image_url', 'api_id', 'code']
+      });
+      searchResults = cards.map(card => {
+        const data = card.toJSON();
+        if (data._id == null) data._id = data.id;
+        return data;
       });
     }
     res.json(searchResults);
@@ -324,8 +331,14 @@ const getAllCards = async (req, res) => {
       limit: limit
     });
 
+    const cardsWithId = cards.map(card => {
+      const data = card.toJSON ? card.toJSON() : card;
+      if (data._id == null) data._id = data.id;
+      return data;
+    });
+
     res.json({
-      cards,
+      cards: cardsWithId,
       hasMore: (page * limit) < count,
       currentPage: page,
     });
@@ -398,8 +411,14 @@ const getAvailableCards = async (req, res) => {
         subQuery: false
     });
 
+    const cardsWithId = cards.map(card => {
+      const data = card.toJSON ? card.toJSON() : card;
+      if (data._id == null) data._id = data.id;
+      return data;
+    });
+
     res.json({
-      cards: cards,
+      cards: cardsWithId,
       hasMore: (currentPage * limit) < count.length,
       currentPage: currentPage,
       totalCards: count.length

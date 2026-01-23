@@ -7,15 +7,19 @@ const logger = require('../config/logger');
 const addToList = (req, res) => {
   try {
     const { cardId, quantity } = req.body;
+    const parsedCardId = Number(cardId);
+    if (!Number.isInteger(parsedCardId) || parsedCardId <= 0) {
+      return res.status(400).json({ success: false, message: 'ID de carta invalido.' });
+    }
 
     if (!req.session.list) req.session.list = [];
 
-    const existingItemIndex = req.session.list.findIndex(item => item.cardId === cardId);
+    const existingItemIndex = req.session.list.findIndex(item => Number(item.cardId) === parsedCardId);
 
     if (existingItemIndex > -1) {
       req.session.list[existingItemIndex].quantity += parseInt(quantity, 10);
     } else {
-      req.session.list.push({ cardId, quantity: parseInt(quantity, 10) });
+      req.session.list.push({ cardId: parsedCardId, quantity: parseInt(quantity, 10) });
     }
 
     const totalItems = req.session.list.reduce((sum, item) => sum + item.quantity, 0);
@@ -37,16 +41,23 @@ const showListPage = async (req, res) => {
       return res.render('pages/list', { wantList: [] });
     }
 
-    const cardIds = userList.map(item => item.cardId);
+    const cardIds = userList
+      .map(item => Number(item.cardId))
+      .filter(id => Number.isInteger(id) && id > 0);
+
+    if (cardIds.length === 0) {
+      req.session.list = [];
+      return res.render('pages/list', { wantList: [] });
+    }
     const cards = await Card.findAll({ where: { id: { [Op.in]: cardIds } } });
     const listings = await Listing.findAll({ 
         where: { cardId: { [Op.in]: cardIds } },
         order: [['price', 'ASC']],
-        include: [{ model: User, as: 'seller', attributes: ['username', 'accountType'] }]
+        include: [{ model: User, as: 'seller', attributes: ['id', 'username', 'accountType'] }]
     });
 
     const wantList = cards.map(card => {
-      const listItem = userList.find(item => item.cardId.toString() === card.id.toString());
+      const listItem = userList.find(item => Number(item.cardId) === Number(card.id));
       const cardListings = listings.filter(listing => listing.cardId.toString() === card.id.toString());
       
       return {
@@ -77,7 +88,7 @@ const filterSellers = async (req, res) => {
     const listings = await Listing.findAll({
         where: matchQuery,
         order: [['price', 'ASC']],
-        include: [{ model: User, as: 'seller', attributes: ['username'] }]
+        include: [{ model: User, as: 'seller', attributes: ['id', 'username'] }]
     });
 
     res.json(listings);
@@ -91,10 +102,13 @@ const filterSellers = async (req, res) => {
 const removeFromList = (req, res) => {
   try {
     const { cardId } = req.body;
+    const parsedCardId = Number(cardId);
     if (!req.session.list) {
       req.session.list = [];
     }
-    req.session.list = req.session.list.filter(item => item.cardId !== cardId);
+    if (Number.isInteger(parsedCardId) && parsedCardId > 0) {
+      req.session.list = req.session.list.filter(item => Number(item.cardId) !== parsedCardId);
+    }
     
     const totalItems = req.session.list.reduce((sum, item) => sum + item.quantity, 0);
 

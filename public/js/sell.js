@@ -97,10 +97,9 @@ document.addEventListener('DOMContentLoaded', () => {
                 <div class="staging-inputs">
                     <select name="condition" class="form-control">
                         <option value="NM">Near Mint (NM)</option>
-                        <option value="SP">Slightly Played (SP)</option>
+                        <option value="LP">Lightly Played (LP)</option>
                         <option value="MP">Moderately Played (MP)</option>
                         <option value="HP">Heavily Played (HP)</option>
-                        <option value="DMG">Damaged (DMG)</option>
                     </select>
                     <select name="language" class="form-control">
                         <option value="EN">Inglês</option>

@@ -75,8 +75,9 @@ document.addEventListener('DOMContentLoaded', () => {
             cards.forEach(card => {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card-item';
+                const cardId = card._id || card.id;
                 cardElement.innerHTML = `
-                    <a href="/card/${card._id}" class="card-link">
+                    <a href="/card/${cardId}" class="card-link">
                         <div class="card-image-container">
                             <img src="${card.image_url}" alt="${card.name}">
                         </div>

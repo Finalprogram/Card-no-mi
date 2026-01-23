@@ -4,6 +4,7 @@ const Order = require('../models/Order');
 const User = require('../models/User');
 const Listing = require('../models/Listing');
 const { MercadoPagoConfig, Preference, Payment } = require('mercadopago');
+const fetch = (...args) => import('node-fetch').then(({ default: fetchFn }) => fetchFn(...args));
 const logger = require('../config/logger');
 const { Op } = require('sequelize');
 const { cotarFreteMelhorEnvio, addItemToCart, purchaseShipments, printLabels } = require('../services/melhorEnvioClient');
@@ -170,6 +171,174 @@ async function createMercadoPagoPreference(req, res) {
     // Log de erro melhorado para capturar o objeto completo
     logger.error("Erro ao criar preferência do Mercado Pago:", error);
     res.status(500).json({ message: "Erro ao criar preferência de pagamento." });
+  }
+}
+
+async function createInfinitePayCheckoutLink(req, res) {
+  try {
+    const cart = req.session.cart;
+    const totals = req.session.totals;
+    const userId = req.session.user.id;
+
+    if (!cart || !cart.items || cart.items.length === 0) {
+      return res.status(400).json({ message: 'Carrinho vazio ou invalido.' });
+    }
+
+    const user = await User.findByPk(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'Usuario nao encontrado.' });
+    }
+
+    if (!user.documentNumber) {
+      return res.status(400).json({ message: 'CPF/CNPJ do usuario e obrigatorio para o pagamento.' });
+    }
+    if (!user.phone) {
+      return res.status(400).json({ message: 'Telefone do usuario e obrigatorio para o pagamento.' });
+    }
+    if (!req.session.shippingAddress) {
+      logger.error('Endereco de entrega nao encontrado na sessao ao criar checkout InfinitePay.');
+      return res.status(400).json({ message: 'Endereco de entrega e obrigatorio.' });
+    }
+
+    const shippingAddress = req.session.shippingAddress;
+    const shippingSelections = req.session.shippingSelections || [];
+
+    const orderItems = cart.items.map((item, index) => ({
+      id: `${item.listingId || item.listing || item.cardId || item.card || 'item'}-${index}`,
+      card: item.cardId,
+      listing: item.listingId,
+      seller: item.vendorId,
+      quantity: item.qty,
+      price: item.price,
+      cardName: item.meta.cardName,
+      sellerName: item.meta.sellerName,
+      marketplaceFee: item.marketplaceFee,
+      sellerNet: item.sellerNet,
+    }));
+
+    const newOrder = await Order.create({
+      userId: userId,
+      items: orderItems,
+      totals: totals,
+      shippingAddress: shippingAddress,
+      shippingSelections: shippingSelections,
+      status: 'PendingPayment',
+    });
+    logger.info(`[Order Creation] Order #${newOrder.id} created for user ${userId} with total ${totals.grand}. Status: PendingPayment.`);
+
+    const handle = process.env.INFINITEPAY_HANDLE;
+    if (!handle) {
+      return res.status(500).json({ message: 'INFINITEPAY_HANDLE nao configurado.' });
+    }
+
+    const baseUrl = process.env.BASE_URL.replace(/\/$/, '');
+    const redirectUrl = `${baseUrl}/payment/infinitepay/return?order=${newOrder.id}`;
+    const webhookUrl = `${baseUrl}/payment/infinitepay/webhook`;
+
+    const items = cart.items.map(item => ({
+      quantity: Number(item.qty),
+      price: Math.round(Number(item.price) * 100),
+      description: item.meta.cardName
+    }));
+
+    const payload = {
+      handle: handle.replace(/^@/, ''),
+      order_nsu: newOrder.id.toString(),
+      redirect_url: redirectUrl,
+      webhook_url: webhookUrl,
+      items,
+      buyer: {
+        name: user.fullName || user.username,
+        email: user.email,
+        document: user.documentNumber
+      }
+    };
+
+    logger.info('[payment] InfinitePay payload:', {
+      handle: payload.handle,
+      order_nsu: payload.order_nsu,
+      redirect_url: payload.redirect_url,
+      webhook_url: payload.webhook_url,
+      items_count: payload.items.length,
+      buyer_email: payload.buyer?.email
+    });
+
+    const response = await fetch('https://api.infinitepay.io/invoices/public/checkout/links', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    let data = null;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      logger.error('Erro ao ler resposta da InfinitePay:', parseError);
+    }
+
+    if (!response.ok) {
+      logger.error('Erro ao criar checkout InfinitePay:', {
+        status: response.status,
+        data
+      });
+      return res.status(502).json({ message: 'Erro ao criar checkout.', details: data || null });
+    }
+
+    const checkoutUrl = data?.checkout_url || data?.url;
+    if (!checkoutUrl) {
+      logger.error('Resposta da InfinitePay sem checkout_url:', {
+        status: response.status,
+        data
+      });
+      return res.status(502).json({ message: 'checkout_url ausente na resposta do provedor.', details: data || null });
+    }
+
+    req.session.cart = { items: [], totalQty: 0, totalPrice: 0 };
+    delete req.session.shippingAddress;
+    delete req.session.shippingSelections;
+
+    res.json({ checkout_url: checkoutUrl, orderId: newOrder.id });
+  } catch (error) {
+    logger.error('Erro ao criar checkout InfinitePay:', error);
+    res.status(500).json({ message: 'Erro ao criar checkout.' });
+  }
+}
+
+async function handleInfinitePayReturn(req, res) {
+  const orderId = req.query.order;
+
+  try {
+    let order = null;
+    if (orderId) {
+      order = await Order.findByPk(orderId);
+    }
+
+    res.render('pages/checkout-success', {
+      message: 'Pagamento recebido! Estamos processando seu pedido.',
+      paymentStatus: 'pending',
+      totals: order ? order.totals : null
+    });
+  } catch (error) {
+    logger.error('Erro ao processar retorno da InfinitePay:', error);
+    res.render('pages/checkout-success', { message: 'Erro ao processar seu pagamento.', paymentStatus: 'pending', totals: null });
+  }
+}
+
+async function handleInfinitePayWebhook(req, res) {
+  try {
+    const { order_nsu: orderNsu, status } = req.body || {};
+    if (!orderNsu) {
+      return res.status(400).send('order_nsu ausente.');
+    }
+
+    let mappedStatus = 'pending';
+    if (status === 'paid') mappedStatus = 'approved';
+    if (status === 'canceled' || status === 'cancelled' || status === 'refused') mappedStatus = 'cancelled';
+
+    await processWebhookLogic(mappedStatus, orderNsu, res);
+  } catch (error) {
+    logger.error('Erro no webhook da InfinitePay:', error);
+    res.status(500).send('Erro interno do servidor.');
   }
 }
 
@@ -349,4 +518,14 @@ async function processWebhookLogic(status, external_reference, res) {
 }
 
 
-module.exports = { showPayment, createMercadoPagoPreference, handleMercadoPagoSuccess, handleMercadoPagoPending, handleMercadoPagoFailure, handleMercadoPagoWebhook };
+module.exports = {
+  showPayment,
+  createMercadoPagoPreference,
+  handleMercadoPagoSuccess,
+  handleMercadoPagoPending,
+  handleMercadoPagoFailure,
+  handleMercadoPagoWebhook,
+  createInfinitePayCheckoutLink,
+  handleInfinitePayReturn,
+  handleInfinitePayWebhook
+};

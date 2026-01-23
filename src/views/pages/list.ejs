@@ -113,7 +113,7 @@
                    // Normaliza campos
                    const available  = v.availableQty || v.quantity || 0;
                    const price      = Number(v.price || 0);
-                   const vendorId   = (v.seller && v.seller._id) || v.seller || '';
+                   const vendorId   = v.sellerId || (v.seller && (v.seller._id || v.seller.id)) || v.seller || '';
                    const sellerName = v.sellerName || (v.seller && (v.seller.username || v.seller.name)) || v.seller || 'Vendedor';
                    const cond       = (v.condition || '').toLowerCase();
                    const lang       = (v.language || '').toLowerCase();
@@ -128,7 +128,7 @@
                      data-vendorid ="<%= vendorId %>"
                      data-price    ="<%= price %>"
                      data-available="<%= available %>"
-                     data-listingid="<%= v._id %>">
+                     data-listingid="<%= v._id || v.id %>">
 
                   <span class="seller-name">
                     <% if (vendorId) { %>

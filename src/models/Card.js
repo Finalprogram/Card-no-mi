@@ -11,6 +11,10 @@ const Card = sequelize.define('Card', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  variant: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
   code: {
     type: DataTypes.STRING
   },
@@ -37,26 +41,26 @@ const Card = sequelize.define('Card', {
     type: DataTypes.STRING
   },
   family: {
-    type: DataTypes.STRING
+    type: DataTypes.TEXT
   },
   ability: {
-    type: DataTypes.STRING
+    type: DataTypes.TEXT
   },
   trigger: {
-    type: DataTypes.STRING
+    type: DataTypes.TEXT
   },
   game: {
     type: DataTypes.ENUM('onepiece'),
     allowNull: false
   },
   set_name: {
-    type: DataTypes.STRING
+    type: DataTypes.TEXT
   },
   image_url: {
-    type: DataTypes.STRING
+    type: DataTypes.TEXT
   },
   type_line: {
-    type: DataTypes.STRING
+    type: DataTypes.TEXT
   },
   price_trend: {
     type: DataTypes.ENUM('up', 'down', 'stable'),

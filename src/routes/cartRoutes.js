@@ -2,7 +2,6 @@
 const express = require('express');
 const router = express.Router();
 const cartController = require('../controllers/cartController');
-const { isAuthApi } = require('../middleware/auth');
 
 /**
  * @fileoverview Rotas para gerenciar o carrinho de compras.
@@ -12,8 +11,6 @@ const { isAuthApi } = require('../middleware/auth');
  */
 
 // Aplica o middleware de autenticação a todas as rotas do carrinho
-router.use(isAuthApi);
-
 /**
  * Rota para exibir o conteúdo do carrinho.
  * @name GET /cart/

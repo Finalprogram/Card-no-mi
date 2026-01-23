@@ -2,6 +2,7 @@ const { Op } = require('sequelize');
 const User = require('../models/User');
 const ForumThread = require('../models/ForumThread');
 const ForumPost = require('../models/ForumPost');
+const ForumCategory = require('../models/ForumCategory');
 const UserReputation = require('../models/UserReputation');
 const logger = require('../config/logger');
 

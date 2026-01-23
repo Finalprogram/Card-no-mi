@@ -6,7 +6,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const btn = event.target;
       const cardItem = btn.closest('.card-item');
       const input = cardItem?.querySelector('.quantity-input');
-      const cardId = btn.dataset.cardid;
+      const rawCardId = btn.dataset.cardid;
+      const cardId = Number(rawCardId);
+      if (!Number.isInteger(cardId) || cardId <= 0) {
+        console.warn('ID de carta invalido:', rawCardId);
+        window.showToast?.('Carta invalida. Recarregue a pagina e tente novamente.', 'error');
+        return;
+      }
       const quantity = input ? input.value : 1;
 
       fetch('/api/list/add', {

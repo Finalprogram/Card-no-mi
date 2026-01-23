@@ -175,18 +175,20 @@ async function quoteDetailed(req, res) {
 
       // Cotar frete usando o Melhor Envio
       const services = '1,2,18'; // Exemplo: PAC, SEDEX, Jadlog.Package
-      const options = await cotarFreteMelhorEnvio({
-        fromPostalCode: cepOrigem,
-        toPostalCode: zip,
-        pkg: {
-          width: larguraCm,
-          height: alturaCm,
-          length: comprimentoCm,
-          weight: pesoKg,
-          insurance_value: insuranceValue,
-        },
-        services,
-      });
+      // Fallback temporario: frete desativado enquanto o token do Melhor Envio nao valida.
+      // const options = await cotarFreteMelhorEnvio({
+      //   fromPostalCode: cepOrigem,
+      //   toPostalCode: zip,
+      //   pkg: {
+      //     width: larguraCm,
+      //     height: alturaCm,
+      //     length: comprimentoCm,
+      //     weight: pesoKg,
+      //     insurance_value: insuranceValue,
+      //   },
+      //   services,
+      // });
+      const options = [];
 
       // Filtra apenas as opções válidas (sem erro) e ordena por preço
       const validOptions = options
@@ -238,9 +240,10 @@ async function confirm(req, res) {
       return res.status(400).send('Carrinho vazio ou inválido.');
     }
 
-    if (!shippingSelections || shippingSelections === '[]') {
-      req.session.message = { type: 'error', text: 'Por favor, calcule e selecione uma opção de frete.' };
-      return res.redirect('/checkout');
+    const hasShippingSelections = shippingSelections && shippingSelections !== '[]';
+    if (!hasShippingSelections) {
+      // Frete temporariamente desativado: permitir checkout sem selecao.
+      req.session.shippingSelections = [];
     }
 
     let totalMarketplaceFee = 0;
@@ -283,9 +286,10 @@ async function confirm(req, res) {
     req.session.cart.items = processedItems;
 
     let shippingTotal = 0;
-    if (shippingSelections) {
+    if (hasShippingSelections) {
       const selections = JSON.parse(shippingSelections);
       shippingTotal = selections.reduce((total, selection) => total + selection.price, 0);
+      req.session.shippingSelections = selections;
     }
 
     const subtotal = cart.totalPrice || 0;
@@ -318,8 +322,7 @@ async function confirm(req, res) {
 
     // Store address and shipping selections in session for later use
     req.session.shippingAddress = user.address;
-    req.session.shippingSelections = JSON.parse(shippingSelections);
-
+    
     res.redirect('/payment');
   } catch (e) {
     console.error('Erro ao processar o checkout e calcular taxas:', e);

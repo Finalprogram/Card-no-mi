@@ -1,14 +1,16 @@
 document.addEventListener('DOMContentLoaded', function () {
-  const mpButton = document.getElementById('mercadopago-button');
+  const infinitePayButton = document.getElementById('infinitepay-button');
 
-  if (mpButton) {
-    mpButton.addEventListener('click', async function () {
+  if (infinitePayButton) {
+  console.log('[payment] InfinitePay button ready');
+    infinitePayButton.addEventListener('click', async function () {
       try {
+        console.log('[payment] InfinitePay click');
         // Mostra algum feedback para o usuário que a ação está acontecendo
-        mpButton.textContent = 'Processando...';
-        mpButton.disabled = true;
+        infinitePayButton.textContent = 'Processando...';
+        infinitePayButton.disabled = true;
 
-        const response = await fetch('/payment/mercadopago/create-preference', {
+        const response = await fetch('/payment/infinitepay/create-link', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -17,18 +19,21 @@ document.addEventListener('DOMContentLoaded', function () {
 
         if (response.ok) {
           const data = await response.json();
-          // Redireciona o usuário para a URL de pagamento do Mercado Pago
-          window.open(data.init_point, '_blank');
+          // Redireciona o usuário para a URL de pagamento do InfinitePay
+          if (!data.checkout_url) {
+            throw new Error('checkout_url ausente');
+          }
+          window.location.href = data.checkout_url;
         } else {
           // Se houver um erro, exibe no console e reabilita o botão
-          console.error('Erro ao criar a preferência de pagamento.');
-          mpButton.textContent = 'Pagar com Mercado Pago';
-          mpButton.disabled = false;
+          console.error('Erro ao criar o checkout.');
+          infinitePayButton.textContent = 'Pagar com InfinitePay';
+          infinitePayButton.disabled = false;
         }
       } catch (error) {
         console.error('Erro na requisição:', error);
-        mpButton.textContent = 'Pagar com Mercado Pago';
-        mpButton.disabled = false;
+        infinitePayButton.textContent = 'Pagar com InfinitePay';
+        infinitePayButton.disabled = false;
       }
     });
   }

@@ -122,6 +122,10 @@ const User = sequelize.define('User', {
   balance: {
     type: DataTypes.JSON,
     defaultValue: {}
+  },
+  firstLogin: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true
   }
 }, {
   tableName: 'users',

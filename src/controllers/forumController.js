@@ -161,7 +161,7 @@ exports.getForumIndex = async (req, res) => {
                 where: { categoryId: category.id, isDeleted: false },
                 order: [['lastActivity', 'DESC']],
                 include: [
-                    { model: User, as: 'author', attributes: ['username', 'avatar', 'role', 'faction', 'factionPoints'] },
+                    { model: User, as: 'author', attributes: ['username', 'avatar', 'faction', 'factionPoints'] },
                     { model: User, as: 'lastActivityBy', attributes: ['username'] }
                 ]
             });
@@ -240,7 +240,7 @@ exports.getCategoryThreads = async (req, res) => {
         const pinnedThreads = await ForumThread.findAll({
             where: { ...query, isPinned: true },
             include: [
-                { model: User, as: 'author', attributes: ['username', 'avatar', 'role'] },
+                { model: User, as: 'author', attributes: ['username', 'avatar'] },
                 { model: User, as: 'lastActivityBy', attributes: ['username'] }
             ],
             order: [['lastActivity', 'DESC']]
@@ -264,7 +264,7 @@ exports.getCategoryThreads = async (req, res) => {
         const { count: totalThreads, rows: unpinnedThreads } = await ForumThread.findAndCountAll({
             where: unpinnedQuery,
             include: [
-                { model: User, as: 'author', attributes: ['username', 'avatar', 'role'] },
+                { model: User, as: 'author', attributes: ['username', 'avatar'] },
                 { model: User, as: 'lastActivityBy', attributes: ['username'] }
             ],
             order: sortOption,
@@ -339,7 +339,7 @@ exports.getThread = async (req, res) => {
         const thread = await ForumThread.findOne({
             where: threadQuery,
             include: [
-                { model: User, as: 'author', attributes: ['username', 'avatar', 'createdAt', 'role'] },
+                { model: User, as: 'author', attributes: ['username', 'avatar', 'createdAt'] },
                 { model: ForumCategory, as: 'category' }
             ]
         });
@@ -362,7 +362,7 @@ exports.getThread = async (req, res) => {
         const posts = await ForumPost.findAll({
             where: postQuery,
             include: [
-                { model: User, as: 'author', attributes: ['username', 'avatar', 'createdAt', 'role'] },
+                { model: User, as: 'author', attributes: ['username', 'avatar', 'createdAt'] },
                 { model: ForumPost, as: 'parentPost' },
                 { model: ForumPost, as: 'quotedPost' }
             ],
@@ -723,7 +723,7 @@ exports.searchForum = async (req, res) => {
         const { count, rows: threads } = await ForumThread.findAndCountAll({
             where: whereClause,
             include: [
-                { model: User, as: 'author', attributes: ['username', 'avatar', 'role'] },
+                { model: User, as: 'author', attributes: ['username', 'avatar'] },
                 { model: ForumCategory, as: 'category', attributes: ['name', 'slug'] }
             ],
             order: orderOption,
@@ -1111,7 +1111,7 @@ exports.getModerationDashboard = async (req, res) => {
                 isDeleted: false
             },
             include: [
-                { model: User, as: 'author', attributes: ['username', 'avatar', 'role'] },
+                { model: User, as: 'author', attributes: ['username', 'avatar'] },
                 { model: ForumCategory, as: 'category', attributes: ['name', 'slug'] }
             ],
             order: [['createdAt', 'DESC']],

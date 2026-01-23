@@ -65,4 +65,31 @@ router.get('/mercadopago/failure', isAuthPage, paymentController.handleMercadoPa
  */
 router.post('/mercadopago/webhook', paymentController.handleMercadoPagoWebhook);
 
+/**
+ * Rota para criar um link de pagamento da InfinitePay.
+ * @name POST /payment/infinitepay/create-link
+ * @function
+ * @memberof module:routes/paymentRoutes
+ * @inner
+ */
+router.post('/infinitepay/create-link', isAuthPage, paymentController.createInfinitePayCheckoutLink);
+
+/**
+ * Rota de retorno do checkout da InfinitePay.
+ * @name GET /payment/infinitepay/return
+ * @function
+ * @memberof module:routes/paymentRoutes
+ * @inner
+ */
+router.get('/infinitepay/return', isAuthPage, paymentController.handleInfinitePayReturn);
+
+/**
+ * Rota para webhook da InfinitePay.
+ * @name POST /payment/infinitepay/webhook
+ * @function
+ * @memberof module:routes/paymentRoutes
+ * @inner
+ */
+router.post('/infinitepay/webhook', paymentController.handleInfinitePayWebhook);
+
 module.exports = router;
