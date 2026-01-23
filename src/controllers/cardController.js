@@ -28,11 +28,48 @@ const showCardsPage = async (req, res) => {
     });
     const distinctCardIds = distinctCardIdsResult.map(item => item.cardId);
 
+    const rarities = await Card.findAll({ attributes: [[fn('DISTINCT', col('rarity')), 'rarity']], where: { game: 'onepiece' } }).then(r => r.map(i => i.rarity));
+    const colors = await Card.findAll({ attributes: [[fn('DISTINCT', col('color')), 'color']], where: { game: 'onepiece' } }).then(r => r.map(i => i.color));
+    const types = await Card.findAll({ attributes: [[fn('DISTINCT', col('type_line')), 'type_line']], where: { game: 'onepiece' } }).then(r => r.map(i => i.type_line));
+    const rawSets = await Card.findAll({ attributes: [[fn('DISTINCT', col('set_name')), 'set_name']], where: { game: 'onepiece' } }).then(r => r.map(i => i.set_name));
+
+    const setsByType = { op: [], st: [], prb: [], p: [], other: [] };
+    rawSets.forEach(rawSet => {
+      if (!rawSet) return;
+      const opMatch = rawSet.match(/OP-?(\d+)/i);
+      const stMatch = rawSet.match(/ST-?(\d+)/i);
+      const prbMatch = rawSet.match(/PRB-?(\d+)/i);
+      const pMatch = rawSet.match(/P-?(\d+)/i);
+      if (opMatch) { setsByType.op.push('OP' + opMatch[1].padStart(2, '0')); }
+      else if (stMatch) { setsByType.st.push('ST' + stMatch[1].padStart(2, '0')); }
+      else if (prbMatch) { setsByType.prb.push('PRB-' + prbMatch[1].padStart(3, '0')); }
+      else if (pMatch) { setsByType.p.push('P-' + pMatch[1].padStart(3, '0')); }
+      else { setsByType.other.push(rawSet); }
+    });
+    const sortNumerically = (a, b) => (parseInt(a.match(/\d+/)?.[0] || 0) - parseInt(b.match(/\d+/)?.[0] || 0));
+    setsByType.op.sort(sortNumerically);
+    setsByType.st.sort(sortNumerically);
+    setsByType.prb.sort(sortNumerically);
+    setsByType.p.sort(sortNumerically);
+    setsByType.other.sort();
+    const sortedSets = [...new Set([...setsByType.op, ...setsByType.st, ...setsByType.prb, ...setsByType.p, ...setsByType.other])];
+
+    const dons = Card.rawAttributes.don
+      ? await Card.findAll({ attributes: [[fn('DISTINCT', col('don')), 'don']], where: { game: 'onepiece' } }).then(r => r.map(i => i.don))
+      : [];
+    const filterGroups = [
+      { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
+      { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
+      { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
+      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] },
+      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] }
+    ];
+
     if (distinctCardIds.length === 0) {
       return res.render('pages/cardSearchPage', {
         title: 'Explorar Cartas de One Piece',
         game: 'onepiece',
-        filterGroups: [],
+        filterGroups: filterGroups,
         cards: [],
         currentPage,
         hasMore: false,
@@ -72,43 +109,6 @@ const showCardsPage = async (req, res) => {
 
     const totalCards = count.length;
 
-    const rarities = await Card.findAll({ attributes: [[fn('DISTINCT', col('rarity')), 'rarity']], where: { game: 'onepiece' } }).then(r => r.map(i => i.rarity));
-    const colors = await Card.findAll({ attributes: [[fn('DISTINCT', col('color')), 'color']], where: { game: 'onepiece' } }).then(r => r.map(i => i.color));
-    const types = await Card.findAll({ attributes: [[fn('DISTINCT', col('type_line')), 'type_line']], where: { game: 'onepiece' } }).then(r => r.map(i => i.type_line));
-    const rawSets = await Card.findAll({ attributes: [[fn('DISTINCT', col('set_name')), 'set_name']], where: { game: 'onepiece' } }).then(r => r.map(i => i.set_name));
-
-    const setsByType = { op: [], st: [], prb: [], p: [], other: [] };
-    rawSets.forEach(rawSet => {
-      if (!rawSet) return;
-      const opMatch = rawSet.match(/OP-?(\d+)/i);
-      const stMatch = rawSet.match(/ST-?(\d+)/i);
-      const prbMatch = rawSet.match(/PRB-?(\d+)/i);
-      const pMatch = rawSet.match(/P-?(\d+)/i);
-      if (opMatch) { setsByType.op.push('OP' + opMatch[1].padStart(2, '0')); }
-      else if (stMatch) { setsByType.st.push('ST' + stMatch[1].padStart(2, '0')); }
-      else if (prbMatch) { setsByType.prb.push('PRB-' + prbMatch[1].padStart(3, '0')); }
-      else if (pMatch) { setsByType.p.push('P-' + pMatch[1].padStart(3, '0')); }
-      else { setsByType.other.push(rawSet); }
-    });
-    const sortNumerically = (a, b) => (parseInt(a.match(/\d+/)?.[0] || 0) - parseInt(b.match(/\d+/)?.[0] || 0));
-    setsByType.op.sort(sortNumerically);
-    setsByType.st.sort(sortNumerically);
-    setsByType.prb.sort(sortNumerically);
-    setsByType.p.sort(sortNumerically);
-    setsByType.other.sort();
-    const sortedSets = [...new Set([...setsByType.op, ...setsByType.st, ...setsByType.prb, ...setsByType.p, ...setsByType.other])];
-
-    const dons = Card.rawAttributes.don
-      ? await Card.findAll({ attributes: [[fn('DISTINCT', col('don')), 'don']], where: { game: 'onepiece' } }).then(r => r.map(i => i.don))
-      : [];
-    const filterGroups = [
-      { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
-      { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
-      { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
-      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] },
-      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] }
-    ];
-
     res.render('pages/cardSearchPage', {
       title: 'Explorar Cartas de One Piece',
       game: 'onepiece',
@@ -122,7 +122,7 @@ const showCardsPage = async (req, res) => {
     });
   } catch (error) {
     console.error("Erro na página de busca de One Piece:", error);
-    res.render('pages/cardSearchPage', { title: 'Erro', game: 'onepiece', filterGroups: [], cards: [], filters: {}, currentPage: 1, hasMore: false, totalCards: 0 });
+    res.render('pages/cardSearchPage', { title: 'Erro', game: 'onepiece', filterGroups: filterGroups, cards: [], filters: {}, currentPage: 1, hasMore: false, totalCards: 0 });
   }
 };
 

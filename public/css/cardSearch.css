@@ -74,34 +74,27 @@
     align-items: center;
     flex: 1;
     min-width: 300px;
+    padding: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid var(--border, #ddd);
+    background: var(--bg-surface, #fff);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
 }
 
 .search-input-main {
-    .card-item {
-        width: 100%;
-        max-width: 220px;
-        margin: 0 auto;
-        background-color: var(--bg-surface);
-        border-radius: 8px;
-        padding: 1rem;
-        border: 1px solid var(--border);
-        position: relative;
-        z-index: 1;
-        text-align: center;
-        transition: all 0.2s ease-in-out, border-width 0.2s ease-in-out, border-color 0.2s ease-in-out;
-        min-height: 375px;
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-        overflow: hidden;
-        /* Removido o scale do card, zoom só na imagem */
-    padding: 0.75rem 1rem;
-    border: 1px solid var(--border, #ddd);
-    border-radius: 8px;
+    flex: 1;
+    min-width: 220px;
+    padding: 0.8rem 1.1rem;
+    border: 2px solid var(--border, #ddd);
+    border-radius: 999px;
     font-size: 1rem;
     background-color: var(--bg-surface, #fff);
     color: var(--text-primary, #000);
-    transition: border-color 0.2s;
+    transition: border-color 0.2s, box-shadow 0.2s, background-color 0.2s;
+}
+
+.search-input-main::placeholder {
+    color: var(--text-muted, #777);
 }
 
 .search-input-main:focus {
@@ -115,6 +108,7 @@
     gap: 0.5rem;
     padding: 0.75rem 1.5rem;
     white-space: nowrap;
+    border-radius: 999px;
 }
 
 /* Modal de Filtros */

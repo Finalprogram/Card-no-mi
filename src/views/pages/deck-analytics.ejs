@@ -9,9 +9,9 @@
             <h2>Lista de Cartas</h2>
             <div class="card-list-grid">
                 <% if (deck.leader && deck.leader.card) { %>
-                    <div class="card-item" data-card-id="<%= deck.leader.card._id %>" onclick="openCardModal(this)">
+                    <div class="card-item" data-card-id="<%= deck.leader.card._id || deck.leader.card.id %>" onclick="openCardModal(this)">
                         <div class="card-item-image">
-                            <img src="<%= deck.leader.card.images.small %>" alt="<%= deck.leader.card.name %>">
+                            <img src="<%= deck.leader.card.images?.small || deck.leader.card.images?.url || deck.leader.card.image_url %>" alt="<%= deck.leader.card.name %>">
                             <div class="card-hover-overlay">Clique para detalhes</div>
                             <span class="card-quantity-badge">1x</span>
                         </div>
@@ -23,9 +23,9 @@
                 <% } %>
                 <% deck.main.forEach(item => { %>
                     <% if (item.card) { %>
-                        <div class="card-item" data-card-id="<%= item.card._id %>" onclick="openCardModal(this)">
+                        <div class="card-item" data-card-id="<%= item.card._id || item.card.id %>" onclick="openCardModal(this)">
                             <div class="card-item-image">
-                                <img src="<%= item.card.images.small %>" alt="<%= item.card.name %>">
+                                <img src="<%= item.card.images?.small || item.card.images?.url || item.card.image_url %>" alt="<%= item.card.name %>">
                                 <div class="card-hover-overlay">Clique para detalhes</div>
                                 <span class="card-quantity-badge"><%= item.quantity %>x</span>
                             </div>
@@ -131,7 +131,7 @@
                             </div>
                             ` : ''}
                         </div>
-                        <a href="/card/${card._id}" class="btn btn-primary">Ver Completa</a>
+                        <a href="/card/${card._id || card.id}" class="btn btn-primary">Ver Completa</a>
                     </div>
                 </div>
             `;
