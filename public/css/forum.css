@@ -3417,6 +3417,22 @@
   font-size: 1.1rem;
 }
 
+.btn-forum-back {
+  margin-top: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(37, 99, 235, 0.12);
+  font-size: 0.7rem;
+}
+
+.btn-forum-back:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(37, 99, 235, 0.18);
+}
+
 /* === Botão de Moderação no Navbar === */
 .moderation-link {
   color: #ff6b6b !important;
