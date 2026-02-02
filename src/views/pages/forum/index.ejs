@@ -141,18 +141,35 @@
       <div class="stat-box">
         <i class="fas fa-users stat-icon"></i>
         <div class="stat-content">
-          <span class="stat-number">---</span>
+          <span class="stat-number"><%= totalUsers || 0 %></span>
           <span class="stat-text">Membros Ativos</span>
         </div>
       </div>
       <div class="stat-box">
         <i class="fas fa-fire stat-icon"></i>
         <div class="stat-content">
-          <span class="stat-number">---</span>
+          <span class="stat-number"><%= onlineUsersCount || 0 %></span>
           <span class="stat-text">Online Agora</span>
         </div>
       </div>
     </div>
+  </div>
+
+
+  <div class="forum-online-section">
+    <h3><i class="fas fa-user-friends"></i> Online agora</h3>
+    <% if (onlineUsers && onlineUsers.length > 0) { %>
+      <div class="online-users">
+        <% onlineUsers.forEach(onlineUser => { %>
+          <a href="/forum/user/<%= onlineUser.username %>" class="online-user" title="<%= onlineUser.username %>">
+            <img src="<%= onlineUser.avatar || '/images/default-avatar.png' %>" alt="<%= onlineUser.username %>" class="online-avatar">
+            <span class="online-name"><%= onlineUser.username %></span>
+          </a>
+        <% }) %>
+      </div>
+    <% } else { %>
+      <p class="online-empty">Nenhum usuario online agora.</p>
+    <% } %>
   </div>
 
   <!-- Regras do Fórum -->

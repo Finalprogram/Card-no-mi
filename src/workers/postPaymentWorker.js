@@ -8,7 +8,7 @@ const Listing = require('../models/Listing');
 const Card = require('../models/Card');
 const { addItemToCart, purchaseShipments, generateLabels, printLabels } = require('../services/melhorEnvioClient');
 const { estimatePackageDims } = require('../services/packaging');
-const { sendEmail } = require('../services/emailService');
+const { sendEmail, sendOrderStatusEmail, sendSaleEmail } = require('../services/emailService');
 const { updateSellerBalancesForOrder } = require('../services/balanceService');
 const notificationService = require('../services/notificationService');
 
@@ -190,12 +190,18 @@ if (redisConnection && redisConnection.status === 'ready') {
     // Notify buyer that order was confirmed
     await notificationService.notifyOrderStatus(order.user.id, orderId, 'Paid');
     
+        // Email buyer about payment confirmation
+    if (order.user && order.user.email) {
+      await sendOrderStatusEmail(order.user.email, orderId, 'Paid', { name: order.user.fullName || order.user.username });
+    }
+
     // Notify each seller about their sales
     const buyerUsername = order.user.username || order.user.fullName;
     for (const item of order.items) {
       const listing = await Listing.findByPk(item.listing, {
         include: [{ model: Card, as: 'card' }]
       });
+      const seller = await User.findByPk(item.seller);
       if (listing) {
         const cardName = listing.card?.name || 'Carta';
         const totalPrice = item.price * item.quantity;
@@ -207,6 +213,9 @@ if (redisConnection && redisConnection.status === 'ready') {
           totalPrice,
           orderId
         );
+        if (seller && seller.email) {
+          await sendSaleEmail(seller.email, orderId, cardName, item.quantity, totalPrice, { name: seller.fullName || seller.username });
+        }
       }
     }
     logger.info(`[worker] Notifications sent for order ${orderId}`);

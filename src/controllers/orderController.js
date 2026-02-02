@@ -1,6 +1,7 @@
 const Order = require('../models/Order');
 const logger = require('../config/logger');
 const notificationService = require('../services/notificationService');
+const { sendOrderStatusEmail } = require('../services/emailService');
 
 const confirmReceipt = async (req, res) => {
   try {
@@ -26,6 +27,9 @@ const confirmReceipt = async (req, res) => {
 
     // Notificar comprador que pedido foi entregue
     await notificationService.notifyOrderStatus(userId, orderId, 'Delivered');
+    if (order.userId && req.session.user && req.session.user.email) {
+      await sendOrderStatusEmail(req.session.user.email, orderId, 'Delivered', { name: req.session.user.username });
+    }
 
     logger.info(`[Order Update] Order #${orderId} status changed to Delivered by User ID: ${userId}.`);
 

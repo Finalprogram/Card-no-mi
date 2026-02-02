@@ -81,4 +81,56 @@ const sendPasswordResetEmail = async (to, token) => {
   await sendEmail(to, subject, htmlContent);
 };
 
-module.exports = { sendVerificationEmail, sendEmail, sendPasswordResetEmail };
+
+const sendOrderStatusEmail = async (to, orderId, status, data = {}) => {
+  let baseUrl = process.env.BASE_URL;
+  if (baseUrl.startsWith('www.')) {
+    baseUrl = baseUrl.substring(4);
+  }
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  const orderUrl = new URL(`/meus-pedidos/${orderId}`, baseUrl).toString();
+
+  const statusMap = {
+    PendingPayment: 'Pagamento pendente',
+    Processing: 'Em processamento',
+    Paid: 'Pagamento confirmado',
+    Shipped: 'Enviado',
+    Delivered: 'Entregue',
+    Cancelled: 'Cancelado'
+  };
+
+  const subject = `Atualizacao do pedido #${orderId} - ${statusMap[status] || status}`;
+  const htmlContent = `
+      <p>Ola${data.name ? `, ${data.name}` : ''}!</p>
+      <p>Seu pedido <strong>#${orderId}</strong> foi atualizado para: <strong>${statusMap[status] || status}</strong>.</p>
+      <p>Acompanhe os detalhes aqui: <a href="${orderUrl}">${orderUrl}</a></p>
+      <p>Obrigado por comprar na Card no Mi.</p>
+    `;
+
+  await sendEmail(to, subject, htmlContent);
+};
+
+const sendSaleEmail = async (to, orderId, itemName, quantity, totalPrice, data = {}) => {
+  let baseUrl = process.env.BASE_URL;
+  if (baseUrl.startsWith('www.')) {
+    baseUrl = baseUrl.substring(4);
+  }
+  if (!baseUrl.startsWith('http://') && !baseUrl.startsWith('https://')) {
+    baseUrl = `https://${baseUrl}`;
+  }
+  const orderUrl = new URL(`/meus-pedidos-vendidos?order=${orderId}`, baseUrl).toString();
+
+  const subject = `Voce tem uma nova venda - Pedido #${orderId}`;
+  const htmlContent = `
+      <p>Ola${data.name ? `, ${data.name}` : ''}!</p>
+      <p>Voce vendeu <strong>${quantity}x ${itemName}</strong> no pedido <strong>#${orderId}</strong>.</p>
+      <p>Total da venda: <strong>R$ ${Number(totalPrice || 0).toFixed(2).replace('.', ',')}</strong></p>
+      <p>Detalhes: <a href="${orderUrl}">${orderUrl}</a></p>
+    `;
+
+  await sendEmail(to, subject, htmlContent);
+};
+
+module.exports = { sendVerificationEmail, sendEmail, sendPasswordResetEmail, sendOrderStatusEmail, sendSaleEmail };

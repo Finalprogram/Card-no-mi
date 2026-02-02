@@ -75,6 +75,8 @@ const profileRoutes = require('./src/routes/profileRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const reportCounter = require('./src/middleware/reportCounter');
 const Card = require('./src/models/Card'); // Import the Card model
+const lastActivityUpdate = {};
+const LAST_ACTIVITY_DEBOUNCE_MS = 60 * 1000;
 
 // 2. Inicialização do App
 const app = express();
@@ -160,6 +162,12 @@ app.use(async (req, res, next) => {
   if (req.session.user && req.session.user.id) {
     try {
       const User = require('./src/models/User');
+      const userId = req.session.user.id;
+      const now = Date.now();
+      if (!lastActivityUpdate[userId] || (now - lastActivityUpdate[userId] > LAST_ACTIVITY_DEBOUNCE_MS)) {
+        await User.update({ lastActivityAt: new Date(now) }, { where: { id: userId } });
+        lastActivityUpdate[userId] = now;
+      }
       const updatedUser = await User.findByPk(req.session.user.id, {
         attributes: ['id', 'username', 'email', 'avatar', 'accountType']
       });

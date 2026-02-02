@@ -170,12 +170,25 @@ exports.getForumIndex = async (req, res) => {
             category.postCount = postCount;
             category.lastThread = lastThread;
         }
+        const totalUsers = await User.count();
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+        const onlineUsersCount = await User.count({ where: { lastActivityAt: { [Op.gte]: fiveMinutesAgo } } });
+        const onlineUsers = await User.findAll({
+            where: { lastActivityAt: { [Op.gte]: fiveMinutesAgo } },
+            attributes: ['id', 'username', 'avatar', 'faction', 'factionPoints', 'lastActivityAt'],
+            order: [['lastActivityAt', 'DESC']],
+            limit: 12
+        });
 
         res.render('pages/forum/index', {
             categories,
+            totalUsers,
+            onlineUsersCount,
+            onlineUsers,
             user: req.session.user || null,
-            pageTitle: 'Fórum Card no Mi'
+            pageTitle: 'F?rum Card no Mi'
         });
+
     } catch (error) {
         logger.error('Erro ao buscar índice do fórum:', error);
         res.status(500).send('Erro interno do servidor');

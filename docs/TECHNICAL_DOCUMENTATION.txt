@@ -1,0 +1,537 @@
+# Documentação Técnica: Card-no-mi
+
+Este documento serve como guia oficial para desenvolvedores que darão manutenção, evoluirão e depurarão a aplicação.
+
+## Índice
+
+1.  [Visão Geral](#1-visao-geral)
+2.  [Stack e Dependências](#2-stack-e-dependencias)
+3.  [Estrutura do Repositório](#3-estrutura-do-repositorio)
+4.  [Guia de Instalação e Execução](#4-guia-de-instalacao-e-execucao)
+5.  [Configuração (Variáveis de Ambiente)](#5-configuracao-variaveis-de-ambiente)
+6.  [Arquitetura e Fluxo de Dados](#6-arquitetura-e-fluxo-de-dados)
+7.  [API e Rotas](#7-api-e-rotas)
+8.  [Banco de Dados](#8-banco-de-dados)
+9.  [Integrações Externas](#9-integracoes-externas)
+10. [Logging, Observabilidade e Debug](#10-logging-observabilidade-e-debug)
+11. [Testes](#11-testes)
+12. [Segurança](#12-seguranca)
+13. [Contribuição](#13-contribuicao)
+14. [Leitura Guiada do Código](#14-leitura-guiada-do-codigo)
+
+---
+
+## 1. Visão Geral
+
+### O que é o projeto
+
+**Card-no-mi** é uma plataforma de marketplace online para compra e venda de Trading Card Games (TCGs), com um foco inicial e bem definido no jogo **One Piece Card Game**. O nome "Car'D No Mi" é uma brincadeira com "Akuma no Mi", as frutas do diabo do universo de One Piece.
+
+A plataforma permite que usuários se cadastrem como vendedores para listar seus cards, e como compradores para adquirir cards de múltiplos vendedores em um único carrinho de compras.
+
+### Público-Alvo
+
+*   **Jogadores e Colecionadores de TCGs:** Principalmente de One Piece, que buscam uma plataforma centralizada para comprar e vender cards.
+*   **Vendedores e Lojistas:** Pessoas ou pequenas empresas que querem um canal de venda especializado para atingir o público de TCGs.
+
+### Principais Funcionalidades
+
+*   Marketplace completo com listagem de produtos (cards), carrinho de compras e checkout.
+*   Sistema de usuários com perfis, reputação e autenticação baseada em sessão.
+*   Integração com múltiplos gateways de pagamento (Mercado Pago, InfinitePay).
+*   Cálculo de frete e automação de logística de envio via Melhor Envio.
+*   Sistema de notificações (vendas, status de pedidos) utilizando MongoDB.
+*   Fórum de comunidade para discussões, integrado ao sistema de usuários.
+*   Jobs em background para processamento assíncrono e resiliente de tarefas pós-pagamento.
+
+### Decisões de Arquitetura
+
+1.  **Monolito com Arquitetura em Camadas:** O projeto é um monolito Node.js/Express, mas com uma separação de responsabilidades muito clara (Rotas → Controllers → Services → Models). Isso facilita a manutenção e o raciocínio sobre o código, separando a lógica de negócio (`Services`) da orquestração de HTTP (`Controllers`).
+
+2.  **Processamento Assíncrono com Filas (Jobs):** A decisão mais importante foi desacoplar o processamento pós-pagamento. Em vez de executar tarefas pesadas (gerar frete, dar baixa em estoque, enviar notificações) no momento da requisição do webhook de pagamento, o sistema apenas adiciona um "job" a uma fila (BullMQ + Redis). Um processo `worker` separado consome essa fila. Isso torna a aplicação:
+    *   **Rápida:** A resposta ao webhook é imediata.
+    *   **Resiliente:** Se a API do Melhor Envio estiver fora do ar, o job pode ser tentado novamente mais tarde sem perder o pedido.
+    *   **Escalável:** Pode-se adicionar mais `workers` para processar um volume maior de pedidos.
+
+3.  **Banco de Dados Híbrido (Poliglot Persistence):**
+    *   **PostgreSQL (Relacional):** Usado para os dados principais e transacionais (usuários, pedidos, anúncios, saldos). A natureza relacional e a consistência (ACID) do Postgres são ideais para a integridade desses dados.
+    *   **MongoDB (NoSQL):** Usado para o sistema de notificações. A flexibilidade de schema e a otimização para escritas rápidas fazem do Mongo uma boa escolha para dados menos estruturados e com alto volume, como logs ou notificações.
+
+4.  **Observabilidade Centralizada:** A stack de **Grafana + Loki + Promtail** é uma escolha de nível profissional para gerenciar logs. Em vez de acessar arquivos de log em um servidor, todos os logs são centralizados em uma interface gráfica poderosa, o que acelera drasticamente a depuração e o monitoramento em produção.
+
+---
+
+## 2. Stack e Dependências
+
+| Tecnologia/Lib | Papel no Sistema |
+| :--- | :--- |
+| **Node.js** | Ambiente de execução (runtime) do backend. |
+| **Express.js** | Framework web para criação do servidor, rotas e middlewares. |
+| **EJS** | Template engine para renderizar as páginas HTML no lado do servidor. |
+| **PostgreSQL** | Banco de dados relacional principal (usuários, pedidos, anúncios). |
+| **Sequelize** | ORM (Object-Relational Mapper) para interagir com o PostgreSQL. |
+| **MongoDB** | Banco de dados NoSQL para o sistema de notificações. |
+| **Mongoose** | ODM (Object-Data Mapper) para interagir com o MongoDB. |
+| **Redis** | Banco de dados em memória, usado como backend para a fila de jobs. |
+| **BullMQ** | Biblioteca para gerenciamento de filas de jobs (processamento assíncrono). |
+| **Winston** | Biblioteca para logging da aplicação. |
+| **Grafana, Loki, Promtail**| Stack de observabilidade para coleta, armazenamento e visualização de logs. |
+| **Mercado Pago SDK** | Gateway de pagamento principal. |
+| **InfinitePay** | Gateway de pagamento alternativo (via API REST). |
+| **Melhor Envio** | Gateway de frete para cotação e geração de etiquetas. |
+| **Axios / node-fetch** | Clientes HTTP para consumir as APIs do One Piece e InfinitePay. |
+| **Bcrypt.js** | Biblioteca para hashing seguro de senhas. |
+| **express-session** | Gerenciamento de sessões de usuário. |
+| **connect-session-sequelize**| Armazena os dados da sessão no PostgreSQL, tornando-as persistentes. |
+| **Jest** | Framework para testes automatizados (unitários e de integração). |
+| **PM2** | Gerenciador de processos para rodar a aplicação em produção. |
+| **Nodemon** | Monitora mudanças no código e reinicia o servidor em desenvolvimento. |
+
+---
+
+## 3. Estrutura do Repositório
+
+O diretório `src/` contém o núcleo da aplicação e segue uma arquitetura em camadas.
+
+```
+Card-no-mi/
+├── docker-compose.yml      # Define serviços de suporte (Loki, Grafana, Redis)
+├── package.json            # Dependências e scripts do projeto
+├── server.js               # Ponto de entrada da aplicação
+├── .env.example            # Arquivo de exemplo para variáveis de ambiente
+├── scripts/                # Scripts de manutenção e sincronização de dados
+├── src/
+│   ├── config/             # Configurações globais (logger, regras de negócio)
+│   ├── controllers/        # Camada de Controladores: recebe requisições e retorna respostas
+│   ├── database/           # Configuração de conexão com o banco de dados
+│   ├── middleware/         # Middlewares do Express (auth, upload, etc.)
+│   ├── models/             # Modelos do Sequelize (Postgres) e Mongoose (Mongo)
+│   ├── routes/             # Definição de todas as rotas da API
+│   ├── services/           # Camada de Serviços: contém a lógica de negócio
+│   ├── utils/              # Funções utilitárias (validação, etc.)
+│   ├── views/              # Arquivos de template EJS (a camada de visualização)
+│   └── workers/            # Lógica dos processadores de jobs da fila (BullMQ)
+├── tests/                  # Arquivos de testes automatizados (Jest)
+├── loki-config/            # Configuração do Loki
+├── promtail-config/        # Configuração do Promtail
+└── logs/                   # Arquivos de log gerados pela aplicação
+```
+
+---
+
+## 4. Guia de Instalação e Execução
+
+### Pré-requisitos
+
+*   Node.js (versão recomendada: 18.x ou superior)
+*   PostgreSQL
+*   MongoDB
+*   Redis
+*   Docker e Docker Compose (para a stack de observabilidade)
+
+### Setup Local
+
+1.  **Clonar o repositório:**
+    ```bash
+    git clone https://github.com/Finalprogram/TCG-MARKETPLACE.git
+    cd Card-no-mi
+    ```
+
+2.  **Instalar dependências:**
+    ```bash
+    npm install
+    ```
+
+3.  **Configurar variáveis de ambiente:**
+    *   Copie o arquivo `.env.example` para um novo arquivo chamado `.env`.
+    *   Preencha todas as variáveis de ambiente necessárias no arquivo `.env`. Consulte a [seção de configuração](#5-configuracao-variaveis-de-ambiente) para mais detalhes.
+
+4.  **Rodar serviços de suporte com Docker:**
+    *   Isso iniciará o Grafana, Loki, Promtail e Redis.
+    *   ```bash
+      docker-compose up -d
+      ```
+
+5.  **Sincronizar o banco de dados (apenas na primeira vez em dev):**
+    *   Certifique-se que sua variável `DB_SYNC=true` no `.env`.
+    *   Ao iniciar a aplicação, o Sequelize criará as tabelas. **Atenção:** Isso não é um sistema de migrations.
+
+### Como Rodar
+
+*   **Modo de Desenvolvimento (com hot-reload):**
+    ```bash
+    npm run dev
+    ```
+    O servidor estará disponível em `http://localhost:3000` (ou a porta definida em `PORT`).
+
+*   **Modo de Produção (com PM2):**
+    ```bash
+    npm start
+    ```
+
+### Scripts Importantes
+
+*   `npm test`: Roda a suíte de testes automatizados.
+*   `npm run docs`: Gera a documentação JSDoc na pasta `docs/`.
+*   `npm run sync:onepiece`: Executa o script `scripts/bulkSyncOnePiece.js` para popular o banco de dados com os cards da API externa.
+
+---
+
+## 5. Configuração (Variáveis de Ambiente)
+
+| Variável | Exemplo | Obrigatório? | Descrição |
+| :--- | :--- | :--- | :--- |
+| **`NODE_ENV`** | `development` | Sim | Ambiente da aplicação (`development` ou `production`). Afeta logs e cookies seguros. |
+| **`PORT`** | `3000` | Não | Porta em que o servidor web irá rodar. Default: `3000`. |
+| **`BASE_URL`** | `http://localhost:3000` | Sim | URL base da aplicação, usada para gerar links absolutos em e-mails e webhooks. |
+| **`POSTGRES_URI`** | `postgres://user:pass@host:port/db`| Sim | String de conexão completa para o banco de dados PostgreSQL. |
+| **`DB_SYNC`** | `true` | Não | Se `true`, ativa o `sequelize.sync()`. **Apenas para desenvolvimento.** |
+| **`MONGODB_URI`** | `mongodb://host:port/db` | Sim | String de conexão completa para o banco de dados MongoDB. |
+| **`SESSION_SECRET`** | `um_segredo_bem_forte` | Sim | Chave secreta para assinar o cookie de sessão. |
+| **`SESSION_STORE`** | `memory` | Não | Se `memory`, usa sessão em memória. **Não use em produção.** |
+| **`REDIS_ENABLED`** | `true` | Não | Se `false`, desativa a conexão com o Redis e o sistema de filas. |
+| **`REDIS_URL`** | `redis://127.0.0.1:6379` | Sim | URL de conexão para o servidor Redis. |
+| **`MERCADO_PAGO_ACCESS_TOKEN`** | `APP_USR-...` | Sim | Token de acesso de produção ou sandbox da API do Mercado Pago. |
+| **`INFINITEPAY_HANDLE`**| `@seu_handle` | Sim | Identificador da sua conta na InfinitePay. |
+| **`MELHOR_ENVIO_TOKEN`** | `seu_token_jwt` | Sim | Token de acesso para a API do Melhor Envio. |
+| **`MELHOR_ENVIO_BASE_URL`**| `https://sandbox.melhorenvio.com.br`| Não | URL base da API do Melhor Envio. Permite usar o ambiente de sandbox. |
+| **`MELHOR_ENVIO_USER_AGENT`**| `Minha Loja (contato@loja.com)`| Sim | Identificação da aplicação para a API do Melhor Envio. |
+| **`MELHOR_ENVIO_CEP_ORIGEM`**| `99999-999` | Sim | CEP de origem padrão para cálculo de frete quando o vendedor não tem um. |
+| **`EMAIL_USER`** | `seu_email@provedor.com` | Sim | Nome de usuário do servidor SMTP para envio de e-mails. |
+| **`EMAIL_PASS`** | `sua_senha` | Sim | Senha do servidor SMTP. |
+| **`ADMIN_EMAIL`** | `admin@meusite.com` | Sim | E-mail do administrador para receber notificações de erro do sistema (ex: falha em jobs).|
+
+---
+
+## 6. Arquitetura e Fluxo de Dados
+
+A aplicação segue uma **Arquitetura em Camadas** com processamento assíncrono para tarefas pesadas.
+
+### Diagrama de Componentes (ASCII)
+
+```
++----------------+      +------------------+      +-----------------+
+|   Cliente      |----->|     Gateway      |----->|   Load Balancer |
+| (Browser/App)  |      |  (Nginx, etc.)   |      |  (Opcional)     |
++----------------+      +------------------+      +-----------------+
+                                                          |
+                                                          |
++---------------------------------------------------------+-----------------------------------------------------------+
+|                                                      Aplicação Card-no-mi                                           |
+|                                                                                                                       |
+|  +-----------+   +---------------+   +----------------+   +----------------+   +-----------------+   +---------------+  |
+|  |  Routes   |-->|  Middleware   |-->|  Controllers   |-->|    Services    |-->|     Models      |-->|  PostgreSQL   |  |
+|  | (Rotas)   |   | (Auth, Upload)|   | (Orquestração) |   | (Lógica Negócio)|   | (Sequelize)     |   | (Dados Core)  |  |
+|  +-----------+   +---------------+   +----------------+   +----------------+   +-----------------+   +---------------+  |
+|                                             |                    |                    |                                |
+|                                             |                    |                    |     +------------------+     |
+|                                             |                    |                    +---->|  MongoDB         |     |
+|                                             |                    |                          |  (Notificações)  |     |
+|                                             |                    |                          +------------------+     |
+|                                             |                    |                                                     |
+|                                             |     +--------------v----------------+                                   |
+|                                             |     |   Serviços Externos           |                                   |
+|                                             |     | - Mercado Pago                |                                   |
+|                                             |     | - Melhor Envio                |                                   |
+|                                             |     | - API de Cards                |                                   |
+|                                             +---->| - SMTP (E-mail)               |                                   |
+|                                                   +-------------------------------+                                   |
+|                                                                                                                       |
+|                                                                                                                       |
+|    +-------------------------+      +--------------------------+      +-------------------------------------------+    |
+|    |  postPaymentQueue.js    |----->|    Redis (BullMQ)        |<-----|        postPaymentWorker.js             |    |
+|    | (Adiciona Job na fila)  |      |    (Fila de Jobs)        |      |        (Processa Jobs em background)      |    |
+|    +-------------------------+      +--------------------------+      +-------------------------------------------+    |
+|                                                                                                                       |
++-----------------------------------------------------------------------------------------------------------------------+
+
+```
+
+### Fluxo Principal: Checkout de um Pedido
+
+1.  **Início:** O usuário clica em "Finalizar Compra". O frontend envia o carrinho para `POST /payment/mercadopago/create-preference`.
+2.  **Controller (`paymentController.js`):**
+    *   Valida a sessão do usuário, o carrinho e o endereço.
+    *   Cria um registro na tabela `Orders` com status `PendingPayment`.
+    *   Chama o `service` de pagamento para gerar a preferência no Mercado Pago.
+    *   Limpa o carrinho da sessão.
+    *   Retorna a URL de checkout do Mercado Pago para o frontend.
+3.  **Gateway de Pagamento:** O usuário é redirecionado para o Mercado Pago e efetua o pagamento.
+4.  **Webhook (Fonte da Verdade):** O Mercado Pago envia uma notificação `POST` para `/payment/mercadopago/webhook`.
+5.  **Controller (`paymentController.js`):**
+    *   O método `handleMercadoPagoWebhook` recebe a notificação.
+    *   Verifica se o pagamento foi `approved`.
+    *   **Atomicidade:** Faz um `UPDATE` na tabela `Orders`, mudando o status para `Processing` **apenas se** o status atual não for `Processing` ou `Paid`. Isso previne o processamento duplicado.
+6.  **Fila de Jobs (`postPaymentQueue.js`):**
+    *   Se a atualização atômica teve sucesso, ele chama `addPostPaymentJob(orderId)`, adicionando o pedido à fila no Redis. A resposta ao webhook é retornada imediatamente (`200 OK`).
+7.  **Worker (`postPaymentWorker.js`):**
+    *   O worker, rodando em um processo separado, detecta o novo job na fila.
+    *   Ele executa a lógica pesada: chama `melhorEnvioClient` para comprar o frete, dá baixa no estoque, atualiza saldos dos vendedores (`balanceService`), envia notificações (`notificationService`) e, ao final, atualiza o status do pedido para `Paid`.
+
+### Pontos de Extensão
+
+*   **Novos Gateways de Pagamento:** Adicione um novo `controller` (ex: `pagseguroController.js`) e rotas em `paymentRoutes.js`, seguindo o padrão do `paymentController.js`.
+*   **Novas Transportadoras:** Se o Melhor Envio não for suficiente, um novo `service` (ex: `frenetClient.js`) pode ser criado e integrado ao `checkoutController` para cotação e ao `postPaymentWorker` para compra.
+*   **Novas Notificações:** Adicione um novo método no `notificationService.js` e chame-o do `service` apropriado onde o evento ocorre.
+
+---
+
+## 7. API e Rotas
+
+As rotas são definidas em `src/routes/` e seguem um padrão RESTful. Todas as rotas são protegidas por middlewares de autenticação (`isAuthPage` para páginas EJS, `isAuthApi` para respostas JSON).
+
+*   **Autenticação (`/auth`):** `register`, `login`, `logout`, `forgot-password`, `reset-password`.
+*   **Anúncios (`/listing`):** CRUD para anúncios de cards.
+*   **Carrinho (`/cart`):** Adicionar, remover, visualizar itens no carrinho.
+*   **Checkout (`/checkout`):** Calcular frete, selecionar endereço.
+*   **Pagamento (`/payment`):** Criar preferências de pagamento, receber webhooks.
+*   **Pedidos (`/meus-pedidos`):** Visualizar histórico de compras e vendas.
+*   **Perfil (`/perfil`):** Visualizar e editar dados do usuário.
+*   **Fórum (`/forum`):** CRUD para categorias, tópicos e posts.
+
+### Exemplo de Fluxo: Login
+
+*   **`POST /auth/login`**
+    *   **Request Body:** `{ "email": "user@test.com", "password": "123" }`
+    *   **Controller:** `authController.loginUser`
+    *   **Sucesso (302 Redirect):** Redireciona para `/perfil/:userId` e define o cookie de sessão.
+    *   **Falha (Redirect com Flash Message):** Redireciona de volta para `/auth/login` com uma mensagem de erro.
+
+### Códigos de Erro Comuns (API)
+
+*   `401 Unauthorized`: Usuário não está logado (`isAuthApi` middleware).
+*   `403 Forbidden`: Usuário logado mas não tem permissão (ex: não é admin).
+*   `400 Bad Request`: Dados de entrada inválidos (falha na validação Joi ou manual).
+*   `404 Not Found`: Recurso não encontrado (ex: pedido com ID inexistente).
+*   `500 Internal Server Error`: Erro inesperado no servidor (verificar logs no Grafana).
+
+---
+
+## 8. Banco de Dados
+
+### ORM/ODM
+
+*   **PostgreSQL:** Gerenciado via **Sequelize**. Os modelos estão em `src/models/` e as associações em `src/models/associations.js`.
+*   **MongoDB:** Gerenciado via **Mongoose**. O principal modelo é `Notification.js`.
+
+### Tabelas/Modelos Principais (PostgreSQL)
+
+*   `Users`: Dados dos usuários, senhas hasheadas, informações de perfil e endereço.
+*   `Cards`: Catálogo de todos os cards de TCG (populado via `onepieceService`).
+*   `Listings`: Anúncios de um card específico por um vendedor (`sellerId`), com preço, quantidade e condição.
+*   `Orders`: Registros de pedidos, contendo os itens, totais, endereço de entrega e status.
+*   `ForumThreads` / `ForumPosts`: Conteúdo do fórum.
+
+### Relacionamentos
+
+As associações (`belongsTo`, `hasMany`) são definidas em `src/models/associations.js` e são a fonte da verdade para as relações do banco relacional.
+
+### Migrações
+
+*   **PONTO CRÍTICO:** O projeto **não possui um sistema de migrations formal** (como o `sequelize-cli`). As alterações de schema dependem do `sequelize.sync()`, que não é seguro para produção.
+*   **Como Lidar:** Para qualquer alteração em um modelo (`src/models/`), uma migração manual precisa ser criada e executada no banco de dados de produção. É **altamente recomendado** implementar o `sequelize-cli` para automatizar e versionar essas alterações.
+
+### Estratégias de Performance
+
+*   **Índices:** Não foi possível verificar os índices diretamente, mas o Sequelize adiciona índices em chaves primárias e estrangeiras por padrão. Índices manuais podem ser necessários em colunas frequentemente consultadas (ex: `Users.email`).
+*   **Paginação:** Não foi identificada uma estratégia de paginação padronizada em toda a API, mas ela existe em `notifications.test.js` (`Notification.getUserNotifications`), indicando que o conceito é usado.
+*   **Pool de Conexões:** O `connection.js` configura um pool de conexões com o PostgreSQL, o que é uma prática essencial para performance.
+
+---
+
+## 9. Integrações Externas
+
+As integrações são encapsuladas na camada de `services`.
+
+1.  **Melhor Envio (`src/services/melhorEnvioClient.js`)**
+    *   **Propósito:** Cotação de frete e automação de compra de etiquetas.
+    *   **Configuração:** `MELHOR_ENVIO_TOKEN`, `MELHOR_ENVIO_BASE_URL`.
+    *   **Fluxo:** Chamado pelo `postPaymentWorker` após um pagamento ser aprovado.
+
+2.  **Mercado Pago (via SDK `mercadopago`)**
+    *   **Propósito:** Gateway de pagamento.
+    *   **Configuração:** `MERCADO_PAGO_ACCESS_TOKEN`.
+    *   **Fluxo:** Orquestrado pelo `paymentController.js` para criar a preferência de pagamento e receber webhooks.
+
+3.  **InfinitePay (`src/controllers/paymentController.js`)**
+    *   **Propósito:** Gateway de pagamento alternativo.
+    *   **Configuração:** `INFINITEPAY_HANDLE`.
+    *   **Fluxo:** Usa `node-fetch` para se comunicar com a API REST da InfinitePay, de forma similar ao Mercado Pago.
+
+4.  **API de Cards (`src/services/onepieceService.js`)**
+    *   **Propósito:** Popular o banco de dados com informações dos cards de One Piece.
+    *   **Configuração:** Nenhuma (URL fixa no código).
+    *   **Fluxo:** Usado por scripts de sincronização.
+
+5.  **Servidor de E-mail (SMTP via `nodemailer`)**
+    *   **Propósito:** Envio de e-mails transacionais (verificação de conta, recuperação de senha).
+    *   **Configuração:** `EMAIL_USER`, `EMAIL_PASS`.
+
+---
+
+## 10. Logging, Observabilidade e Debug
+
+### Onde ficam os logs
+
+*   **Localmente:** No arquivo `logs/app.log`, em formato JSON.
+*   **Centralizados:** Todos os logs são enviados pela stack **Promtail → Loki → Grafana**.
+*   **Acesso:** O painel do Grafana fica disponível em `http://localhost:3001` (com a porta padrão do `docker-compose.yml`). É necessário configurar o Loki como *data source*.
+
+### Como Habilitar Debug
+
+Para ver os logs de queries do Sequelize e outros logs de nível `debug`, altere o nível do logger em `src/config/logger.js`:
+
+```javascript
+// Em src/config/logger.js
+const logger = winston.createLogger({
+    level: process.env.LOG_LEVEL || 'info', // Mude para 'debug' no .env
+    // ...
+});
+```
+Ou defina a variável de ambiente `LOG_LEVEL=debug`.
+
+### Rastreamento de Erros
+
+*   Erros não tratados são capturados pelo middleware de erro no `server.js`.
+*   Falhas em jobs do `postPaymentWorker` são logadas e um e-mail é enviado para o `ADMIN_EMAIL`.
+*   A principal ferramenta para rastrear erros em produção é **consultar o Grafana**, onde é possível filtrar logs por nível (`level: "error"`), por job, ou por qualquer outro contexto que tenha sido logado.
+
+---
+
+## 11. Testes
+
+### Tipos e Como Rodar
+
+*   **Framework:** Jest.
+*   **Tipo:** Predominantemente **testes de integração**, que testam a interação entre a camada de serviço e o banco de dados (neste caso, MongoDB para notificações).
+*   **Comandos:**
+    *   `npm test`: Roda todos os testes uma vez.
+    *   `npm run test:watch`: Roda os testes em modo "watch", re-executando ao salvar arquivos.
+    *   `npm run test:coverage`: Roda os testes e gera um relatório de cobertura.
+
+### Cobertura e Padrões
+
+*   A configuração do Jest (`jest.config.js`) está pronta para coletar cobertura de toda a pasta `src/`.
+*   O arquivo `tests/notifications.test.js` é um excelente exemplo de como os testes devem ser escritos:
+    *   Uso de `beforeAll`, `afterAll`, `beforeEach` para gerenciar o estado do banco.
+    *   Mocking de dependências externas (`logger`).
+    *   Testes descritivos e focados em um único comportamento.
+
+### Como Escrever um Novo Teste
+
+1.  Crie um novo arquivo em `tests/` com o sufixo `.test.js` (ex: `tests/balanceService.test.js`).
+2.  Siga o padrão de `notifications.test.js` para conectar e limpar o banco de dados (PostgreSQL neste caso).
+3.  Importe o serviço que você quer testar.
+4.  Escreva `describe` e `test` (ou `it`) blocos para cobrir os casos de uso.
+5.  Use `expect` para fazer as asserções.
+
+---
+
+## 12. Segurança
+
+### Gerenciamento de Segredos
+
+*   Todos os segredos (chaves de API, senhas de banco) são gerenciados via **variáveis de ambiente** e carregados pelo `dotenv`.
+*   **Nunca** comite o arquivo `.env` no repositório. O `.gitignore` já está configurado para isso.
+
+### Permissões
+
+*   O sistema de permissões é baseado no `accountType` do usuário, armazenado na sessão (`req.session.user.accountType`).
+*   Os middlewares `isAdminPage` e `isAdminApi` em `src/middleware/auth.js` são os "gatekeepers", bloqueando o acesso a rotas administrativas.
+
+### Boas Práticas e Riscos Encontrados
+
+*   **Hashing de Senha:** ✅ Bom. `bcryptjs` é usado corretamente.
+*   **Autenticação:** ✅ Bom. O fluxo de sessão é seguro, com regeneração de sessão para evitar *fixation*.
+*   **Injeção de SQL:** ✅ Bom. O uso do Sequelize (ORM) previne a maioria das vulnerabilidades de injeção de SQL.
+*   **Falta de Migrations:** ⚠️ **Risco Alto.** A ausência de um sistema de migrations pode levar a inconsistências no schema do banco de dados entre ambientes, causando bugs e potenciais vulnerabilidades se uma coluna de segurança for esquecida.
+*   **Cross-Site Scripting (XSS):** A verificar. Como o EJS é usado para renderizar dados no HTML, é preciso garantir que toda a saída de dados vinda do usuário (nomes, posts de fórum) seja devidamente "escapada" antes de ser renderizada. O EJS faz isso por padrão com a tag `<%=`, mas a tag `<%-` não, e deve ser usada com extremo cuidado.
+
+---
+
+## 13. Contribuição
+
+*   **Branches:** Não há um padrão definido no repositório, mas sugere-se o GitFlow (`feature/`, `bugfix/`, `hotfix/`).
+*   **Commits:** Recomenda-se o padrão [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) (ex: `feat: adiciona checkout com InfinitePay`, `fix: corrige cálculo de frete`).
+*   **Lint/Format:** Não foi encontrado um arquivo de configuração de linter (como `.eslintrc.js`) ou formatter (como `.prettierrc`). **Recomenda-se fortemente adicionar Prettier e ESLint** ao projeto para manter um padrão de código consistente.
+*   **Pull Request (PR) Checklist:**
+    1.  O código segue as convenções do projeto.
+    2.  Novas funcionalidades estão cobertas por testes.
+    3.  Todos os testes existentes estão passando (`npm test`).
+    4.  As variáveis de ambiente foram adicionadas ao `.env.example`.
+
+---
+
+## 14. Leitura Guiada do Código
+
+### 1. `server.js` (Ponto de Entrada)
+
+*   **Responsabilidade:** Orquestrar a inicialização da aplicação.
+*   **O que faz:**
+    1.  Carrega as variáveis de ambiente com `dotenv`.
+    2.  Verifica se as variáveis de ambiente obrigatórias existem.
+    3.  Inicializa o servidor Express.
+    4.  Configura a `view engine` para EJS.
+    5.  Configura middlewares essenciais: `cors`, `express.json`, `express-session` (com persistência no Postgres).
+    6.  **Carregamento dinâmico de rotas:** Ele lê todos os arquivos da pasta `src/routes` e os registra automaticamente. Isso é um padrão elegante que evita a necessidade de importar cada rota manualmente.
+    7.  Conecta ao banco de dados (`connectDB()`) e opcionalmente sincroniza o schema (`DB_SYNC`).
+    8.  Configura um middleware de erro global para capturar erros não tratados.
+    9.  Inicia o servidor na porta especificada.
+*   **Armadilha:** A ordem dos middlewares é crucial. O `express-session` deve vir antes das rotas que dependem dele. O middleware de erro deve ser o último.
+
+### 2. `src/controllers/paymentController.js` (Orquestrador Complexo)
+
+*   **Responsabilidade:** Lidar com todas as interações HTTP relacionadas a pagamentos.
+*   **O que faz:**
+    *   `createMercadoPagoPreference`: Orquestra a criação de um pedido no banco (`Order.create`), a formatação dos dados para a API do Mercado Pago, a limpeza do carrinho na sessão e a resposta ao cliente.
+    *   `handleMercadoPagoWebhook`: A função mais crítica. Recebe a notificação do gateway, valida, busca os dados reais do pagamento na API, e chama `processWebhookLogic`.
+    *   `processWebhookLogic`: Contém a lógica de idempotência (atualização atômica) e delega o trabalho pesado para a fila chamando `addPostPaymentJob`.
+*   **Por que faz assim:** Ele separa a "orquestração" (lógica de HTTP) da "execução" (lógica de negócio). O controller não sabe *como* a baixa de estoque é feita, ele apenas sabe que precisa mandar uma mensagem para a fila (`addPostPaymentJob`) para que *alguém* faça.
+
+### 3. `src/services/postPaymentQueue.js` e `src/workers/postPaymentWorker.js` (Coração Assíncrono)
+
+*   **`postPaymentQueue.js`:**
+    *   **Responsabilidade:** Definir a fila `post-payment` e fornecer uma função (`addPostPaymentJob`) para adicionar jobs a ela.
+    *   **O que faz:** Configura a conexão com o Redis e a fila BullMQ, incluindo políticas de retentativa (`attempts: 3`, `backoff: 'exponential'`). Se o Redis não estiver disponível, ele não quebra, apenas loga um aviso (embora o job não seja enfileirado).
+*   **`postPaymentWorker.js`:**
+    *   **Responsabilidade:** Processar os jobs da fila `post-payment`.
+    *   **O que faz:** Ele escuta a fila. Quando um job chega, ele executa a lógica completa de pós-venda: chama o `melhorEnvioClient`, atualiza o estoque, atualiza o status do pedido, chama o `balanceService` e o `notificationService`.
+    *   **Por que faz assim:** Resiliência e performance. Se a API do Melhor Envio falhar, o BullMQ tentará rodar o job novamente mais tarde. Enquanto isso, o `worker` pode processar outros pedidos, e a API principal não fica bloqueada esperando por serviços externos.
+
+### 4. `src/middleware/auth.js` (Segurança Centralizada)
+
+*   **Responsabilidade:** Proteger rotas, verificando se o usuário está autenticado e/ou tem as permissões necessárias.
+*   **O que faz:**
+    *   Exporta funções de middleware distintas para diferentes contextos:
+        *   `isAuthPage`: Para páginas EJS. Se não autenticado, redireciona para `/auth/login`.
+        *   `isAuthApi`: Para APIs JSON. Se não autenticado, retorna `401 Unauthorized`.
+        *   `isAdminPage`/`isAdminApi`: Idem, mas também checa `req.session.user.accountType === 'admin'`.
+    *   **Bônus:** Ele também atualiza a `lastActivityAt` do usuário com *debounce*, uma otimização inteligente para rastrear usuários ativos.
+*   **Por que faz assim:** Mantém a lógica de autorização completamente separada das rotas e controllers. Para proteger uma nova rota, basta adicionar o middleware a ela, sem duplicar código.
+
+### 5. `src/models/associations.js` (Mapa do Banco de Dados)
+
+*   **Responsabilidade:** Definir todos os relacionamentos entre os modelos do Sequelize.
+*   **O que faz:** Importa todos os modelos e usa os métodos `belongsTo`, `hasMany`, etc., para declarar como as tabelas se conectam. Ex: `Listing.belongsTo(User, { as: 'seller', ... })`.
+*   **Por que faz assim:** Centralizar todas as associações em um único arquivo torna o modelo de dados explícito e fácil de entender. Sem isso, as associações estariam espalhadas por cada arquivo de modelo, dificultando a visualização do quadro geral. O uso de `as: 'seller'` permite escrever queries mais legíveis, como `Order.findAll({ include: 'user' })`.
+
+### 6. `src/services/melhorEnvioClient.js` (Integração de Frete)
+
+*   **Responsabilidade:** Encapsular toda a comunicação com a API do Melhor Envio para cotação e compra de fretes.
+*   **O que faz:**
+    *   Fornece funções para cada etapa da interação com o Melhor Envio:
+        *   `cotarFreteMelhorEnvio`: Envia dados do pacote e CEPs para obter as opções de frete disponíveis e seus custos.
+        *   `addItemToCart`: Adiciona detalhes de uma remessa (remetente, destinatário, pacote) ao "carrinho" do Melhor Envio. Isso prepara o envio para compra.
+        *   `purchaseShipments`: Efetiva a compra das remessas que foram adicionadas ao carrinho.
+        *   `generateLabels`: Adiciona as etiquetas compradas à fila de geração do Melhor Envio.
+        *   `printLabels`: Obtém a URL pública para que as etiquetas possam ser impressas.
+    *   Gerencia tokens de autenticação e `User-Agent` para a API.
+*   **Entradas/Saídas/Dependências:**
+    *   **Entradas:** Objetos com detalhes da remessa (CEPs, dimensões, pesos, valores, dados do remetente/destinatário).
+    *   **Saídas:** Respostas em JSON da API do Melhor Envio, incluindo IDs de carrinho, detalhes de frete, URLs de impressão.
+    *   **Dependências:** `process.env.MELHOR_ENVIO_TOKEN`, `process.env.MELHOR_ENVIO_BASE_URL`, `process.env.MELHOR_ENVIO_USER_AGENT`.
+*   **Armadilhas:**
+    *   A API do Melhor Envio é um fluxo sequencial (adicionar ao carrinho, comprar, gerar, imprimir). É preciso seguir essa ordem.
+    *   Erros de validação (CEPs inválidos, dados incompletos) podem ocorrer e precisam ser tratados.
+    *   Verificar o `Content-Type` da resposta na função `printLabels` é uma boa prática para identificar erros na API que podem retornar HTML em vez de JSON.
+*   **Por que faz assim:** Centraliza toda a complexidade da API de frete em um único local, mantendo a lógica de negócio do sistema (ex: `postPaymentWorker`) limpa e focada no que fazer com o frete, e não *como* comprá-lo.
