@@ -147,7 +147,7 @@ app.use(session({
   cookie: {
     secure: process.env.NODE_ENV === 'production', // Use secure cookies in production
     httpOnly: true, // Prevents client-side JS from accessing the cookie
-    sameSite: 'strict' // Mitigates CSRF attacks
+    sameSite: 'lax' // Allow top-level cross-site redirects (e.g., payment return)
   }
 }));
 

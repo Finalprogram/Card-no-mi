@@ -377,6 +377,30 @@
     margin-left: 5px;
 }
 
+.variant-badge {
+    display: inline-block;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    margin-left: 5px;
+}
+
+.variant-aa {
+    background-color: #7c3aed;
+}
+
+.variant-alt {
+    background-color: #0ea5e9;
+}
+
+.variant-reprint {
+    background-color: #f59e0b;
+}
 .card-image-container {
     position: relative;
 }

@@ -326,14 +326,24 @@ async function handleInfinitePayReturn(req, res) {
 
 async function handleInfinitePayWebhook(req, res) {
   try {
-    const { order_nsu: orderNsu, status } = req.body || {};
+    logger.info('[payment] InfinitePay webhook recebido:', {
+      headers: req.headers,
+      body: req.body
+    });
+    const { order_nsu: orderNsu, status, paid_amount: paidAmount, amount } = req.body || {};
     if (!orderNsu) {
+      logger.warn('[payment] InfinitePay webhook sem order_nsu:', req.body);
       return res.status(400).send('order_nsu ausente.');
     }
 
     let mappedStatus = 'pending';
     if (status === 'paid') mappedStatus = 'approved';
     if (status === 'canceled' || status === 'cancelled' || status === 'refused') mappedStatus = 'cancelled';
+
+    // Some webhook payloads do not include status. Use paid_amount vs amount as fallback.
+    if (!status && paidAmount != null && amount != null && Number(paidAmount) >= Number(amount)) {
+      mappedStatus = 'approved';
+    }
 
     await processWebhookLogic(mappedStatus, orderNsu, res);
   } catch (error) {

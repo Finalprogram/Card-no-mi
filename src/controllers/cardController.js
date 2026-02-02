@@ -5,6 +5,49 @@ const User = require('../models/User');
 const onePieceService = require('../services/onepieceService');
 const { sequelize } = require('../database/connection');
 
+const applyVariantFilter = (query, variantFilter) => {
+  if (!variantFilter) return;
+  if (variantFilter[Op.and]) {
+    query[Op.and] = [...(query[Op.and] || []), ...variantFilter[Op.and]];
+  } else {
+    query[Op.and] = [...(query[Op.and] || []), variantFilter];
+  }
+};
+
+const buildVariantFilter = (variantValue) => {
+  if (variantValue == null || Number.isNaN(variantValue)) return null;
+  const suffixMap = {
+    1: '_p1',
+    2: '_r1',
+    3: '_p2'
+  };
+  const suffix = suffixMap[variantValue] || null;
+
+  if (variantValue === 0) {
+    return {
+      [Op.and]: [
+        { image_url: { [Op.notILike]: '%_p1.png%' } },
+        { image_url: { [Op.notILike]: '%_r1.png%' } },
+        { image_url: { [Op.notILike]: '%_r2.png%' } },
+        { image_url: { [Op.notILike]: '%_p2.png%' } },
+        {
+          [Op.or]: [
+            { variant: { [Op.notIn]: [1, 2, 3] } },
+            { variant: null }
+          ]
+        }
+      ]
+    };
+  }
+
+  return {
+    [Op.or]: [
+      ...(suffix ? [{ image_url: { [Op.iLike]: `%${suffix}.png%` } }] : []),
+      { variant: variantValue }
+    ]
+  };
+};
+
 // --- FUNÇÃO ÚNICA PARA A PÁGINA DE BUSCA ---
 const showCardsPage = async (req, res) => {
   try {
@@ -21,6 +64,15 @@ const showCardsPage = async (req, res) => {
       cardMatchQuery.set_name = { [Op.iLike]: `%${setCode}%` };
     }
     if (req.query.q && req.query.q !== '') cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
+    if (req.query.variant && req.query.variant !== '') {
+      const variantValue = parseInt(req.query.variant, 10);
+      const variantFilter = buildVariantFilter(variantValue);
+      applyVariantFilter(cardMatchQuery, variantFilter);
+    }
+    if (!req.query.variant || req.query.variant === '') {
+      const baseFilter = buildVariantFilter(0);
+      applyVariantFilter(cardMatchQuery, baseFilter);
+    }
 
     const distinctCardIdsResult = await Listing.findAll({ 
         attributes: [[fn('DISTINCT', col('cardId')), 'cardId']],
@@ -57,12 +109,21 @@ const showCardsPage = async (req, res) => {
     const dons = Card.rawAttributes.don
       ? await Card.findAll({ attributes: [[fn('DISTINCT', col('don')), 'don']], where: { game: 'onepiece' } }).then(r => r.map(i => i.don))
       : [];
+    const variantOptions = [
+      { value: '', label: 'Todas' },
+      { value: '0', label: 'Padrao' },
+      { value: '1', label: 'Parallel/AA' },
+      { value: '2', label: 'Alt Art' },
+      { value: '3', label: 'Reprint/Variacao' }
+    ];
+
     const filterGroups = [
       { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
       { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
       { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
       { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] },
-      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] }
+      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] },
+      { name: 'Variante', key: 'variant', options: variantOptions }
     ];
 
     if (distinctCardIds.length === 0) {
@@ -97,6 +158,8 @@ const showCardsPage = async (req, res) => {
             'type_line',
             'price_trend',
             'ability',
+            'images',
+            'variant',
             [fn('MIN', col('listings.price')), 'lowestAvailablePrice'],
             [fn('BOOL_OR', col('listings.is_foil')), 'hasFoil']
         ],
@@ -140,7 +203,14 @@ const showCardDetailPage = async (req, res) => {
     }
 
     let allVersions = [];
-    if (mainCard.api_id) {
+    if (mainCard.code) {
+      allVersions = await Card.findAll({
+        where: {
+          code: mainCard.code,
+          set_name: mainCard.set_name
+        }
+      });
+    } else if (mainCard.api_id) {
       const baseApiId = mainCard.api_id.split('_')[0];
       allVersions = await Card.findAll({
         where: {
@@ -317,6 +387,15 @@ const getAllCards = async (req, res) => {
     if (req.query.color) filterQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
     if (req.query.type) filterQuery.type_line = req.query.type;
     if (req.query.set) filterQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
+    if (req.query.variant) {
+      const variantValue = parseInt(req.query.variant, 10);
+      const variantFilter = buildVariantFilter(variantValue);
+      applyVariantFilter(filterQuery, variantFilter);
+    }
+    if (!req.query.variant || req.query.variant === '') {
+      const baseFilter = buildVariantFilter(0);
+      applyVariantFilter(filterQuery, baseFilter);
+    }
     if (req.query.q) {
       filterQuery[Op.or] = [
         { name: { [Op.iLike]: `%${req.query.q}%` } },
@@ -374,6 +453,15 @@ const getAvailableCards = async (req, res) => {
     if (req.query.type) cardMatchQuery.type_line = req.query.type;
     if (req.query.set) cardMatchQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
     if (req.query.q) cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
+    if (req.query.variant) {
+      const variantValue = parseInt(req.query.variant, 10);
+      const variantFilter = buildVariantFilter(variantValue);
+      applyVariantFilter(cardMatchQuery, variantFilter);
+    }
+    if (!req.query.variant || req.query.variant === '') {
+      const baseFilter = buildVariantFilter(0);
+      applyVariantFilter(cardMatchQuery, baseFilter);
+    }
     
     const distinctCardIdsResult = await Listing.findAll({ 
         attributes: [[fn('DISTINCT', col('cardId')), 'cardId']],
@@ -400,7 +488,7 @@ const getAvailableCards = async (req, res) => {
             required: true
         }],
         attributes: [
-            'id', 'name', 'image_url', 'set_name', 'rarity', 'type_line', 'price_trend', 'ability',
+            'id', 'name', 'image_url', 'set_name', 'rarity', 'type_line', 'price_trend', 'ability', 'images', 'variant',
             [fn('MIN', col('listings.price')), 'lowestAvailablePrice'],
             [fn('BOOL_OR', col('listings.is_foil')), 'hasFoil']
         ],

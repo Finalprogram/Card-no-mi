@@ -31,6 +31,52 @@ document.addEventListener('DOMContentLoaded', () => {
     let tempFilters = {}; // Temporary filters before applying
     let debounceTimer;
 
+    const extractSuffix = (value) => {
+        if (!value) return null;
+        const match = String(value).match(/(_p1|_p2|_r1|_r2)\.png/i);
+        return match ? match[1].toLowerCase() : null;
+    };
+
+    const normalizeCardName = (value) => {
+        if (!value) return value;
+        return String(value).replace(/\s*\(\d+\)\s*$/, '');
+    };
+
+    const getVariantBadge = (card) => {
+        let images = card && card.images ? card.images : null;
+        if (typeof images === 'string') {
+            try {
+                images = JSON.parse(images);
+            } catch (err) {
+                images = null;
+            }
+        }
+        const suffix = images && images.suffix ? String(images.suffix).toLowerCase() : extractSuffix(card && card.image_url);
+        const map = {
+            _p1: { label: 'AA', className: 'variant-badge variant-aa' },
+            _r1: { label: 'Alt Art', className: 'variant-badge variant-alt' },
+            _r2: { label: 'Reprint', className: 'variant-badge variant-reprint' },
+            _p2: { label: 'Reprint', className: 'variant-badge variant-reprint' }
+        };
+        if (suffix && map[suffix]) {
+            const info = map[suffix];
+            return `<span class="${info.className}">${info.label}</span>`;
+        }
+
+        const variantValue = Number(card && card.variant);
+        const variantMap = {
+            1: { label: 'AA', className: 'variant-badge variant-aa' },
+            2: { label: 'Alt Art', className: 'variant-badge variant-alt' },
+            3: { label: 'Reprint', className: 'variant-badge variant-reprint' }
+        };
+        if (variantMap[variantValue]) {
+            const info = variantMap[variantValue];
+            return `<span class="${info.className}">${info.label}</span>`;
+        }
+
+        return '';
+    };
+
     // --- FUNÇÕES ---
 
     // Função principal para buscar e renderizar as cartas
@@ -76,12 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 const cardElement = document.createElement('div');
                 cardElement.className = 'card-item';
                 const cardId = card._id || card.id;
+                const variantBadge = getVariantBadge(card);
+                const displayName = normalizeCardName(card.name);
                 cardElement.innerHTML = `
                     <a href="/card/${cardId}" class="card-link">
                         <div class="card-image-container">
-                            <img src="${card.image_url}" alt="${card.name}">
+                            <img src="${card.image_url}" alt="${displayName}">
                         </div>
-                        <h4>${card.name}</h4>
+                        <h4>${displayName} ${variantBadge}</h4>
                     </a>
                 `;
                 cardList.appendChild(cardElement);

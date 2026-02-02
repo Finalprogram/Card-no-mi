@@ -7,6 +7,51 @@ const Review = require('../models/Review');
 const Deck = require('../models/Deck');
 const Setting = require('../models/Setting');
 const { Op, fn, col } = require('sequelize');
+const { sequelize } = require('../database/connection');
+
+const applyVariantFilter = (query, variantFilter) => {
+  if (!variantFilter) return;
+  if (variantFilter[Op.and]) {
+    query[Op.and] = [...(query[Op.and] || []), ...variantFilter[Op.and]];
+  } else {
+    query[Op.and] = [...(query[Op.and] || []), variantFilter];
+  }
+};
+
+const buildVariantFilter = (variantValue) => {
+  if (variantValue == null || Number.isNaN(variantValue)) return null;
+  const suffixMap = {
+    1: '_p1',
+    2: '_r1',
+    3: '_p2'
+  };
+  const suffix = suffixMap[variantValue] || null;
+
+  if (variantValue === 0) {
+    return {
+      [Op.and]: [
+        { image_url: { [Op.notILike]: '%_p1.png%' } },
+        { image_url: { [Op.notILike]: '%_r1.png%' } },
+        { image_url: { [Op.notILike]: '%_r2.png%' } },
+        { image_url: { [Op.notILike]: '%_p2.png%' } },
+        {
+          [Op.or]: [
+            { variant: { [Op.notIn]: [1, 2, 3] } },
+            { variant: null }
+          ]
+        }
+      ]
+    };
+  }
+
+  return {
+    [Op.or]: [
+      ...(suffix ? [{ image_url: { [Op.iLike]: `%${suffix}.png%` } }] : []),
+      { variant: variantValue }
+    ]
+  };
+};
+
 
 function addIdAlias(value) {
   if (value && value.id != null && value._id == null) {
@@ -377,6 +422,15 @@ const getEncyclopediaPage = async (req, res) => {
     if (req.query.type && req.query.type !== '') queryFilters.type_line = req.query.type;
     if (req.query.set && req.query.set !== '') queryFilters.set_name = { [Op.iLike]: `%${req.query.set}%` };
     if (req.query.q && req.query.q !== '') queryFilters.name = { [Op.iLike]: `%${req.query.q}%` };
+    if (req.query.variant && req.query.variant !== '') {
+      const variantValue = parseInt(req.query.variant, 10);
+      const variantFilter = buildVariantFilter(variantValue);
+      applyVariantFilter(queryFilters, variantFilter);
+    }
+    if (!req.query.variant || req.query.variant === '') {
+      const baseFilter = buildVariantFilter(0);
+      applyVariantFilter(queryFilters, baseFilter);
+    }
     if (req.query.don && req.query.don !== '' && Card.rawAttributes.don) queryFilters.don = req.query.don;
 
     // Busca as opções de filtro dinamicamente do banco de dados
@@ -407,12 +461,21 @@ const getEncyclopediaPage = async (req, res) => {
     })).sort((a, b) => a.label.localeCompare(b.label));
 
     // Define os filtros que serão enviados para a view
+    const variantOptions = [
+      { value: '', label: 'Todas' },
+      { value: '0', label: 'Padrao' },
+      { value: '1', label: 'Parallel/AA' },
+      { value: '2', label: 'Alt Art' },
+      { value: '3', label: 'Reprint/Variacao' }
+    ];
+
     const filterGroups = [
       { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
       { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
       { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
       { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...setOptions] },
-      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] }
+      { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] },
+      { name: 'Variante', key: 'variant', options: variantOptions }
     ];
 
     // Paginação e busca de cartas

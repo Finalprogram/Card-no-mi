@@ -576,12 +576,16 @@
   border-radius: var(--radius-card);
   padding: 20px;
   transition: all 0.3s ease;
+  color: var(--forum-text);
+  text-decoration: none;
 }
 
 .thread-item:hover {
   border-color: var(--forum-accent);
   transform: translateX(4px);
   box-shadow: 0 4px 20px rgba(162, 89, 255, 0.15);
+  color: var(--forum-text);
+  text-decoration: none;
 }
 
 .thread-item.pinned {
@@ -1966,12 +1970,13 @@
 
 .post-thread-link {
   font-weight: 600;
-  color: var(--text-primary);
+  color: var(--forum-text);
   text-decoration: none;
 }
 
 .post-thread-link:hover {
-  color: var(--primary-color);
+  color: var(--forum-primary);
+  text-decoration: none;
 }
 
 .post-date {
@@ -2003,13 +2008,14 @@
 }
 
 .view-post-link {
-  color: var(--primary-color);
+  color: var(--forum-text);
   text-decoration: none;
   font-weight: 500;
 }
 
 .view-post-link:hover {
-  text-decoration: underline;
+  color: var(--forum-primary);
+  text-decoration: none;
 }
 
 /* ========================================

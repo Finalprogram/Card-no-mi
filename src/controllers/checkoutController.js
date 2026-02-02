@@ -136,8 +136,8 @@ async function showCheckout(req, res) {
 async function quoteDetailed(req, res) {
   try {
     const user = await User.findByPk(req.session.user.id);
-    const zip = user.address.cep;
-    if (!zip) return res.json({ ok: false, error: 'zip required' });
+    const zip = (req.body && req.body.zip) || user?.address?.cep;
+    if (!zip) return res.json({ ok: false, error: 'CEP obrigatório para cotar frete.' });
 
     const cart = getCart(req);
     const items = cart.items || [];
@@ -175,20 +175,18 @@ async function quoteDetailed(req, res) {
 
       // Cotar frete usando o Melhor Envio
       const services = '1,2,18'; // Exemplo: PAC, SEDEX, Jadlog.Package
-      // Fallback temporario: frete desativado enquanto o token do Melhor Envio nao valida.
-      // const options = await cotarFreteMelhorEnvio({
-      //   fromPostalCode: cepOrigem,
-      //   toPostalCode: zip,
-      //   pkg: {
-      //     width: larguraCm,
-      //     height: alturaCm,
-      //     length: comprimentoCm,
-      //     weight: pesoKg,
-      //     insurance_value: insuranceValue,
-      //   },
-      //   services,
-      // });
-      const options = [];
+      const options = await cotarFreteMelhorEnvio({
+        fromPostalCode: cepOrigem,
+        toPostalCode: zip,
+        pkg: {
+          width: larguraCm,
+          height: alturaCm,
+          length: comprimentoCm,
+          weight: pesoKg,
+          insurance_value: insuranceValue,
+        },
+        services,
+      });
 
       // Filtra apenas as opções válidas (sem erro) e ordena por preço
       const validOptions = options
@@ -242,8 +240,7 @@ async function confirm(req, res) {
 
     const hasShippingSelections = shippingSelections && shippingSelections !== '[]';
     if (!hasShippingSelections) {
-      // Frete temporariamente desativado: permitir checkout sem selecao.
-      req.session.shippingSelections = [];
+      return res.status(400).send('Selecione o frete antes de continuar.');
     }
 
     let totalMarketplaceFee = 0;
@@ -286,11 +283,9 @@ async function confirm(req, res) {
     req.session.cart.items = processedItems;
 
     let shippingTotal = 0;
-    if (hasShippingSelections) {
-      const selections = JSON.parse(shippingSelections);
-      shippingTotal = selections.reduce((total, selection) => total + selection.price, 0);
-      req.session.shippingSelections = selections;
-    }
+    const selections = JSON.parse(shippingSelections);
+    shippingTotal = selections.reduce((total, selection) => total + selection.price, 0);
+    req.session.shippingSelections = selections;
 
     const subtotal = cart.totalPrice || 0;
     let grandTotal = subtotal + shippingTotal;

@@ -2,6 +2,7 @@
 const { Queue } = require('bullmq');
 const Redis = require('ioredis');
 const logger = require('../config/logger');
+const { processOrderPostPayment } = require('./postPaymentProcessor');
 
 // Variáveis para Redis e Queue
 let redisConnection = null;
@@ -51,9 +52,13 @@ if (REDIS_ENABLED) {
  * @param {string} orderId - The ID of the order to process.
  */
 async function addPostPaymentJob(orderId) {
-  // Verificar se Redis/Queue estão disponíveis
   if (!postPaymentQueue || !redisConnection || redisConnection.status !== 'ready') {
-    logger.warn(`[queue] Redis não disponível - processando order ${orderId} diretamente`);
+    logger.warn(`[queue] Redis n?o dispon?vel - processando order ${orderId} diretamente`);
+    try {
+      await processOrderPostPayment(orderId);
+    } catch (error) {
+      logger.error(`[queue] Falha ao processar order ${orderId} diretamente:`, error);
+    }
     return;
   }
 
@@ -65,9 +70,15 @@ async function addPostPaymentJob(orderId) {
     });
     logger.info(`[queue] Job added for order ${orderId}`);
   } catch (error) {
-    logger.warn(`[queue] Error adding job for order ${orderId} (Redis indisponível)`);
+    logger.warn(`[queue] Error adding job for order ${orderId} - processando diretamente`);
+    try {
+      await processOrderPostPayment(orderId);
+    } catch (err) {
+      logger.error(`[queue] Falha ao processar order ${orderId} diretamente:`, err);
+    }
   }
 }
+
 
 module.exports = {
   postPaymentQueue,

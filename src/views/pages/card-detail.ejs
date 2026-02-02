@@ -13,6 +13,31 @@
     box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
     margin-left: 10px;
   }
+  .variant-badge {
+    display: inline-block;
+    color: #fff;
+    padding: 3px 8px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    line-height: 1;
+    box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
+    margin-left: 10px;
+  }
+
+  .variant-aa {
+    background-color: #7c3aed;
+  }
+
+  .variant-alt {
+    background-color: #0ea5e9;
+  }
+
+  .variant-reprint {
+    background-color: #f59e0b;
+  }
+
   .card-image-container {
     position: relative;
     display: inline-block; /* To make the container wrap the image */
@@ -96,6 +121,47 @@
     backdrop-filter: blur(4px);
   }
 </style>
+<%
+  const extractSuffix = (value) => {
+    if (!value) return null;
+    const match = String(value).match(/(_p1|_p2|_r1|_r2)\.png/i);
+    return match ? match[1].toLowerCase() : null;
+  };
+
+  const normalizeCardName = (value) => {
+    if (!value) return value;
+    return String(value).replace(/\s*\(\d+\)\s*$/, '');
+  };
+
+  const getVariantInfo = (cardLike) => {
+    if (!cardLike) return null;
+    let images = cardLike.images || null;
+    if (typeof images === 'string') {
+      try {
+        images = JSON.parse(images);
+      } catch (err) {
+        images = null;
+      }
+    }
+    const suffix = images && images.suffix ? String(images.suffix).toLowerCase() : extractSuffix(cardLike.image_url);
+    const map = {
+      _p1: { label: 'AA', className: 'variant-aa' },
+      _r1: { label: 'Alt Art', className: 'variant-alt' },
+      _r2: { label: 'Reprint', className: 'variant-reprint' },
+      _p2: { label: 'Reprint', className: 'variant-reprint' }
+    };
+    if (suffix && map[suffix]) return map[suffix];
+
+    const variantValue = Number(cardLike.variant);
+    const variantMap = {
+      1: { label: 'AA', className: 'variant-aa' },
+      2: { label: 'Alt Art', className: 'variant-alt' },
+      3: { label: 'Reprint', className: 'variant-reprint' }
+    };
+    return variantMap[variantValue] || null;
+  };
+%>
+
 <main class="container">
   <%- include('../partials/navbar') %>
 
@@ -105,12 +171,17 @@
 
   <div class="card-detail-container">
     <div class="card-image-section">
+      <% const variantInfo = getVariantInfo(card); %>
+      <% const displayName = normalizeCardName(card.name); %>
       <div class="card-image-container">
-        <img src="<%= card.image_url %>" alt="<%= card.name %>">
+        <img src="<%= card.image_url %>" alt="<%= displayName %>">
       </div>
     </div>
     <div class="card-info-section">
-      <h1><%= card.name %>
+      <h1><%= displayName %>
+        <% if (variantInfo) { %>
+          <span class="variant-badge <%= variantInfo.className %>"><%= variantInfo.label %></span>
+        <% } %>
         <% if (hasFoilListing) { %>
           <div class="ability-badge">Foil</div>
         <% } %>
@@ -146,11 +217,10 @@
           <a href="/card/<%= ver._id %>" class="card-version-link <%= card._id.toString() === ver._id.toString() ? 'active' : '' %>">
             <div class="card-version-item">
               <img src="<%= ver.image_url %>" alt="<%= ver.name %>" class="card-version-img">
-              <% let badge = 'Normal';
-                if (ver.api_id && ver.api_id.endsWith('_p1')) badge = 'Alt Art 1';
-                else if (ver.api_id && ver.api_id.endsWith('_p2')) badge = 'Alt Art 2';
-                else if (ver.api_id && ver.api_id.endsWith('_p3')) badge = 'Full Art'; %>
-              <span class="card-version-badge"><%= badge %></span>
+              <% const verVariantInfo = getVariantInfo(ver); %>
+              <% if (verVariantInfo) { %>
+                <span class="card-version-badge"><%= verVariantInfo.label %></span>
+              <% } %>
             </div>
           </a>
         <% }) %>
