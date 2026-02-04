@@ -1,190 +1,870 @@
 <%- include('../../partials/header') %>
+
+
 <%- include('../../partials/navbar') %>
+
+
+
+
 
 <link rel="stylesheet" href="/css/forum.css">
 
+
+
+
+
+<% if (false) { %>
+
+
 <div class="forum-container">
-  <!-- Header do Fórum -->
+
+
+  <!-- Header do F&oacute;rum -->
+
+
   <div class="forum-header">
+
+
     <h1 class="forum-title">
+
+
       <i class="fas fa-comments"></i>
-      Fórum Card no Mi
+
+
+      FÃÂÃÂ³rum Card no Mi
+
+
     </h1>
-    <p class="forum-subtitle">Participe das discussões, compartilhe estratégias e conecte-se com a comunidade!</p>
+
+
+    <p class="forum-subtitle">Participe das discuss&otilde;es, compartilhe estrat&eacute;gias e conecte-se com a comunidade!</p>
+
+
     
+
+
     <div class="forum-actions">
+
+
       <a href="/forum/leaderboard" class="btn btn-secondary">
+
+
         <i class="fas fa-trophy"></i> Ranking
+
+
       </a>
+
+
       <a href="/forum/search" class="btn btn-secondary">
+
+
         <i class="fas fa-search"></i> Buscar
+
+
       </a>
+
+
       <% if (user) { %>
+
+
         <a href="/forum/user/<%= user.username %>" class="btn btn-secondary">
+
+
           <i class="fas fa-user"></i> Meu Perfil
+
+
         </a>
+
+
       <% } else { %>
+
+
         <a href="/auth/login" class="btn btn-primary">
+
+
           <i class="fas fa-sign-in-alt"></i> Entrar
+
+
         </a>
+
+
       <% } %>
+
+
     </div>
+
+
   </div>
+
+
+
+
 
   <!-- Categorias -->
+
+
   <div class="forum-categories">
+
+
     <% categories.forEach(category => { %>
+
+
       <div class="category-card" style="border-left-color: <%= category.color %>">
+
+
         <div class="category-icon" style="background: <%= category.color %>20; color: <%= category.color %>">
+
+
           <%= category.icon %>
+
+
         </div>
+
+
         
+
+
         <div class="category-info">
+
+
           <h2 class="category-name">
+
+
             <a href="/forum/<%= category.slug %>"><%= category.name %></a>
+
+
           </h2>
+
+
           <p class="category-description"><%= category.description %></p>
+
+
           
-          <!-- Subfóruns -->
+
+
+          <!-- SubfÃÂÃÂ³runs -->
+
+
           <% if (category.subforums && category.subforums.length > 0) { %>
+
+
             <div class="subforums-list">
-              <span class="subforums-label"><i class="fas fa-sitemap"></i> Subfóruns:</span>
+
+
+              <span class="subforums-label"><i class="fas fa-sitemap"></i> Subf&oacute;runs:</span>
+
+
               <% category.subforums.forEach((subforum, index) => { %>
+
+
                 <a href="/forum/<%= subforum.slug %>" class="subforum-link" style="color: <%= subforum.color || category.color %>">
+
+
                   <%= subforum.icon %> <%= subforum.name %>
+
+
                   <span class="subforum-count">(<%= subforum.threadCount || 0 %>)</span>
+
+
                 </a>
+
+
                 <% if (index < category.subforums.length - 1) { %>
-                  <span class="subforum-separator">•</span>
+
+
+                  <span class="subforum-separator">?</span>
+
+
                 <% } %>
+
+
               <% }) %>
+
+
             </div>
+
+
           <% } %>
+
+
         </div>
+
+
+
+
 
         <div class="category-stats">
+
+
           <div class="stat">
+
+
             <span class="stat-value"><%= category.threadCount || 0 %></span>
-            <span class="stat-label">Tópicos</span>
+
+
+            <span class="stat-label">T?picos</span>
+
+
           </div>
+
+
           <div class="stat">
+
+
             <span class="stat-value"><%= category.postCount || 0 %></span>
+
+
             <span class="stat-label">Posts</span>
+
+
           </div>
+
+
         </div>
+
+
+
+
 
         <div class="category-activity">
+
+
           <% if (category.lastThread) { %>
+
+
             <div class="last-activity">
+
+
               <div class="activity-info">
+
+
                 <a href="/forum/<%= category.slug %>/<%= category.lastThread.slug %>" class="activity-title">
+
+
                   <%= category.lastThread.title.substring(0, 60) %><%= category.lastThread.title.length > 60 ? '...' : '' %>
+
+
                 </a>
+
+
                 <div class="activity-meta">
+
+
                   <% if (category.lastThread.author) { %>
+
+
                     <img src="<%= category.lastThread.author.avatar || '/images/default-avatar.png' %>" 
+
+
                          alt="<%= category.lastThread.author.username %>" 
+
+
                          class="activity-avatar">
+
+
                     <% if (category.lastThread.author.faction) { %>
+
+
                       <span style="font-size: 2.6em;">
-                        <%= category.lastThread.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>
+
+
+                      <%= category.lastThread.author.faction === 'pirate' ? '&#9760;' : '&#9875;' %>
+
+
                       </span>
+
+
                     <% } %>
+
+
                   <% } %>
+
+
                   <span class="activity-time">
+
+
                     <i class="far fa-clock"></i>
+
+
                     <%= new Date(category.lastThread.lastActivity).toLocaleDateString('pt-BR', { 
+
+
                       day: 'numeric', 
+
+
                       month: 'short', 
+
+
                       hour: '2-digit', 
+
+
                       minute: '2-digit' 
+
+
                     }) %>
+
+
                   </span>
+
+
                 </div>
+
+
               </div>
+
+
             </div>
+
+
           <% } else { %>
+
+
             <div class="no-activity">
+
+
               <i class="fas fa-inbox"></i>
+
+
               <span>Nenhuma atividade ainda</span>
+
+
             </div>
+
+
           <% } %>
+
+
         </div>
+
+
       </div>
+
+
     <% }) %>
+
+
   </div>
 
+
+
+
+
   <!-- Stats Gerais -->
+
+
   <div class="forum-stats-section">
+
+
     <h3>
-      <i class="fas fa-chart-line"></i> Estatísticas da Comunidade
+
+
+      <i class="fas fa-chart-line"></i> Estat&iacute;sticas da Comunidade
+
+
     </h3>
+
+
     <div class="forum-stats-grid">
+
+
       <div class="stat-box">
+
+
         <i class="fas fa-comments stat-icon"></i>
+
+
         <div class="stat-content">
+
+
           <span class="stat-number">
+
+
             <%= categories.reduce((sum, cat) => sum + (cat.threadCount || 0), 0) %>
+
+
           </span>
-          <span class="stat-text">Total de Tópicos</span>
+
+
+          <span class="stat-text">Total de T?picos</span>
+
+
         </div>
+
+
       </div>
+
+
       <div class="stat-box">
+
+
         <i class="fas fa-comment-dots stat-icon"></i>
+
+
         <div class="stat-content">
+
+
           <span class="stat-number">
+
+
             <%= categories.reduce((sum, cat) => sum + (cat.postCount || 0), 0) %>
+
+
           </span>
-          <span class="stat-text">Total de Posts</span>
+
+
+          <span class="stat-text">Total de T?picos</span>
+
+
         </div>
+
+
       </div>
+
+
       <div class="stat-box">
+
+
         <i class="fas fa-users stat-icon"></i>
+
+
         <div class="stat-content">
+
+
           <span class="stat-number"><%= totalUsers || 0 %></span>
+
+
           <span class="stat-text">Membros Ativos</span>
+
+
         </div>
+
+
       </div>
+
+
       <div class="stat-box">
+
+
         <i class="fas fa-fire stat-icon"></i>
+
+
         <div class="stat-content">
+
+
           <span class="stat-number"><%= onlineUsersCount || 0 %></span>
+
+
           <span class="stat-text">Online Agora</span>
+
+
         </div>
+
+
       </div>
+
+
     </div>
+
+
   </div>
+
+
+
+
+
+
 
 
   <div class="forum-online-section">
+
+
     <h3><i class="fas fa-user-friends"></i> Online agora</h3>
+
+
     <% if (onlineUsers && onlineUsers.length > 0) { %>
+
+
       <div class="online-users">
+
+
         <% onlineUsers.forEach(onlineUser => { %>
+
+
           <a href="/forum/user/<%= onlineUser.username %>" class="online-user" title="<%= onlineUser.username %>">
+
+
             <img src="<%= onlineUser.avatar || '/images/default-avatar.png' %>" alt="<%= onlineUser.username %>" class="online-avatar">
+
+
             <span class="online-name"><%= onlineUser.username %></span>
+
+
           </a>
+
+
         <% }) %>
+
+
       </div>
+
+
     <% } else { %>
-      <p class="online-empty">Nenhum usuario online agora.</p>
+
+
+      <p class="online-empty">Nenhum usu&aacute;rio online agora.</p>
+
     <% } %>
+
+
   </div>
 
-  <!-- Regras do Fórum -->
+
+
+
+
+  <!-- Regras do FÃÂÃÂ³rum -->
+
+
   <div class="forum-rules">
+
+
     <h3>
-      <i class="fas fa-shield-alt"></i> Regras do Fórum
+
+
+      <i class="fas fa-shield-alt"></i> Regras do F&oacute;rum
+
+
     </h3>
+
+
     <ul class="rules-list">
+
+
       <li><i class="fas fa-check-circle"></i> Seja respeitoso com todos os membros</li>
-      <li><i class="fas fa-check-circle"></i> Não faça spam ou publicidade não autorizada</li>
-      <li><i class="fas fa-check-circle"></i> Mantenha as discussões relacionadas ao tema</li>
-      <li><i class="fas fa-check-circle"></i> Não compartilhe conteúdo ilegal ou ofensivo</li>
-      <li><i class="fas fa-check-circle"></i> Use a busca antes de criar tópicos duplicados</li>
+
+
+      <li><i class="fas fa-check-circle"></i> N&atilde;o fa&ccedil;a spam ou publicidade n?o autorizada</li>
+
+
+      <li><i class="fas fa-check-circle"></i> Mantenha as discuss&otilde;es relacionadas ao tema</li>
+
+
+      <li><i class="fas fa-check-circle"></i> N&atilde;o compartilhe conte&uacute;do ilegal ou ofensivo</li>
+
+
+      <li><i class="fas fa-check-circle"></i> Use a busca antes de criar t&oacute;picos duplicados</li>
+
+
     </ul>
+
+
   </div>
+
+
 </div>
+
+
+<% } %>
+
+
+<div class="forum-twitter">
+
+
+  <div class="forum-twitter-grid">
+
+
+    <aside class="forum-side left">
+      <div class="forum-brand">
+        <i class="fas fa-comments"></i>
+        <span class="nav-text">F&oacute;rum Card no Mi</span>
+      </div>
+      <nav class="forum-nav">
+        <a href="/forum" class="forum-nav-link active"><i class="fas fa-home"></i><span class="nav-text">In&iacute;cio</span></a>
+        <a href="/forum/search" class="forum-nav-link"><i class="fas fa-search"></i><span class="nav-text">Buscar</span></a>
+        <a href="/forum/leaderboard" class="forum-nav-link"><i class="fas fa-trophy"></i><span class="nav-text">Ranking</span></a>
+        <% if (user) { %>
+          <a href="/forum/user/<%= user.username %>" class="forum-nav-link"><i class="fas fa-user"></i><span class="nav-text">Meu Perfil</span></a>
+          <a href="/forum/notifications" class="forum-nav-link"><i class="fas fa-bell"></i><span class="nav-text">Notifica&ccedil;&otilde;es</span></a>
+        <% } else { %>
+          <a href="/auth/login" class="forum-nav-link"><i class="fas fa-sign-in-alt"></i><span class="nav-text">Entrar</span></a>
+        <% } %>
+      </nav>
+      <a href="/forum/search" class="forum-create-btn"><i class="fas fa-plus"></i><span class="nav-text">Criar t&oacute;pico</span></a>
+    </aside>
+
+
+
+
+
+    <main class="forum-feed">
+
+
+      <header class="forum-feed-header">
+
+
+        <h1>F&oacute;rum</h1>
+
+        <p>Participe das discuss&otilde;es, compartilhe estrat&eacute;gias e conecte-se com a comunidade.</p>
+
+      </header>
+
+
+
+
+
+      <section class="forum-composer">
+
+
+        <div class="composer-avatar">
+
+
+          <img src="<%= user && user.avatar ? user.avatar : '/images/default-avatar.png' %>" alt="avatar">
+
+
+        </div>
+
+
+        <div class="composer-box">
+
+
+          <p>Tem algo para compartilhar?</p>
+
+
+          <div class="composer-actions">
+
+
+            <a href="/forum/search" class="btn btn-secondary">Escolher categoria</a>
+
+
+            <a href="/forum/search" class="btn btn-primary">Novo t&oacute;pico</a>
+
+          </div>
+
+
+        </div>
+
+
+      </section>
+
+
+
+
+
+      <section class="forum-feed-list">
+
+
+        <% categories.forEach(category => { %>
+
+
+          <article class="forum-thread-card">
+
+
+            <div class="thread-card-icon" style="background: <%= category.color %>20; color: <%= category.color %>"><%= category.icon %></div>
+
+
+            <div class="thread-card-body">
+
+
+              <a href="/forum/<%= category.slug %>" class="thread-card-title"><%= category.name %></a>
+
+
+              <p class="thread-card-desc"><%= category.description %></p>
+
+
+              <div class="thread-card-meta">
+
+
+                <span><i class="fas fa-comments"></i> <%= category.threadCount || 0 %> t&oacute;picos</span>
+
+                <span><i class="fas fa-comment-dots"></i> <%= category.postCount || 0 %> posts</span>
+
+
+              </div>
+
+
+            </div>
+
+
+            <div class="thread-card-activity">
+
+
+              <% if (category.lastThread) { %>
+
+
+                <a href="/forum/<%= category.slug %>/<%= category.lastThread.slug %>" class="activity-title">
+
+
+                  <%= category.lastThread.title.substring(0, 40) %><%= category.lastThread.title.length > 40 ? '...' : '' %>
+
+
+                </a>
+
+
+                <span class="activity-time">
+
+
+                  <%= new Date(category.lastThread.lastActivity).toLocaleDateString('pt-BR', { day: 'numeric', month: 'short' }) %>
+
+
+                </span>
+
+
+              <% } else { %>
+
+
+                <span class="activity-empty">Sem atividade</span>
+
+
+              <% } %>
+
+
+            </div>
+
+
+          </article>
+
+
+        <% }) %>
+
+
+      </section>
+
+
+    </main>
+
+
+
+
+
+    <aside class="forum-side right">
+
+
+      <div class="forum-widget trends-widget">
+
+
+        <h3>Trends</h3>
+
+
+        <% const trendThreadsSafe = trendThreads || []; %>
+
+
+        <div class="trend-list">
+
+
+          <% trendThreadsSafe.forEach(thread => { %>
+
+
+            <a class="trend-item" href="/forum/<%= thread.category ? thread.category.slug : '' %>/<%= thread.slug %>">
+
+
+              <span class="trend-label"><%= thread.title %></span>
+
+            </a>
+
+
+          <% }) %>
+
+
+          <% if (!trendThreadsSafe.length) { %>
+            <div class="trend-empty">Sem t&oacute;picos populares no momento.</div>
+          <% } %>
+
+        </div>
+
+
+      </div>
+
+
+
+
+
+      <div class="forum-widget">
+
+
+        <h3>Online agora</h3>
+
+
+        <% if (onlineUsers && onlineUsers.length > 0) { %>
+
+
+          <div class="online-users">
+
+
+            <% onlineUsers.forEach(onlineUser => { %>
+
+
+              <a href="/forum/user/<%= onlineUser.username %>" class="online-user" title="<%= onlineUser.username %>">
+
+
+                <img src="<%= onlineUser.avatar || '/images/default-avatar.png' %>" alt="<%= onlineUser.username %>" class="online-avatar">
+
+
+                <span class="online-name"><%= onlineUser.username %></span>
+
+
+              </a>
+
+
+            <% }) %>
+
+
+          </div>
+
+
+        <% } else { %>
+
+
+      <p class="online-empty">Nenhum usu&aacute;rio online agora.</p>
+
+
+        <% } %>
+
+
+      </div>
+
+
+
+
+
+      <div class="forum-widget">
+
+
+        <h3>Resumo</h3>
+
+
+        <div class="forum-summary">
+
+
+          <div><strong><%= categories.reduce((sum, cat) => sum + (cat.threadCount || 0), 0) %></strong> t&oacute;picos</div>
+
+          <div><strong><%= categories.reduce((sum, cat) => sum + (cat.postCount || 0), 0) %></strong> posts</div>
+
+
+          <div><strong><%= totalUsers || 0 %></strong> membros</div>
+
+
+          <div><strong><%= onlineUsersCount || 0 %></strong> online</div>
+
+
+        </div>
+
+
+      </div>
+
+
+    </aside>
+
+
+  </div>
+
+
+</div>
+
+
+
+
+
+
+
 
 <%- include('../../partials/footer') %>

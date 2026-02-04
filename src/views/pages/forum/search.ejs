@@ -79,7 +79,16 @@
         <% if (results && results.length > 0) { %>
             <div class="search-results">
                 <% results.forEach(result => { %>
-                    <div class="search-result-item">
+                    <% 
+                        const threadUrl = (result.category && result.slug) 
+                            ? `/forum/${result.category.slug}/${result.slug}` 
+                            : null;
+                        const postUrl = (result.thread && result.thread.category && result.thread.slug)
+                            ? `/forum/${result.thread.category.slug}/${result.thread.slug}#post-${result._id}`
+                            : null;
+                        const resultUrl = threadUrl || postUrl || '';
+                    %>
+                    <div class="search-result-item clickable-result" data-url="<%= resultUrl %>">
                         <!-- Thread Result -->
                         <% if (result.type === 'thread' || result.title) { %>
                             <div class="result-header">
@@ -234,6 +243,16 @@
     <%- include('../../partials/footer') %>
 
     <script>
+        // Make result card clickable
+        document.querySelectorAll('.clickable-result').forEach(item => {
+            item.addEventListener('click', function (e) {
+                // keep default behavior for direct link clicks inside the card
+                if (e.target.closest('a, button, input, select, textarea')) return;
+                const url = item.dataset.url;
+                if (url) window.location.href = url;
+            });
+        });
+
         // Apply filters
         document.getElementById('apply-filters').addEventListener('click', function() {
             const query = document.querySelector('.search-input').value;

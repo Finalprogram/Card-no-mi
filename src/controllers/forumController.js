@@ -13,7 +13,7 @@ const factionSystem = require('../config/factionSystem');
 const { sequelize } = require('../database/connection');
 
 // ============================================================================ 
-// SISTEMA DE FACÇÃO
+// SISTEMA DE FACÃÂÃÂO
 // ============================================================================ 
 
 // @desc    Show faction choice page
@@ -33,10 +33,10 @@ exports.getFactionChoice = async (req, res) => {
 
         res.render('pages/forum/faction-choice', {
             user: req.session.user,
-            pageTitle: 'Escolha sua Facção'
+            pageTitle: 'Escolha sua FacÃÂ§ÃÂ£o'
         });
     } catch (error) {
-        logger.error('Erro ao exibir escolha de facção:', error);
+        logger.error('Erro ao exibir escolha de facÃÂ§ÃÂ£o:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };
@@ -47,24 +47,24 @@ exports.getFactionChoice = async (req, res) => {
 exports.postFactionChoice = async (req, res) => {
     try {
         if (!req.session.user) {
-            return res.status(401).json({ success: false, message: 'Não autorizado' });
+            return res.status(401).json({ success: false, message: 'NÃÂ£o autorizado' });
         }
 
         const { faction } = req.body;
         
         if (!faction || !['pirate', 'marine'].includes(faction)) {
-            return res.status(400).json({ success: false, message: 'Facção inválida' });
+            return res.status(400).json({ success: false, message: 'FacÃÂ§ÃÂ£o invÃÂ¡lida' });
         }
 
         const userId = req.session.user.id;
         const user = await User.findByPk(userId);
 
         if (!user) {
-            return res.status(404).json({ success: false, message: 'Usuário não encontrado' });
+            return res.status(404).json({ success: false, message: 'UsuÃÂ¡rio nÃÂ£o encontrado' });
         }
 
         if (user.faction) {
-            return res.status(400).json({ success: false, message: 'Você já escolheu uma facção' });
+            return res.status(400).json({ success: false, message: 'VocÃÂª jÃÂ¡ escolheu uma facÃÂ§ÃÂ£o' });
         }
 
         await user.update({
@@ -78,20 +78,20 @@ exports.postFactionChoice = async (req, res) => {
         req.session.user.faction = faction;
         req.session.user.factionRank = 0;
 
-        logger.info(`Usuário ${user.username} escolheu a facção: ${faction}`);
+        logger.info(`UsuÃÂ¡rio ${user.username} escolheu a facÃÂ§ÃÂ£o: ${faction}`);
 
         const rankInfo = factionSystem.getCurrentRank(faction, 0);
 
         res.json({
             success: true, 
-            message: 'Facção escolhida com sucesso!',
+            message: 'FacÃÂ§ÃÂ£o escolhida com sucesso!',
             rank: {
                 name: rankInfo ? rankInfo.title : 'Recruta',
                 level: 0
             }
         });
     } catch (error) {
-        logger.error('Erro ao processar escolha de facção:', error);
+        logger.error('Erro ao processar escolha de facÃÂ§ÃÂ£o:', error);
         res.status(500).json({ success: false, message: 'Erro ao processar escolha' });
     }
 };
@@ -112,6 +112,8 @@ exports.getForumIndex = async (req, res) => {
             }
         }
         
+        const isAdminIndex = req.session.user && req.session.user.role === 'admin';
+
         const categories = await ForumCategory.findAll({
             where: {
                 isActive: true,
@@ -150,7 +152,6 @@ exports.getForumIndex = async (req, res) => {
                 }
             };
             
-            const isAdminIndex = req.session.user && req.session.user.role === 'admin';
             if (!isAdminIndex) {
                 postCountQuery.isActive = true;
             }
@@ -180,17 +181,53 @@ exports.getForumIndex = async (req, res) => {
             limit: 12
         });
 
+        const trendThreadsRaw = await ForumThread.findAll({
+            where: {
+                isDeleted: false,
+                ...(isAdminIndex ? {} : { isActive: true })
+            },
+            attributes: [
+                'id',
+                'title',
+                'slug',
+                'categoryId',
+                'viewCount',
+                'lastActivity',
+                [
+                    literal(`(SELECT COUNT(*) FROM forum_posts WHERE "forum_posts"."threadId" = "ForumThread"."id" AND "forum_posts"."isDeleted" = false${isAdminIndex ? '' : ' AND "forum_posts"."isActive" = true'})`),
+                    'postCount'
+                ]
+            ],
+            include: [
+                { model: ForumCategory, as: 'category', attributes: ['name', 'slug'] }
+            ],
+            order: [
+                [literal('"postCount"'), 'DESC'],
+                ['viewCount', 'DESC'],
+                ['lastActivity', 'DESC']
+            ],
+            limit: 5
+        });
+        const trendThreads = [];
+        const trendSeen = new Set();
+        for (const thread of trendThreadsRaw) {
+            if (trendSeen.has(thread.id)) continue;
+            trendSeen.add(thread.id);
+            trendThreads.push(thread);
+        }
+
         res.render('pages/forum/index', {
             categories,
             totalUsers,
             onlineUsersCount,
             onlineUsers,
+            trendThreads,
             user: req.session.user || null,
             pageTitle: 'F?rum Card no Mi'
         });
 
     } catch (error) {
-        logger.error('Erro ao buscar índice do fórum:', error);
+        logger.error('Erro ao buscar ÃÂ­ndice do fÃÂ³rum:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };
@@ -213,7 +250,7 @@ exports.getCategoryThreads = async (req, res) => {
 
         const category = await ForumCategory.findOne({ where: { slug: categorySlug } });
         if (!category) {
-            return res.status(404).send('Categoria não encontrada');
+            return res.status(404).send('Categoria nÃÂ£o encontrada');
         }
 
         const subforums = await ForumCategory.findAll({
@@ -323,7 +360,7 @@ exports.getCategoryThreads = async (req, res) => {
             filterTag,
             popularTags,
             user: req.session.user || null,
-            pageTitle: `${category.name} - Fórum`
+            pageTitle: `${category.name} - FÃÂ³rum`
         });
     } catch (error) {
         logger.error('Erro ao buscar threads da categoria:', error);
@@ -358,7 +395,7 @@ exports.getThread = async (req, res) => {
         });
 
         if (!thread) {
-            return res.status(404).send('Thread não encontrada');
+            return res.status(404).send('Thread nÃÂ£o encontrada');
         }
 
         await thread.increment('viewCount');
@@ -452,7 +489,7 @@ exports.showCreateThreadForm = async (req, res) => {
         const category = await ForumCategory.findOne({ where: { slug: req.params.categorySlug } });
         
         if (!category) {
-            return res.status(404).send('Categoria não encontrada');
+            return res.status(404).send('Categoria nÃÂ£o encontrada');
         }
         
         res.render('pages/forum/create-thread', {
@@ -461,7 +498,7 @@ exports.showCreateThreadForm = async (req, res) => {
             pageTitle: 'Nova Thread'
         });
     } catch (error) {
-        logger.error('Erro ao exibir formulário de thread:', error);
+        logger.error('Erro ao exibir formulÃÂ¡rio de thread:', error);
         res.status(500).send(`Erro interno do servidor: ${error.message}`);
     }
 };
@@ -474,14 +511,14 @@ exports.createThread = async (req, res) => {
     try {
         if (!req.session.user) {
             await t.rollback();
-            return res.status(401).json({ success: false, message: 'Não autorizado' });
+            return res.status(401).json({ success: false, message: 'NÃÂ£o autorizado' });
         }
         
         const userId = req.session.user.id;
         
         if (!userId) {
             await t.rollback();
-            return res.status(401).json({ success: false, message: 'ID de usuário não encontrado na sessão' });
+            return res.status(401).json({ success: false, message: 'ID de usuÃÂ¡rio nÃÂ£o encontrado na sessÃÂ£o' });
         }
 
         const { title, content, tags, type } = req.body;
@@ -490,15 +527,15 @@ exports.createThread = async (req, res) => {
 
         if (!category) {
             await t.rollback();
-            return res.status(404).json({ success: false, message: 'Categoria não encontrada' });
+            return res.status(404).json({ success: false, message: 'Categoria nÃÂ£o encontrada' });
         }
 
         if (!title || !content) {
             await t.rollback();
-            return res.status(400).json({ success: false, message: 'Título e conteúdo são obrigatórios' });
+            return res.status(400).json({ success: false, message: 'TÃÂ­tulo e conteÃÂºdo sÃÂ£o obrigatÃÂ³rios' });
         }
 
-        const slug = title.toLowerCase().replace(/[^ -~ -ÿ]/g, '').replace(/[^a-z0-9_ -]/g, '').replace(/ +/g, '-').substring(0, 100) + '-' + Date.now();
+        const slug = title.toLowerCase().replace(/[^ -~ÃÂ -ÃÂ¿]/g, '').replace(/[^a-z0-9_ -]/g, '').replace(/ +/g, '-').substring(0, 100) + '-' + Date.now();
         const tagsArray = tags ? tags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag) : [];
         const images = req.files?.map(file => ({ url: `/uploads/forum/${file.filename}`, filename: file.filename })) || [];
 
@@ -523,7 +560,7 @@ exports.createThread = async (req, res) => {
         const user = await User.findByPk(userId, { transaction: t });
         if (user && user.faction) {
             const pointsAwarded = await factionSystem.addFactionPoints(user, 10, 'Criou uma thread', { transaction: t });
-            logger.info(`💰 Usuário ${user.username} ganhou ${pointsAwarded} pontos de facção (thread criada)`);
+            logger.info(`Ã°ÂÂÂ° UsuÃÂ¡rio ${user.username} ganhou ${pointsAwarded} pontos de facÃÂ§ÃÂ£o (thread criada)`);
         }
 
         await achievementService.checkAchievements(userId, 'threads', { transaction: t });
@@ -554,7 +591,7 @@ exports.createPost = async (req, res) => {
     try {
         if (!req.session.user) {
             await t.rollback();
-            return res.status(401).json({ success: false, message: 'Não autorizado' });
+            return res.status(401).json({ success: false, message: 'NÃÂ£o autorizado' });
         }
 
         const userId = req.session.user.id;
@@ -567,7 +604,7 @@ exports.createPost = async (req, res) => {
 
         if (!thread) {
             await t.rollback();
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
         
         if (thread.isLocked) {
@@ -577,7 +614,7 @@ exports.createPost = async (req, res) => {
 
         if (!content) {
             await t.rollback();
-            return res.status(400).json({ success: false, message: 'Conteúdo é obrigatório' });
+            return res.status(400).json({ success: false, message: 'ConteÃÂºdo ÃÂ© obrigatÃÂ³rio' });
         }
 
         let depth = 0;
@@ -691,13 +728,14 @@ exports.searchForum = async (req, res) => {
                 categoryFilter: category || '',
                 authorFilter: author || '',
                 sortFilter: sort,
+                sortBy: sort,
                 typeFilter: 'all',
                 user: req.session.user || null,
-                pageTitle: 'Buscar no Fórum'
+                pageTitle: 'Buscar no FÃÂ³rum'
             });
         }
 
-        // Verificar se é admin
+        // Verificar se ÃÂ© admin
         const isAdmin = req.session.user && req.session.user.role === 'admin';
 
         let whereClause = {
@@ -754,7 +792,8 @@ exports.searchForum = async (req, res) => {
             categoryFilter: category || '',
             authorFilter: author || '',
             sortFilter: sort,
-            typeFilter: 'all', // Por enquanto só threads, mas preparado para posts também
+            sortBy: sort,
+            typeFilter: 'all', // Por enquanto sÃÂ³ threads, mas preparado para posts tambÃÂ©m
             currentPage: page,
             totalPages,
             totalResults: count,
@@ -762,13 +801,13 @@ exports.searchForum = async (req, res) => {
             pageTitle: `Buscar: ${q}`
         });
     } catch (error) {
-        logger.error('Erro ao buscar no fórum:', error);
+        logger.error('Erro ao buscar no fÃÂ³rum:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };
 
 // ============================================================================ 
-// MODERAÇÃO
+// MODERAÃÂÃÂO
 // ============================================================================ 
 
 // @desc    Pin/Unpin thread
@@ -780,7 +819,7 @@ exports.pinThread = async (req, res) => {
         const thread = await ForumThread.findByPk(threadId);
 
         if (!thread) {
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
 
         await thread.update({ isPinned: !thread.isPinned });
@@ -823,7 +862,7 @@ exports.lockThread = async (req, res) => {
         const thread = await ForumThread.findByPk(threadId);
 
         if (!thread) {
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
 
         await thread.update({ isLocked: !thread.isLocked });
@@ -868,7 +907,7 @@ exports.deleteThread = async (req, res) => {
         const thread = await ForumThread.findByPk(threadId);
 
         if (!thread) {
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
 
         await thread.update({
@@ -912,12 +951,12 @@ exports.deletePost = async (req, res) => {
         const post = await ForumPost.findByPk(postId);
 
         if (!post) {
-            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+            return res.status(404).json({ success: false, message: 'Post nÃÂ£o encontrado' });
         }
 
         if (req.session.user.role !== 'moderator' && req.session.user.role !== 'admin') {
             if (post.authorId !== userId) {
-                return res.status(403).json({ success: false, message: 'Você não pode deletar este post' });
+                return res.status(403).json({ success: false, message: 'VocÃÂª nÃÂ£o pode deletar este post' });
             }
         }
 
@@ -960,18 +999,18 @@ exports.editPost = async (req, res) => {
         const userId = req.session.user.id;
         
         if (!content || content.trim().length < 10) {
-            return res.status(400).json({ success: false, message: 'Conteúdo deve ter no mínimo 10 caracteres' });
+            return res.status(400).json({ success: false, message: 'ConteÃÂºdo deve ter no mÃÂ­nimo 10 caracteres' });
         }
 
         const post = await ForumPost.findByPk(postId);
 
         if (!post) {
-            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+            return res.status(404).json({ success: false, message: 'Post nÃÂ£o encontrado' });
         }
 
         if (req.session.user.role !== 'moderator' && req.session.user.role !== 'admin') {
             if (post.authorId !== userId) {
-                return res.status(403).json({ success: false, message: 'Você não pode editar este post' });
+                return res.status(403).json({ success: false, message: 'VocÃÂª nÃÂ£o pode editar este post' });
             }
         }
 
@@ -1006,20 +1045,20 @@ exports.flagThread = async (req, res) => {
         const userId = req.session.user.id;
 
         if (!reason || reason.trim().length < 5) {
-            return res.status(400).json({ success: false, message: 'Motivo deve ter no mínimo 5 caracteres' });
+            return res.status(400).json({ success: false, message: 'Motivo deve ter no mÃÂ­nimo 5 caracteres' });
         }
 
         const thread = await ForumThread.findByPk(threadId);
 
         if (!thread) {
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
 
         const moderationFlags = thread.moderationFlags || [];
         const alreadyFlagged = moderationFlags.some(flag => flag.user === userId);
 
         if (alreadyFlagged) {
-            return res.status(400).json({ success: false, message: 'Você já denunciou esta thread' });
+            return res.status(400).json({ success: false, message: 'VocÃÂª jÃÂ¡ denunciou esta thread' });
         }
 
         moderationFlags.push({
@@ -1065,20 +1104,20 @@ exports.flagPost = async (req, res) => {
         const userId = req.session.user.id;
 
         if (!reason || reason.trim().length < 5) {
-            return res.status(400).json({ success: false, message: 'Motivo deve ter no mínimo 5 caracteres' });
+            return res.status(400).json({ success: false, message: 'Motivo deve ter no mÃÂ­nimo 5 caracteres' });
         }
 
         const post = await ForumPost.findByPk(postId);
 
         if (!post) {
-            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+            return res.status(404).json({ success: false, message: 'Post nÃÂ£o encontrado' });
         }
 
         const moderationFlags = post.moderationFlags || [];
         const alreadyFlagged = moderationFlags.some(flag => flag.user === userId);
 
         if (alreadyFlagged) {
-            return res.status(400).json({ success: false, message: 'Você já denunciou este post' });
+            return res.status(400).json({ success: false, message: 'VocÃÂª jÃÂ¡ denunciou este post' });
         }
 
         moderationFlags.push({
@@ -1167,10 +1206,10 @@ exports.getModerationDashboard = async (req, res) => {
             flaggedPosts,
             stats,
             user: req.session.user,
-            pageTitle: 'Painel de Moderação'
+            pageTitle: 'Painel de ModeraÃÂ§ÃÂ£o'
         });
     } catch (error) {
-        logger.error('Erro ao carregar dashboard de moderação:', error);
+        logger.error('Erro ao carregar dashboard de moderaÃÂ§ÃÂ£o:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };
@@ -1186,7 +1225,7 @@ exports.dismissThreadFlags = async (req, res) => {
         const thread = await ForumThread.findByPk(threadId, { include: [{ model: User, as: 'author', attributes: ['username'] }] });
 
         if (!thread) {
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
 
         const archivedFlags = thread.moderationFlags || [];
@@ -1209,10 +1248,10 @@ exports.dismissThreadFlags = async (req, res) => {
             userAgent: req.get('user-agent')
         });
 
-        res.json({ success: true, message: 'Denúncias da thread descartadas com sucesso' });
+        res.json({ success: true, message: 'DenÃÂºncias da thread descartadas com sucesso' });
     } catch (error) {
-        logger.error('Erro ao descartar denúncias da thread:', error);
-        res.status(500).json({ success: false, message: 'Erro ao descartar denúncias' });
+        logger.error('Erro ao descartar denÃÂºncias da thread:', error);
+        res.status(500).json({ success: false, message: 'Erro ao descartar denÃÂºncias' });
     }
 };
 
@@ -1227,7 +1266,7 @@ exports.dismissPostFlags = async (req, res) => {
         const post = await ForumPost.findByPk(postId, { include: [{ model: User, as: 'author', attributes: ['username'] }] });
 
         if (!post) {
-            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+            return res.status(404).json({ success: false, message: 'Post nÃÂ£o encontrado' });
         }
 
         const archivedFlags = post.moderationFlags || [];
@@ -1249,10 +1288,10 @@ exports.dismissPostFlags = async (req, res) => {
             userAgent: req.get('user-agent')
         });
 
-        res.json({ success: true, message: 'Denúncias do post descartadas com sucesso' });
+        res.json({ success: true, message: 'DenÃÂºncias do post descartadas com sucesso' });
     } catch (error) {
-        logger.error('Erro ao descartar denúncias do post:', error);
-        res.status(500).json({ success: false, message: 'Erro ao descartar denúncias' });
+        logger.error('Erro ao descartar denÃÂºncias do post:', error);
+        res.status(500).json({ success: false, message: 'Erro ao descartar denÃÂºncias' });
     }
 };
 
@@ -1267,7 +1306,7 @@ exports.toggleThreadActive = async (req, res) => {
         const thread = await ForumThread.findByPk(threadId);
 
         if (!thread) {
-            return res.status(404).json({ success: false, message: 'Thread não encontrada' });
+            return res.status(404).json({ success: false, message: 'Thread nÃÂ£o encontrada' });
         }
 
         const isActive = !thread.isActive;
@@ -1316,7 +1355,7 @@ exports.togglePostActive = async (req, res) => {
         const post = await ForumPost.findByPk(postId);
 
         if (!post) {
-            return res.status(404).json({ success: false, message: 'Post não encontrado' });
+            return res.status(404).json({ success: false, message: 'Post nÃÂ£o encontrado' });
         }
 
         const isActive = !post.isActive;
@@ -1392,16 +1431,16 @@ exports.getModerationHistory = async (req, res) => {
                 targetUser: req.query.targetUser || ''
             },
             user: req.session.user,
-            pageTitle: 'Histórico de Moderação'
+            pageTitle: 'HistÃÂ³rico de ModeraÃÂ§ÃÂ£o'
         });
     } catch (error) {
-        logger.error('Erro ao carregar histórico de moderação:', error);
+        logger.error('Erro ao carregar histÃÂ³rico de moderaÃÂ§ÃÂ£o:', error);
         res.status(500).send('Erro interno do servidor');
     }
 };
 
 // ============================================================================ 
-// LEADERBOARD DE FACÇÕES
+// LEADERBOARD DE FACÃÂÃÂES
 // ============================================================================ 
 
 // @desc    Show faction leaderboard
@@ -1462,7 +1501,7 @@ exports.getLeaderboard = async (req, res) => {
             topMarines,
             stats,
             user: req.session.user || null,
-            pageTitle: 'Ranking de Facções'
+            pageTitle: 'Ranking de FacÃÂ§ÃÂµes'
         });
     } catch (error) {
         logger.error('Erro ao carregar leaderboard:', error);
