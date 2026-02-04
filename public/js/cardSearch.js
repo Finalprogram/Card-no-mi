@@ -42,6 +42,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getVariantBadge = (card) => {
+        const variantValue = Number(card && card.variant);
+        if (variantValue === 0) return '';
+
         let images = card && card.images ? card.images : null;
         if (typeof images === 'string') {
             try {
@@ -62,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<span class="${info.className}">${info.label}</span>`;
         }
 
-        const variantValue = Number(card && card.variant);
         const variantMap = {
             1: { label: 'AA', className: 'variant-badge variant-aa' },
             2: { label: 'Alt Art', className: 'variant-badge variant-alt' },

@@ -33,12 +33,14 @@ function normalizeImageUrl(url) {
 function inferVariantFromImageUrl(imageUrl) {
   if (!imageUrl) return null;
   const lower = String(imageUrl).toLowerCase();
-  const match = lower.match(/(_p1|_p2|_r1|_r2)\.png/);
+  const match = lower.match(/_(p|r)(\d+)\.png/);
   if (!match) return null;
-  const suffix = match[1];
+  const family = match[1];
+  const index = Number(match[2]);
+  const suffix = `_${family}${index}`;
   switch (suffix) {
     case '_p1':
-      return { variant: 0, label: 'arte padr?o', suffix };
+      return { variant: 1, label: 'parallel / AA', suffix };
     case '_r1':
       return { variant: 1, label: 'parallel / AA', suffix };
     case '_r2':
@@ -46,7 +48,13 @@ function inferVariantFromImageUrl(imageUrl) {
     case '_p2':
       return { variant: 3, label: 'reprint ou varia??o', suffix };
     default:
-      return null;
+      // Preserve unknown suffixes (e.g. _p3, _r3) as unique variants.
+      // This avoids collisions on api_id when JSON ships Variante=0 for alternate prints.
+      return {
+        variant: family === 'p' ? (10 + index) : (20 + index),
+        label: `variante ${suffix}`,
+        suffix
+      };
   }
 }
 
@@ -54,7 +62,17 @@ function mapCard(raw) {
   const code = raw.Codigo || raw.Código || raw.code || null;
   const imageUrl = raw.Imagem_URL || raw.image_url || null;
   const variantInfo = inferVariantFromImageUrl(imageUrl);
-  const variant = raw.Variante != null ? Number(raw.Variante) : (variantInfo ? variantInfo.variant : 0);
+  const jsonVariant = raw.Variante ?? raw.variante ?? raw.variant;
+  const parsedJsonVariant = jsonVariant != null && jsonVariant !== '' ? Number(jsonVariant) : null;
+  let variant = parsedJsonVariant != null && Number.isFinite(parsedJsonVariant)
+    ? parsedJsonVariant
+    : (variantInfo ? variantInfo.variant : 0);
+
+  // Regra de base: somente "variant=0" + imagem plain "<code>.png" e sem sufixo.
+  // Se vier variant=0 em URL com sufixo (_p1/_p2/_r1/_r2...), forca variante do sufixo.
+  if (variant === 0 && variantInfo && !isPlainCodeImage(imageUrl, code)) {
+    variant = variantInfo.variant;
+  }
   const name = raw.Nome || raw.name || null;
   const edition = raw.Edicao || raw.Edicao_Set || raw.set_name || raw.Card_Set || null;
   const type = raw.Tipo || raw.type || null;
@@ -118,62 +136,17 @@ async function importCardsFromPath(targetPath) {
   const records = [];
   const dedupe = new Set();
 
-  const codeImageMap = new Map();
-
   for (const file of files) {
     const items = loadJsonFromFile(file);
     for (const item of items) {
       const code = item.Codigo || item['Código'] || item.code || '';
       const imageUrl = item.Imagem_URL || item.image_url || null;
-      if (!code || !imageUrl) continue;
-      const entry = codeImageMap.get(code) || { hasP1: false, hasPlain: false };
-      if (inferVariantFromImageUrl(imageUrl)?.suffix === '_p1') entry.hasP1 = true;
-      if (isPlainCodeImage(imageUrl, code)) entry.hasPlain = true;
-      codeImageMap.set(code, entry);
-    }
-  }
-
-  for (const file of files) {
-    const items = loadJsonFromFile(file);
-    for (const item of items) {
-      const code = item.Codigo || item['Código'] || item.code || '';
-      const imageUrl = item.Imagem_URL || item.image_url || null;
-      const variantInfo = inferVariantFromImageUrl(imageUrl);
-
-      let variant = item.Variante != null ? String(item.Variante) : String(variantInfo ? variantInfo.variant : 0);
-      const codeInfo = codeImageMap.get(code);
-      if (codeInfo && codeInfo.hasP1 && codeInfo.hasPlain) {
-        if (isPlainCodeImage(imageUrl, code)) {
-          variant = '0';
-        } else if (inferVariantFromImageUrl(imageUrl)?.suffix === '_p1') {
-          variant = '1';
-        }
-      }
-
       const normalizedUrl = normalizeImageUrl(imageUrl) || '';
       const key = `${code}::${normalizedUrl}`;
       if (dedupe.has(key)) continue;
       dedupe.add(key);
 
       const mapped = mapCard(item);
-      if (codeInfo && codeInfo.hasP1 && codeInfo.hasPlain) {
-        if (isPlainCodeImage(imageUrl, code)) {
-          mapped.variant = 0;
-          mapped.images = {
-            ...(mapped.images || {}),
-            suffix: null,
-            variant: 'arte padrao'
-          };
-        } else if (inferVariantFromImageUrl(imageUrl)?.suffix === '_p1') {
-          mapped.variant = 1;
-          mapped.images = {
-            ...(mapped.images || {}),
-            suffix: '_p1',
-            variant: 'parallel / AA'
-          };
-        }
-      }
-
       records.push(mapped);
     }
   }

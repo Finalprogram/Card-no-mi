@@ -35,41 +35,6 @@ async function main() {
     byCode.get(key).push(card);
   }
 
-  // If code has both _p1 and plain .png, treat _p1 as AA (variant=1) and plain .png as base (variant=0)
-  for (const [code, list] of byCode.entries()) {
-    const hasP1 = list.some(card => extractSuffix(card.image_url) === '_p1');
-    const hasPlain = list.some(card => isPlainCodeImage(card.image_url, code));
-    if (!hasP1 || !hasPlain) continue;
-
-    for (const card of list) {
-      if (extractSuffix(card.image_url) === '_p1') {
-        if (card.variant !== 1) {
-          await card.update({
-            variant: 1,
-            images: {
-              ...(card.images || {}),
-              suffix: '_p1',
-              variant: 'parallel / AA'
-            }
-          });
-          updated += 1;
-        }
-      } else if (isPlainCodeImage(card.image_url, code)) {
-        if (card.variant !== 0) {
-          await card.update({
-            variant: 0,
-            images: {
-              ...(card.images || {}),
-              suffix: null,
-              variant: 'arte padrao'
-            }
-          });
-          updated += 1;
-        }
-      }
-    }
-  }
-
   // Remove duplicates: same code + same normalized image_url.
   const refreshed = await Card.findAll({ order: [['id', 'ASC']] });
   const seen = new Map();

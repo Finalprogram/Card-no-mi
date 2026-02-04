@@ -29,20 +29,7 @@ const buildVariantFilter = (variantValue) => {
   const suffix = suffixMap[variantValue] || null;
 
   if (variantValue === 0) {
-    return {
-      [Op.and]: [
-        { image_url: { [Op.notILike]: '%_p1.png%' } },
-        { image_url: { [Op.notILike]: '%_r1.png%' } },
-        { image_url: { [Op.notILike]: '%_r2.png%' } },
-        { image_url: { [Op.notILike]: '%_p2.png%' } },
-        {
-          [Op.or]: [
-            { variant: { [Op.notIn]: [1, 2, 3] } },
-            { variant: null }
-          ]
-        }
-      ]
-    };
+    return { [Op.or]: [{ variant: 0 }, { variant: null }] };
   }
 
   return {

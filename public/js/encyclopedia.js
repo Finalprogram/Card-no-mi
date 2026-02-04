@@ -14,6 +14,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const prevPageButton = document.getElementById('prev-page');
     const nextPageButton = document.getElementById('next-page');
     const pageIndicator = document.getElementById('page-indicator');
+    const totalPagesIndicator = document.getElementById('total-pages');
+    const googleStylePagination = document.getElementById('google-style-pagination');
     const searchInput = document.getElementById('search-input');
     const resultsSection = document.querySelector('.results');
     
@@ -43,6 +45,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const getVariantBadge = (card) => {
+        const variantValue = Number(card && card.variant);
+        if (variantValue === 0) return '';
+
         let images = card && card.images ? card.images : null;
         if (typeof images === 'string') {
             try {
@@ -63,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
             return `<span class="${info.className}">${info.label}</span>`;
         }
 
-        const variantValue = Number(card && card.variant);
         const variantMap = {
             1: { label: 'AA', className: 'variant-badge variant-aa' },
             2: { label: 'Alt Art', className: 'variant-badge variant-alt' },
@@ -103,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const data = await response.json();
             renderCards(data.cards);
-            updatePagination(data.currentPage, data.hasMore);
+            updatePagination(data.currentPage, data.hasMore, data.totalPages);
 
         } catch (error) {
             console.error('Erro ao buscar cartas:', error);
@@ -140,9 +144,48 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Função para atualizar os controles de paginação
-    const updatePagination = (currentPage, hasMore) => {
+const renderGooglePagination = (currentPage, totalPages) => {
+        if (!googleStylePagination) return;
+        googleStylePagination.innerHTML = '';
+        if (!totalPages || totalPages <= 1) return;
+
+        const appendPageButton = (page, isActive) => {
+            const btn = document.createElement('button');
+            btn.className = `page-btn ${isActive ? 'active' : ''}`.trim();
+            btn.dataset.page = page;
+            btn.textContent = page;
+            googleStylePagination.appendChild(btn);
+        };
+
+        const appendEllipsis = () => {
+            const span = document.createElement('span');
+            span.textContent = '...';
+            googleStylePagination.appendChild(span);
+        };
+
+        const start = Math.max(1, currentPage - 2);
+        const end = Math.min(totalPages, currentPage + 2);
+
+        if (start > 1) {
+            appendPageButton(1, false);
+            if (start > 2) appendEllipsis();
+        }
+
+        for (let i = start; i <= end; i++) {
+            appendPageButton(i, i === currentPage);
+        }
+
+        if (end < totalPages) {
+            if (end < totalPages - 1) appendEllipsis();
+            appendPageButton(totalPages, false);
+        }
+    };
+
+const updatePagination = (currentPage, hasMore, totalPages) => {
         currentFilters.page = currentPage;
         pageIndicator.textContent = `Página ${currentPage}`;
+        if (totalPagesIndicator) totalPagesIndicator.textContent = `de ${totalPages || 1}`;
+        renderGooglePagination(currentPage, totalPages || 1);
         prevPageButton.disabled = currentPage === 1;
         nextPageButton.disabled = !hasMore;
     };

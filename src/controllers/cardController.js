@@ -39,20 +39,7 @@ const buildVariantFilter = (variantValue) => {
   const suffix = suffixMap[variantValue] || null;
 
   if (variantValue === 0) {
-    return {
-      [Op.and]: [
-        { image_url: { [Op.notILike]: '%_p1.png%' } },
-        { image_url: { [Op.notILike]: '%_r1.png%' } },
-        { image_url: { [Op.notILike]: '%_r2.png%' } },
-        { image_url: { [Op.notILike]: '%_p2.png%' } },
-        {
-          [Op.or]: [
-            { variant: { [Op.notIn]: [1, 2, 3] } },
-            { variant: null }
-          ]
-        }
-      ]
-    };
+    return { [Op.or]: [{ variant: 0 }, { variant: null }] };
   }
 
   return {
@@ -219,22 +206,21 @@ const showCardDetailPage = async (req, res) => {
 
     let allVersions = [];
     if (mainCard.code) {
+      // Fetch all variants across sets/products by code (base + AA + reprints).
       allVersions = await Card.findAll({
         where: {
-          code: mainCard.code,
-          set_name: mainCard.set_name
+          code: mainCard.code
         }
       });
     } else if (mainCard.api_id) {
       const baseApiId = mainCard.api_id.split('_')[0];
       allVersions = await Card.findAll({
         where: {
-          api_id: { [Op.iLike]: `${baseApiId}%` },
-          set_name: mainCard.set_name
+          api_id: { [Op.iLike]: `${baseApiId}%` }
         }
       });
     }
-    allVersions.sort((a, b) => a.api_id.localeCompare(b.api_id));
+    allVersions.sort((a, b) => String(a.api_id || '').localeCompare(String(b.api_id || '')));
 
     const listings = await Listing.findAll({ 
         where: { cardId: mainCard.id },
@@ -435,6 +421,8 @@ const getAllCards = async (req, res) => {
       cards: cardsWithId,
       hasMore: (page * limit) < count,
       currentPage: page,
+      totalCards: count,
+      totalPages: Math.max(1, Math.ceil(count / limit))
     });
   } catch (error) {
     console.error("Erro ao buscar todas as cartas de One Piece do banco de dados:", error);
