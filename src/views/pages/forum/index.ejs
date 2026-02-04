@@ -589,7 +589,7 @@
           <a href="/auth/login" class="forum-nav-link"><i class="fas fa-sign-in-alt"></i><span class="nav-text">Entrar</span></a>
         <% } %>
       </nav>
-      <a href="/forum/search" class="forum-create-btn"><i class="fas fa-plus"></i><span class="nav-text">Criar t&oacute;pico</span></a>
+      <a href="<%= (categories && categories.length > 0) ? ('/forum/' + categories[0].slug + '/new') : '/forum' %>" class="forum-create-btn"><i class="fas fa-plus"></i><span class="nav-text">Criar t&oacute;pico</span></a>
     </aside>
 
 
@@ -633,10 +633,7 @@
           <div class="composer-actions">
 
 
-            <a href="/forum/search" class="btn btn-secondary">Escolher categoria</a>
-
-
-            <a href="/forum/search" class="btn btn-primary">Novo t&oacute;pico</a>
+            <a href="<%= (categories && categories.length > 0) ? ('/forum/' + categories[0].slug + '/new') : '/forum' %>" class="btn btn-primary">Novo t&oacute;pico</a>
 
           </div>
 

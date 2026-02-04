@@ -12,6 +12,12 @@ const logger = require('../config/logger');
 const factionSystem = require('../config/factionSystem');
 const { sequelize } = require('../database/connection');
 
+function normalizeThreadTitle(rawTitle = '') {
+    const trimmed = String(rawTitle).trim();
+    if (!trimmed) return '';
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+}
+
 // ============================================================================ 
 // SISTEMA DE FACÃÂÃÂO
 // ============================================================================ 
@@ -522,6 +528,7 @@ exports.createThread = async (req, res) => {
         }
 
         const { title, content, tags, type } = req.body;
+        const normalizedTitle = normalizeThreadTitle(title);
         
         const category = await ForumCategory.findOne({ where: { slug: req.params.categorySlug }, transaction: t });
 
@@ -530,17 +537,17 @@ exports.createThread = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Categoria nÃÂ£o encontrada' });
         }
 
-        if (!title || !content) {
+        if (!normalizedTitle || !content) {
             await t.rollback();
             return res.status(400).json({ success: false, message: 'TÃÂ­tulo e conteÃÂºdo sÃÂ£o obrigatÃÂ³rios' });
         }
 
-        const slug = title.toLowerCase().replace(/[^ -~ÃÂ -ÃÂ¿]/g, '').replace(/[^a-z0-9_ -]/g, '').replace(/ +/g, '-').substring(0, 100) + '-' + Date.now();
+        const slug = normalizedTitle.toLowerCase().replace(/[^ -~ÃÂ -ÃÂ¿]/g, '').replace(/[^a-z0-9_ -]/g, '').replace(/ +/g, '-').substring(0, 100) + '-' + Date.now();
         const tagsArray = tags ? tags.split(',').map(tag => tag.trim().toLowerCase()).filter(tag => tag) : [];
         const images = req.files?.map(file => ({ url: `/uploads/forum/${file.filename}`, filename: file.filename })) || [];
 
         const thread = await ForumThread.create({
-            title,
+            title: normalizedTitle,
             type: type || 'discussao',
             slug,
             content,

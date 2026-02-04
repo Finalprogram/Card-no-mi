@@ -6,6 +6,7 @@ const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Deck = require('../models/Deck');
 const Setting = require('../models/Setting');
+const { getCreatorsLatestVideos } = require('../services/youtubeService');
 const { Op, fn, col } = require('sequelize');
 const { sequelize } = require('../database/connection');
 
@@ -132,6 +133,19 @@ async function distinctValues(field, where) {
 }
 const showHomePage = async (req, res) => {
   try {
+    // Ensure homepage always fetches fresh dynamic content (e.g., latest YouTube videos)
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+
+    let creatorsFeed = { enabled: false, creators: [] };
+    try {
+      creatorsFeed = await getCreatorsLatestVideos();
+    } catch (error) {
+      console.error('Erro ao buscar vídeos dos criadores:', error.message);
+    }
+
     const recentListings = await Listing.findAll({
       order: [['createdAt', 'DESC']],
       limit: 10,
@@ -145,6 +159,7 @@ const showHomePage = async (req, res) => {
         if (data.card) data.card = addIdAlias(data.card);
         return data;
       }),
+      creatorsFeed
     });
   } catch (error) {
     console.error('Error fetching recent listings:', error);

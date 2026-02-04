@@ -180,6 +180,7 @@ section h2 {
     border-radius: 50%;
     object-fit: cover;
     margin-bottom: 15px;
+    border: 2px solid rgba(212, 175, 55, 0.28);
 }
 
 /* Community & Events */
@@ -287,4 +288,5 @@ section h2 {
     .history-content {
         flex-direction: column;
     }
+
 }

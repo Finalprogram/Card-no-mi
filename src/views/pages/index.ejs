@@ -2,58 +2,204 @@
 <%- include('../partials/navbar') %>
 
 <style>
-        /* Responsividade para mobile */
-        @media (max-width: 600px) {
-            .container {
-                padding: 0 8px;
-            }
-            .hero {
-                text-align: center;
-                padding: 24px 0 12px 0;
-            }
-            .hero-logo-center img {
-                max-width: 80vw;
-                height: auto;
-            }
-            .hero-search {
-                flex-direction: column;
-                gap: 8px;
-            }
-            .hero-search input {
-                width: 100%;
-                font-size: 1.1em;
-            }
-            .hero-search button {
-                width: 100%;
-                font-size: 1em;
-            }
-            .recently-added {
-                padding: 0;
-            }
-            .carousel-wrapper {
-                flex-direction: column;
-                align-items: center;
-            }
-            .cards-carousel {
-                display: flex;
-                flex-wrap: wrap;
-                gap: 8px;
-                justify-content: center;
-            }
-            .card-item {
-                min-width: 120px;
-                max-width: 45vw;
-            }
-            .card-image-container img {
-                max-width: 100%;
-                height: auto;
-            }
-            .carousel-btn {
-                font-size: 1.5em;
-                padding: 8px;
-            }
-            .trust-features {
-                padding: 0;
+    .creators-home {
+        margin-top: 20px;
+        margin-bottom: 8px;
+    }
+    .creators-home h2 {
+        margin-bottom: 8px;
+    }
+    .creators-home-subtitle {
+        color: var(--text-secondary);
+        margin-bottom: 18px;
+    }
+    .creators-home-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 16px;
+    }
+    .creator-home-card {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 14px;
+        padding: 14px;
+    }
+    .creator-home-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+    }
+    .creator-home-header h3 {
+        margin: 0;
+        font-size: 1.05rem;
+    }
+    .creator-home-header a {
+        color: var(--accent-gold);
+        text-decoration: none;
+        font-size: 0.88rem;
+    }
+    .creator-home-videos {
+        display: grid;
+        grid-auto-flow: column;
+        grid-auto-columns: minmax(250px, 1fr);
+        gap: 10px;
+        overflow-x: auto;
+        padding-bottom: 4px;
+        scrollbar-width: thin;
+    }
+    .creator-home-video {
+        display: block;
+        text-decoration: none;
+        color: inherit;
+        padding: 10px;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.02);
+        border: 1px solid transparent;
+        transition: all 160ms ease;
+    }
+    .creator-home-video:hover {
+        border-color: rgba(var(--accent-primary-rgb), 0.45);
+        background: rgba(var(--accent-primary-rgb), 0.10);
+        transform: translateY(-1px);
+    }
+    .creator-home-video img {
+        width: 100%;
+        height: 140px;
+        object-fit: cover;
+        border-radius: 8px;
+        margin-bottom: 8px;
+    }
+    .creator-home-video-info h4 {
+        margin: 0 0 6px;
+        font-size: 0.92rem;
+        line-height: 1.35;
+    }
+    .creator-home-video-info span {
+        color: var(--text-secondary);
+        font-size: 0.8rem;
+    }
+    .creator-home-empty {
+        color: var(--text-secondary);
+        margin: 0;
+    }
+    .video-modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.76);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 2200;
+        padding: 16px;
+    }
+    .video-modal-overlay.active {
+        display: flex;
+    }
+    .video-modal-dialog {
+        width: min(960px, 100%);
+        background: #0f1115;
+        border: 1px solid rgba(255, 255, 255, 0.12);
+        border-radius: 14px;
+        padding: 14px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
+    }
+    .video-modal-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 10px;
+        gap: 10px;
+    }
+    .video-modal-title {
+        margin: 0;
+        font-size: 1rem;
+        color: var(--text-primary);
+    }
+    .video-modal-close {
+        border: 0;
+        background: rgba(255, 255, 255, 0.08);
+        color: #fff;
+        border-radius: 8px;
+        width: 34px;
+        height: 34px;
+        cursor: pointer;
+    }
+    .video-modal-frame-wrap {
+        position: relative;
+        width: 100%;
+        padding-top: 56.25%;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #000;
+    }
+    .video-modal-frame-wrap iframe {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+    }
+
+    @media (max-width: 600px) {
+        .container {
+            padding: 0 8px;
+        }
+        .hero {
+            text-align: center;
+            padding: 24px 0 12px 0;
+        }
+        .hero-logo-center img {
+            max-width: 80vw;
+            height: auto;
+        }
+        .hero-search {
+            flex-direction: column;
+            gap: 8px;
+        }
+        .hero-search input {
+            width: 100%;
+            font-size: 1.1em;
+        }
+        .hero-search button {
+            width: 100%;
+            font-size: 1em;
+        }
+        .recently-added {
+            padding: 0;
+        }
+        .carousel-wrapper {
+            flex-direction: column;
+            align-items: center;
+        }
+        .cards-carousel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+        }
+        .card-item {
+            min-width: 120px;
+            max-width: 45vw;
+        }
+        .card-image-container img {
+            max-width: 100%;
+            height: auto;
+        }
+        .carousel-btn {
+            font-size: 1.5em;
+            padding: 8px;
+        }
+        .trust-features {
+            padding: 0;
+        }
+        .creators-home-grid {
+            grid-template-columns: 1fr;
+        }
+        .creator-home-video img {
+            height: 120px;
+        }
+    }
 </style>
 
 <body class="public-site">
@@ -155,7 +301,27 @@
         </section>
 
         <!-- 4. Seção de Confiança -->
-       <section class="trust-features">
+       <section class="creators-home">
+            <h2>Nossos Criadores</h2>
+           
+            <% if (creatorsFeed && creatorsFeed.enabled && creatorsFeed.interleavedVideos && creatorsFeed.interleavedVideos.length > 0) { %>
+                <div class="creator-home-videos">
+                    <% creatorsFeed.interleavedVideos.forEach(video => { %>
+                        <a class="creator-home-video" href="<%= video.videoUrl %>" data-video-id="<%= video.id %>" data-video-title="<%= video.title %>" rel="noopener noreferrer">
+                            <img src="<%= video.thumbnail %>" alt="<%= video.title %>">
+                            <div class="creator-home-video-info">
+                                <h4><%= video.title %></h4>
+                                <span><%= video.creatorDisplayName || video.creatorName %> • <%= new Date(video.publishedAt).toLocaleDateString('pt-BR') %></span>
+                            </div>
+                        </a>
+                    <% }) %>
+                </div>
+            <% } else { %>
+                <p class="creator-home-empty">Integração do YouTube em configuração. Em breve, os vídeos aparecerão aqui.</p>
+            <% } %>
+        </section>
+
+<section class="trust-features">
   <h2>Negocie com Confiança</h2>
   <div class="features-grid">
     
@@ -191,6 +357,7 @@
 
   </div>
 </section>
+        
     </main>
 </div> <!-- A tag </div> do container é fechada aqui -->
 
@@ -239,6 +406,18 @@
     </div>
 </div>
 
+<div class="video-modal-overlay" id="youtubeVideoModal">
+    <div class="video-modal-dialog" onclick="event.stopPropagation()">
+        <div class="video-modal-head">
+            <h3 class="video-modal-title" id="youtubeVideoTitle">Vídeo</h3>
+            <button type="button" class="video-modal-close" id="youtubeVideoClose" aria-label="Fechar vídeo">&times;</button>
+        </div>
+        <div class="video-modal-frame-wrap">
+            <iframe id="youtubeVideoFrame" src="" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
+        </div>
+    </div>
+</div>
+
 <!-- Botão Flutuante do Carrinho -->
 <a href="/carrinho" id="floating-cart-button" style="display: none;">
     <i class="fas fa-shopping-cart"></i>
@@ -267,6 +446,42 @@ document.addEventListener('DOMContentLoaded', () => {
     nextBtn.addEventListener('click', () => {
         carousel.scrollBy({ left: cardWidth, behavior: 'smooth' });
     });
+
+    const youtubeModal = document.getElementById('youtubeVideoModal');
+    const youtubeFrame = document.getElementById('youtubeVideoFrame');
+    const youtubeTitle = document.getElementById('youtubeVideoTitle');
+    const youtubeClose = document.getElementById('youtubeVideoClose');
+
+    const openYoutubeModal = (videoId, titleText) => {
+        if (!youtubeModal || !youtubeFrame || !videoId) return;
+        youtubeFrame.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0`;
+        if (youtubeTitle) youtubeTitle.textContent = titleText || 'Vídeo';
+        youtubeModal.classList.add('active');
+        document.body.style.overflow = 'hidden';
+    };
+
+    const closeYoutubeModal = () => {
+        if (!youtubeModal || !youtubeFrame) return;
+        youtubeModal.classList.remove('active');
+        youtubeFrame.src = '';
+        document.body.style.overflow = '';
+    };
+
+    document.querySelectorAll('.creator-home-video[data-video-id]').forEach(link => {
+        link.addEventListener('click', (event) => {
+            event.preventDefault();
+            openYoutubeModal(link.dataset.videoId, link.dataset.videoTitle);
+        });
+    });
+
+    if (youtubeModal) {
+        youtubeModal.addEventListener('click', closeYoutubeModal);
+    }
+    if (youtubeClose) {
+        youtubeClose.addEventListener('click', closeYoutubeModal);
+    }
+
+    window.closeYoutubeModal = closeYoutubeModal;
 });
 
 // Card Modal functions
@@ -360,6 +575,9 @@ function closeCardModal(event) {
 document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         closeCardModal();
+        if (typeof window.closeYoutubeModal === 'function') {
+            window.closeYoutubeModal();
+        }
     }
 });
 

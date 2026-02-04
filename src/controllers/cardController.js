@@ -1,9 +1,24 @@
-const { Op, fn, col, literal } = require('sequelize');
+﻿const { Op, fn, col, literal, where, cast } = require('sequelize');
 const Card = require('../models/Card');
 const Listing = require('../models/Listing');
 const User = require('../models/User');
 const onePieceService = require('../services/onepieceService');
 const { sequelize } = require('../database/connection');
+
+const applyColorFilter = (query, colorValue) => {
+  const safeColor = String(colorValue || '').replace(/\"/g, '').trim();
+  if (!safeColor) return;
+
+  query[Op.and] = [
+    ...(query[Op.and] || []),
+    {
+      [Op.or]: [
+        where(cast(col('colors'), 'text'), { [Op.iLike]: `%${safeColor}%` }),
+        { color: { [Op.iLike]: `%${safeColor}%` } }
+      ]
+    }
+  ];
+};
 
 const applyVariantFilter = (query, variantFilter) => {
   if (!variantFilter) return;
@@ -48,7 +63,7 @@ const buildVariantFilter = (variantValue) => {
   };
 };
 
-// --- FUNÇÃO ÚNICA PARA A PÁGINA DE BUSCA ---
+// --- FUNÃ‡ÃƒO ÃšNICA PARA A PÃGINA DE BUSCA ---
 const showCardsPage = async (req, res) => {
   try {
     const currentPage = parseInt(req.query.p) || 1;
@@ -57,7 +72,7 @@ const showCardsPage = async (req, res) => {
     const cardMatchQuery = { game: 'onepiece' };
 
     if (req.query.rarity && req.query.rarity !== '') cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color && req.query.color !== '') cardMatchQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
+    if (req.query.color && req.query.color !== '') applyColorFilter(cardMatchQuery, req.query.color);
     if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
     if (req.query.set && req.query.set !== '') {
       const setCode = req.query.set.replace(/-/g, '-?');
@@ -121,7 +136,7 @@ const showCardsPage = async (req, res) => {
       { name: 'Raridade', key: 'rarity', options: [{ value: '', label: 'Todas' }, ...rarities.sort().map(r => ({ value: r, label: r }))] },
       { name: 'Cor', key: 'color', options: [{ value: '', label: 'Todas' }, ...colors.sort().map(c => ({ value: c, label: c }))] },
       { name: 'Tipo', key: 'type', options: [{ value: '', label: 'Todos' }, ...types.sort().map(t => ({ value: t, label: t }))] },
-      { name: 'Edição', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] },
+      { name: 'EdiÃ§Ã£o', key: 'set', options: [{ value: '', label: 'Todas' }, ...sortedSets.map(s => ({ value: s, label: s }))] },
       { name: 'DON', key: 'don', options: [{ value: '', label: 'Todos' }, ...dons.filter(Boolean).map(d => ({ value: d, label: d }))] },
       { name: 'Variante', key: 'variant', options: variantOptions }
     ];
@@ -184,22 +199,22 @@ const showCardsPage = async (req, res) => {
       filters: req.query,
     });
   } catch (error) {
-    console.error("Erro na página de busca de One Piece:", error);
+    console.error("Erro na pÃ¡gina de busca de One Piece:", error);
     res.render('pages/cardSearchPage', { title: 'Erro', game: 'onepiece', filterGroups: filterGroups, cards: [], filters: {}, currentPage: 1, hasMore: false, totalCards: 0 });
   }
 };
 
-// --- FUNÇÃO PARA A PÁGINA DE DETALHES DA CARTA ---
+// --- FUNÃ‡ÃƒO PARA A PÃGINA DE DETALHES DA CARTA ---
 const showCardDetailPage = async (req, res) => {
   try {
     const cardId = req.params.id;
     if (!cardId || isNaN(cardId)) {
-      return res.status(400).send('ID de carta inválido');
+      return res.status(400).send('ID de carta invÃ¡lido');
     }
 
     const mainCard = await Card.findByPk(cardId);
     if (!mainCard) {
-      return res.status(404).send('Carta não encontrada');
+      return res.status(404).send('Carta nÃ£o encontrada');
     }
 
     let allVersions = [];
@@ -238,7 +253,7 @@ const showCardDetailPage = async (req, res) => {
   }
 };
 
-// --- FUNÇÃO PARA A API DE BUSCA DA PÁGINA DE VENDA ---
+// --- FUNÃ‡ÃƒO PARA A API DE BUSCA DA PÃGINA DE VENDA ---
 const searchCardsForSale = async (req, res) => {
   try {
     const searchQuery = req.query.q;
@@ -287,7 +302,7 @@ const searchAvailableCards = async (req, res) => {
     }
     res.json(searchResults);
   } catch (error) {
-    console.error("Erro na API de busca de cartas disponíveis:", error);
+    console.error("Erro na API de busca de cartas disponÃ­veis:", error);
     res.status(500).json({ message: 'Erro no servidor' });
   }
 };
@@ -356,7 +371,7 @@ const getLeaders = async (req, res) => {
       type_line: 'LEADER'
     };
     if (q) filter.name = { [Op.iLike]: `%${q}%` };
-    if (color) filter.colors = { [Op.iLike]: `%${color}%` };
+    if (color) applyColorFilter(filter, color);
     if (set) filter.set_name = { [Op.iLike]: `%${set}%` };
 
     const leaders = await Card.findAll({
@@ -366,8 +381,8 @@ const getLeaders = async (req, res) => {
     });
     res.json(leaders);
   } catch (error) {
-    console.error("Erro ao buscar líderes:", error);
-    res.status(500).json({ message: 'Erro ao buscar líderes.' });
+    console.error("Erro ao buscar lÃ­deres:", error);
+    res.status(500).json({ message: 'Erro ao buscar lÃ­deres.' });
   }
 };
 
@@ -384,7 +399,7 @@ const getAllCards = async (req, res) => {
       ]
     };
     if (req.query.rarity) filterQuery.rarity = req.query.rarity;
-    if (req.query.color) filterQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
+    if (req.query.color) applyColorFilter(filterQuery, req.query.color);
     if (req.query.type) filterQuery.type_line = req.query.type;
     if (req.query.set) filterQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
     if (req.query.variant) {
@@ -449,7 +464,7 @@ const getAvailableCards = async (req, res) => {
     
     const cardMatchQuery = { game: 'onepiece' };
     if (req.query.rarity) cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color) cardMatchQuery.colors = { [Op.iLike]: `%${req.query.color}%` };
+    if (req.query.color) applyColorFilter(cardMatchQuery, req.query.color);
     if (req.query.type) cardMatchQuery.type_line = req.query.type;
     if (req.query.set) cardMatchQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
     if (req.query.q) cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
@@ -512,7 +527,7 @@ const getAvailableCards = async (req, res) => {
       totalCards: count.length
     });
   } catch (error) {
-    console.error("❌ Erro na API de cartas disponíveis:", error);
+    console.error("âŒ Erro na API de cartas disponÃ­veis:", error);
     res.status(500).json({ message: 'Erro no servidor', cards: [], hasMore: false, currentPage: 1, totalCards: 0 });
   }
 };
@@ -521,11 +536,11 @@ const getCardById = async (req, res) => {
   try {
     const cardId = req.params.id;
     if (!cardId || isNaN(cardId)) {
-      return res.status(400).json({ error: 'ID de carta inválido' });
+      return res.status(400).json({ error: 'ID de carta invÃ¡lido' });
     }
     const card = await Card.findByPk(cardId);
     if (!card) {
-      return res.status(404).json({ error: 'Carta não encontrada' });
+      return res.status(404).json({ error: 'Carta nÃ£o encontrada' });
     }
     res.json(card);
   } catch (error) {
@@ -546,3 +561,6 @@ module.exports = {
   getAvailableCards,
   getCardById,
 };
+
+
+
