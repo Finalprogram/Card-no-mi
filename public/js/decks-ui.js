@@ -31,6 +31,11 @@ try {
         const leaderColorFilter = qs('#leader-color-filter');
         const leaderEditionFilter = qs('#leader-edition-filter');
         const leaderGallery = qs('#leader-gallery');
+        const importDecklistBtn = qs('#import-decklist-btn');
+        const importDecklistModal = qs('#import-decklist-modal');
+        const importDecklistCloseBtn = qs('.import-modal-close');
+        const importDecklistTextarea = qs('#import-decklist-textarea');
+        const importDecklistConfirmBtn = qs('#import-decklist-confirm-btn');
 
         let allLeaders = []; // To store all fetched leaders
         let filteredLeaders = []; // To store currently filtered leaders
@@ -131,6 +136,73 @@ try {
                 const selectedLeader = JSON.parse(leaderCardItem.dataset.leader);
                 sessionStorage.setItem('selectedLeader', JSON.stringify(selectedLeader));
                 window.location.href = '/deck-builder'; // Redirect to deck builder
+            }
+        });
+
+        const closeImportModal = () => {
+            if (!importDecklistModal) return;
+            importDecklistModal.style.display = 'none';
+        };
+
+        importDecklistBtn?.addEventListener('click', (event) => {
+            event.preventDefault();
+            if (!importDecklistModal) return;
+            importDecklistModal.style.display = 'block';
+            importDecklistTextarea?.focus();
+        });
+
+        importDecklistCloseBtn?.addEventListener('click', closeImportModal);
+        importDecklistModal?.addEventListener('click', (event) => {
+            if (event.target === importDecklistModal) {
+                closeImportModal();
+            }
+        });
+
+        importDecklistConfirmBtn?.addEventListener('click', async () => {
+            const rawDecklist = (importDecklistTextarea?.value || '').trim();
+            if (!rawDecklist) {
+                showToast('Cole uma lista para importar.', 'error');
+                return;
+            }
+
+            const normalizedDecklist = rawDecklist
+                .replace(/\r/g, '')
+                .replace(/;/g, '\n')
+                .split('\n')
+                .map((line) => line.trim())
+                .filter(Boolean)
+                .join('\n');
+
+            try {
+                importDecklistConfirmBtn.disabled = true;
+                importDecklistConfirmBtn.textContent = 'Importando...';
+
+                const response = await fetch('/api/decks/parse', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify({ decklist: normalizedDecklist })
+                });
+
+                const payload = await response.json();
+                if (!response.ok) {
+                    throw new Error(payload.message || 'Não foi possível importar o deck.');
+                }
+                if (!payload || (!payload.leader && (!Array.isArray(payload.main) || payload.main.length === 0))) {
+                    throw new Error('Nenhuma carta foi importada. Verifique o formato da lista.');
+                }
+
+                sessionStorage.setItem('importedDeck', JSON.stringify(payload));
+                closeImportModal();
+                window.location.href = '/deck-builder';
+            } catch (error) {
+                console.error('Erro ao importar deck:', error);
+                showToast(error.message || 'Erro ao importar deck.', 'error');
+            } finally {
+                importDecklistConfirmBtn.disabled = false;
+                importDecklistConfirmBtn.textContent = 'Importar e Abrir no Builder';
             }
         });
 

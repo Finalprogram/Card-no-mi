@@ -1,0 +1,20 @@
+<%- include('../partials/header') %>
+<%- include('../partials/navbar') %>
+<link rel="stylesheet" href="/css/maintenance.css">
+
+<main class="maintenance-page container">
+  <section class="maintenance-card">
+    <div class="maintenance-badge">Em construção</div>
+    <h1><%= pageTitle || 'Página em manutenção' %></h1>
+    <p>
+      <%= message || 'Estamos finalizando esta seção para entregar uma experiência melhor. Volte em breve.' %>
+    </p>
+
+    <div class="maintenance-actions">
+      <a href="<%= backHref || '/forum' %>" class="btn-back">Voltar</a>
+      <a href="/" class="btn-home">Ir para o início</a>
+    </div>
+  </section>
+</main>
+
+<%- include('../partials/footer') %>

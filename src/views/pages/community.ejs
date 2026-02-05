@@ -2,76 +2,233 @@
 <%- include('../partials/navbar') %>
 
 <style>
-  .community-container {
-    text-align: center;
-    padding: 40px 20px;
+  .community-page {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem 1rem 3rem;
   }
-  .community-header {
-    margin-bottom: 30px;
+
+  .community-hero {
+    background: linear-gradient(145deg, rgba(124, 108, 255, 0.16), rgba(255, 185, 66, 0.12));
+    border: 1px solid rgba(124, 108, 255, 0.2);
+    border-radius: 18px;
+    padding: 1.8rem 1.6rem;
+    margin-bottom: 1.4rem;
   }
-  .community-links {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    flex-wrap: wrap;
+
+  .community-hero h1 {
+    margin: 0 0 0.5rem;
+    color: #fff;
+    font-size: clamp(1.7rem, 2.3vw, 2.2rem);
+    font-weight: 800;
   }
-  .community-link-card {
-    background-color: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 30px;
-    width: 300px;
+
+  .community-hero p {
+    margin: 0;
+    color: #cfd2dc;
+    font-size: 1rem;
+    line-height: 1.55;
+    max-width: 780px;
+  }
+
+  .community-section {
+    margin-top: 1.25rem;
+    background: #12151f;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 16px;
+    padding: 1.25rem;
+  }
+
+  .community-section h2 {
+    margin: 0 0 0.35rem;
+    color: #fff;
+    font-size: 1.15rem;
+    font-weight: 800;
+  }
+
+  .community-section .section-desc {
+    margin: 0 0 1rem;
+    color: #a9afbf;
+    font-size: 0.95rem;
+  }
+
+  .creators-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .creator-card {
+    display: block;
     text-decoration: none;
-    color: inherit;
-    transition: transform 0.2s, box-shadow 0.2s;
+    border-radius: 14px;
+    padding: 0.9rem;
+    background: #181c27;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
   }
+
+  .creator-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(124, 108, 255, 0.45);
+    background: #1d2230;
+  }
+
+  .creator-top {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .creator-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    border: 2px solid rgba(124, 108, 255, 0.45);
+    object-fit: cover;
+    background: #0f1115;
+  }
+
+  .creator-name {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.98rem;
+    line-height: 1.35;
+  }
+
+  .creator-platform {
+    margin-top: 0.1rem;
+    font-size: 0.8rem;
+    color: #adb5c9;
+  }
+
+  .creator-cta {
+    margin-top: 0.7rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: #f5b942;
+    font-weight: 700;
+  }
+
+  .community-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .community-link-card {
+    display: block;
+    text-decoration: none;
+    border-radius: 14px;
+    padding: 1rem;
+    background: #171b26;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
   .community-link-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    background: #1d2230;
   }
+
   .community-link-card h3 {
-    margin-top: 0;
-    color: #343a40;
+    margin: 0 0 0.45rem;
+    font-size: 1.02rem;
+    font-weight: 700;
   }
+
   .community-link-card p {
-    color: #6c757d;
+    margin: 0;
+    color: #b3bac8;
+    font-size: 0.9rem;
+    line-height: 1.5;
   }
-  .btn-community {
-      display: inline-block;
-      padding: 10px 20px;
-      margin-top: 15px;
-      border-radius: 5px;
-      text-decoration: none;
-      color: #fff;
-      font-weight: bold;
+
+  .community-link-card.discord:hover {
+    border-color: rgba(114, 137, 218, 0.55);
   }
-  .btn-discord {
-      background-color: #7289DA;
-  }
-  .btn-whatsapp {
-      background-color: #25D366;
+
+  .community-link-card.whatsapp:hover {
+    border-color: rgba(37, 211, 102, 0.55);
   }
 </style>
 
-<main class="container community-container">
-  <div class="community-header">
-    <h1 class="display-4">Junte-se à nossa Comunidade</h1>
-    <p class="lead">Conecte-se com outros jogadores, troque cartas e fique por dentro das novidades!</p>
-  </div>
+<main class="community-page">
+  <section class="community-hero">
+    <h1>Comunidade Card no Mi</h1>
+    <p>Conteudo, estrategia e trocas em um so lugar. Acompanhe criadores parceiros, entre nas comunidades e fique por dentro de tudo do One Piece TCG.</p>
+  </section>
 
-  <div class="community-links">
-    <a href="https://discord.gg/s4pdaqq8Ur" class="community-link-card" id="discord-link" target="_blank">
-      <h3>Discord</h3>
-      <p>Participe do nosso servidor para conversas em tempo real, organização de partidas e canais de troca.</p>
-      <span class="btn-community btn-discord">Entrar no Discord</span>
-    </a>
+  <section class="community-section">
+    <h2>Criadores Parceiros</h2>
+    <p class="section-desc">Destaque para quem cria conteudo da comunidade. Clique no canal para abrir as redes.</p>
+    <div class="creators-grid">
+      <a href="https://www.youtube.com/@matugabrazil" target="_blank" rel="noopener noreferrer" class="creator-card">
+        <div class="creator-top">
+          <img src="/images/logo_YT/MatugaBrazil.jpg" alt="Logo do canal parceiro 1" class="creator-logo">
+          <div>
+            <p class="creator-name">Matuga Brazil</p>
+            <div class="creator-platform">YouTube</div>
+          </div>
+        </div>
+        <span class="creator-cta">Ver canal</span>
+      </a>
 
-    <a href="https://chat.whatsapp.com/FPctK5BXTuw3JrCfOb87Az" class="community-link-card" id="whatsapp-link" target="_blank">
-      <h3>WhatsApp</h3>
-      <p>Faça parte do nosso grupo no WhatsApp para anúncios importantes e discussões rápidas.</p>
-      <span class="btn-community btn-whatsapp">Entrar no WhatsApp</span>
-    </a>
-  </div>
+      <a href="https://www.youtube.com/@farofadobardo" target="_blank" rel="noopener noreferrer" class="creator-card">
+        <div class="creator-top">
+          <img src="/images/logo_YT/FarofaBardo.jpg" alt="Logo do canal parceiro 2" class="creator-logo">
+          <div>
+            <p class="creator-name">Farofa do Bardo</p>
+            <div class="creator-platform">YouTube</div>
+          </div>
+        </div>
+        <span class="creator-cta">Ver canal</span>
+      </a>
+
+      <a href="https://www.youtube.com/bernalkaiba1" target="_blank" rel="noopener noreferrer" class="creator-card">
+        <div class="creator-top">
+          <img src="/images/logo_YT/Bernalkaiba.jpg" alt="Logo do canal parceiro 3" class="creator-logo">
+          <div>
+            <p class="creator-name">Bernalkaiba</p>
+            <div class="creator-platform">YouTube / X</div>
+          </div>
+        </div>
+        <span class="creator-cta">Ver canal</span>
+      </a>
+
+      <!-- <a href="https://www.youtube.com/" target="_blank" rel="noopener noreferrer" class="creator-card">
+        <div class="creator-top">
+          <img src="/images/default-avatar.png" alt="Logo do canal parceiro 4" class="creator-logo">
+          <div>
+            <p class="creator-name">Canal Parceiro 04</p>
+            <div class="creator-platform">YouTube / Twitch</div>
+          </div>
+        </div>
+        <span class="creator-cta">Ver canal</span>
+      </a> -->
+    </div>
+  </section>
+
+  <section class="community-section">
+
+    <h2>Conexoes da Comunidade</h2>
+    <p class="section-desc">Grupos oficiais para conversar, tirar duvidas e acompanhar anuncios.</p>
+    <div class="community-links-grid">
+      <a href="https://discord.gg/s4pdaqq8Ur" class="community-link-card discord" target="_blank" rel="noopener noreferrer">
+        <h3>Discord</h3>
+        <p>Servidor para discussao, organizacao de partidas, trocas e canais por assunto.</p>
+      </a>
+
+      <a href="https://chat.whatsapp.com/FPctK5BXTuw3JrCfOb87Az" class="community-link-card whatsapp" target="_blank" rel="noopener noreferrer">
+        <h3>WhatsApp</h3>
+        <p>Grupo para avisos rapidos, novidades da plataforma e comunicacao direta.</p>
+      </a>
+    </div>
+  </section>
 </main>
 
 <%- include('../partials/footer') %>

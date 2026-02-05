@@ -8,6 +8,15 @@
             <h1>Decks da Comunidade</h1>
             <div class="header-actions">
                 <a href="/my-decks" class="btn btn-secondary">Meus Decks</a>
+                <% if (user) { %>
+                <button id="import-decklist-btn" class="btn btn-secondary">
+                    <i class="fas fa-file-import"></i> Importar Deck
+                </button>
+                <% } else { %>
+                <a href="/auth/login" class="btn btn-secondary">
+                    <i class="fas fa-sign-in-alt"></i> Entrar para Importar
+                </a>
+                <% } %>
                 <button id="create-deck-btn" class="btn btn-primary">
                     <i class="fas fa-plus"></i> Criar Novo Deck
                 </button>
@@ -111,6 +120,20 @@
             </div>
         </div>
     </div>
+
+    <% if (user) { %>
+    <div id="import-decklist-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn import-modal-close">&times;</span>
+            <h2>Importar Deck por Código</h2>
+            <p style="color:#9aa0b2; font-size:0.9rem; margin:0 0 0.75rem;">
+                Formato aceito: <code>1xOP13-004;4xOP05-015;3xOP13-016</code>
+            </p>
+            <textarea id="import-decklist-textarea" placeholder="Cole aqui a lista do deck..."></textarea>
+            <button id="import-decklist-confirm-btn" class="btn btn-primary">Importar e Abrir no Builder</button>
+        </div>
+    </div>
+    <% } %>
 </div>
 
 <%# Toast Notifications Container %>

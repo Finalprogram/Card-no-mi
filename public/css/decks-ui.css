@@ -469,6 +469,53 @@
     margin-bottom: 1.5rem;
 }
 
+#import-decklist-modal.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(5px);
+    -webkit-backdrop-filter: blur(5px);
+}
+
+#import-decklist-modal .modal-content {
+    max-width: 720px;
+    width: 90%;
+    margin: 8% auto;
+    padding: 2rem;
+    border: 1px solid var(--deck-border);
+    border-radius: 16px;
+    position: relative;
+}
+
+#import-decklist-modal .close-btn {
+    color: var(--text-secondary);
+    position: absolute;
+    top: 0.75rem;
+    right: 1rem;
+    font-size: 2rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#import-decklist-textarea {
+    width: 100%;
+    min-height: 180px;
+    resize: vertical;
+    margin-bottom: 1rem;
+    padding: 0.85rem 1rem;
+    font-family: var(--font-body);
+    border-radius: 10px;
+    border: 1px solid var(--deck-border);
+    background: var(--deck-bg);
+    color: var(--text-primary);
+}
+
 .leader-filters {
     display: flex;
     gap: 1rem;

@@ -290,7 +290,13 @@ exports.deleteDeck = async (req, res) => {
 exports.parseDeck = async (req, res) => {
     try {
         const { decklist } = req.body;
-        const lines = decklist.split('\n').filter(line => line.trim() !== '');
+        if (!decklist || typeof decklist !== 'string') {
+            return res.status(400).json({ message: 'Decklist inválida.' });
+        }
+        const lines = decklist
+            .split(/[\n;]+/)
+            .map((line) => line.trim())
+            .filter((line) => line !== '');
 
         let deck = {
             leader: null,

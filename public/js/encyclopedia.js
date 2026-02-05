@@ -1,15 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
-        // Navegação estilo Google: clique nos botões de página
-        document.addEventListener('click', (e) => {
-            if (e.target.classList.contains('page-btn')) {
-                const page = parseInt(e.target.dataset.page);
-                if (!isNaN(page) && page !== currentFilters.page) {
-                    currentFilters.page = page;
-                    fetchCards();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                }
+    document.addEventListener('click', (e) => {
+        if (e.target.classList.contains('page-btn')) {
+            const page = parseInt(e.target.dataset.page, 10);
+            if (!Number.isNaN(page) && page !== currentFilters.page) {
+                currentFilters.page = page;
+                fetchCards();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             }
-        });
+        }
+    });
+
     const cardList = document.getElementById('card-list');
     const prevPageButton = document.getElementById('prev-page');
     const nextPageButton = document.getElementById('next-page');
@@ -17,9 +17,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const totalPagesIndicator = document.getElementById('total-pages');
     const googleStylePagination = document.getElementById('google-style-pagination');
     const searchInput = document.getElementById('search-input');
+    const activeFiltersSummary = document.getElementById('active-filters-summary');
     const resultsSection = document.querySelector('.results');
-    
-    // Modal elements
+
     const filtersModal = document.getElementById('filters-modal');
     const openFiltersBtn = document.getElementById('open-filters-btn');
     const closeFiltersBtn = document.getElementById('close-filters-btn');
@@ -27,11 +27,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const clearFiltersBtn = document.getElementById('clear-filters-btn');
     const modalOverlay = document.querySelector('.filters-modal-overlay');
 
-    let currentFilters = {
-        page: 1
-    };
-    let tempFilters = {}; // Temporary filters before applying
+    let currentFilters = { page: 1 };
+    let tempFilters = {};
     let debounceTimer;
+
+    const multiSelectKeys = new Set(['rarity', 'color', 'type', 'set', 'don', 'variant']);
 
     const extractSuffix = (value) => {
         if (!value) return null;
@@ -42,6 +42,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const normalizeCardName = (value) => {
         if (!value) return value;
         return String(value).replace(/\s*\(\d+\)\s*$/, '');
+    };
+
+    const getFilterArray = (container, key) => {
+        const value = container[key];
+        if (Array.isArray(value)) return value;
+        if (value == null || value === '') return [];
+        return String(value).split(',').map(v => v.trim()).filter(Boolean);
+    };
+
+    const setFilterArray = (container, key, values) => {
+        const normalized = [...new Set(values.map(v => String(v).trim()).filter(Boolean))];
+        if (!normalized.length) {
+            delete container[key];
+            return;
+        }
+        container[key] = normalized;
     };
 
     const getVariantBadge = (card) => {
@@ -56,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 images = null;
             }
         }
+
         const suffix = images && images.suffix ? String(images.suffix).toLowerCase() : extractSuffix(card && card.image_url);
         const map = {
             _p1: { label: 'AA', className: 'variant-badge variant-aa' },
@@ -63,6 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             _r2: { label: 'Reprint', className: 'variant-badge variant-reprint' },
             _p2: { label: 'Reprint', className: 'variant-badge variant-reprint' }
         };
+
         if (suffix && map[suffix]) {
             const info = map[suffix];
             return `<span class="${info.className}">${info.label}</span>`;
@@ -73,6 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
             2: { label: 'Alt Art', className: 'variant-badge variant-alt' },
             3: { label: 'Reprint', className: 'variant-badge variant-reprint' }
         };
+
         if (variantMap[variantValue]) {
             const info = variantMap[variantValue];
             return `<span class="${info.className}">${info.label}</span>`;
@@ -81,70 +100,48 @@ document.addEventListener('DOMContentLoaded', () => {
         return '';
     };
 
-    // --- FUNÇÕES ---
-
-    // Função principal para buscar e renderizar as cartas
-    const fetchCards = async () => {
-        // Adiciona um loader
-        const loader = document.createElement('div');
-        loader.className = 'loader';
-        resultsSection.appendChild(loader);
-
+    const buildParams = (filters) => {
         const params = new URLSearchParams();
-        for (const key in currentFilters) {
-            if (currentFilters[key]) {
-                params.set(key, currentFilters[key]);
+        Object.keys(filters).forEach(key => {
+            const value = filters[key];
+            if (Array.isArray(value)) {
+                value.forEach(item => params.append(key, item));
+            } else if (value) {
+                params.set(key, value);
             }
-        }
-
-        // Atualiza a URL do navegador
-        const newUrl = `${window.location.pathname}?${params.toString()}`;
-        history.pushState({ path: newUrl }, '', newUrl);
-
-        try {
-            const response = await fetch(`/api/cards/all?${params.toString()}`);
-            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-            
-            const data = await response.json();
-            renderCards(data.cards);
-            updatePagination(data.currentPage, data.hasMore, data.totalPages);
-
-        } catch (error) {
-            console.error('Erro ao buscar cartas:', error);
-            cardList.innerHTML = '<p class="text-center text-danger">Erro ao carregar as cartas. Tente novamente mais tarde.</p>';
-        } finally {
-            // Remove o loader
-            loader.remove();
-        }
+        });
+        return params;
     };
 
-    // Função para renderizar as cartas na tela
-    const renderCards = (cards) => {
-        cardList.innerHTML = '';
-        if (cards && cards.length > 0) {
-            cards.forEach(card => {
-                const cardElement = document.createElement('div');
-                cardElement.className = 'card-item';
-                const cardId = card._id || card.id;
-                const variantBadge = getVariantBadge(card);
-                const displayName = normalizeCardName(card.name);
-                cardElement.innerHTML = `
-                    <a href="/card/${cardId}" class="card-link">
-                        <div class="card-image-container">
-                            <img src="${card.image_url}" alt="${displayName}">
-                        </div>
-                        <h4>${displayName} ${variantBadge}</h4>
-                    </a>
-                `;
-                cardList.appendChild(cardElement);
+    const getFilterLabel = (key, value) => {
+        if (!filtersModal) return value;
+        const chip = filtersModal.querySelector(`.filter-chip[data-filter-key="${key}"][data-filter-value="${value}"]`);
+        return chip ? chip.textContent.trim() : value;
+    };
+
+    const renderActiveFiltersSummary = () => {
+        if (!activeFiltersSummary) return;
+        const items = [];
+        Object.keys(currentFilters).forEach(key => {
+            if (key === 'page') return;
+            if (key === 'q' && currentFilters.q) {
+                items.push({ key: 'q', value: currentFilters.q, label: `Busca: ${currentFilters.q}` });
+                return;
+            }
+            if (!multiSelectKeys.has(key)) return;
+            getFilterArray(currentFilters, key).forEach(value => {
+                items.push({ key, value, label: getFilterLabel(key, value) });
             });
-        } else {
-            cardList.innerHTML = '<p class="text-center">Nenhuma carta encontrada com esses filtros.</p>';
-        }
+        });
+
+        activeFiltersSummary.innerHTML = items.map(item => `
+            <button type="button" class="active-filter-chip" data-key="${item.key}" data-value="${item.value}">
+                ${item.label} <span class="remove">×</span>
+            </button>
+        `).join('');
     };
 
-    // Função para atualizar os controles de paginação
-const renderGooglePagination = (currentPage, totalPages) => {
+    const renderGooglePagination = (currentPage, totalPages) => {
         if (!googleStylePagination) return;
         googleStylePagination.innerHTML = '';
         if (!totalPages || totalPages <= 1) return;
@@ -171,9 +168,7 @@ const renderGooglePagination = (currentPage, totalPages) => {
             if (start > 2) appendEllipsis();
         }
 
-        for (let i = start; i <= end; i++) {
-            appendPageButton(i, i === currentPage);
-        }
+        for (let i = start; i <= end; i++) appendPageButton(i, i === currentPage);
 
         if (end < totalPages) {
             if (end < totalPages - 1) appendEllipsis();
@@ -181,7 +176,7 @@ const renderGooglePagination = (currentPage, totalPages) => {
         }
     };
 
-const updatePagination = (currentPage, hasMore, totalPages) => {
+    const updatePagination = (currentPage, hasMore, totalPages) => {
         currentFilters.page = currentPage;
         pageIndicator.textContent = `Página ${currentPage}`;
         if (totalPagesIndicator) totalPagesIndicator.textContent = `de ${totalPages || 1}`;
@@ -190,21 +185,84 @@ const updatePagination = (currentPage, hasMore, totalPages) => {
         nextPageButton.disabled = !hasMore;
     };
 
-    // --- MODAL FUNCTIONS ---
+    const renderCards = (cards) => {
+        cardList.innerHTML = '';
+        if (!cards || !cards.length) {
+            cardList.innerHTML = '<p class="text-center">Nenhuma carta encontrada com esses filtros.</p>';
+            return;
+        }
+
+        cards.forEach(card => {
+            const cardElement = document.createElement('div');
+            cardElement.className = 'card-item';
+            const cardId = card._id || card.id;
+            const variantBadge = getVariantBadge(card);
+            const displayName = normalizeCardName(card.name);
+            cardElement.innerHTML = `
+                <a href="/card/${cardId}" class="card-link">
+                    <div class="card-image-container">
+                        <img src="${card.image_url}" alt="${displayName}">
+                    </div>
+                    <h4>${displayName} ${variantBadge}</h4>
+                </a>
+            `;
+            cardList.appendChild(cardElement);
+        });
+    };
+
+    const fetchCards = async () => {
+        const loader = document.createElement('div');
+        loader.className = 'loader';
+        resultsSection.appendChild(loader);
+
+        const params = buildParams(currentFilters);
+        history.pushState({ path: `${window.location.pathname}?${params.toString()}` }, '', `${window.location.pathname}?${params.toString()}`);
+
+        try {
+            const response = await fetch(`/api/cards/all?${params.toString()}`);
+            if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+            const data = await response.json();
+            renderCards(data.cards);
+            updatePagination(data.currentPage, data.hasMore, data.totalPages);
+            renderActiveFiltersSummary();
+        } catch (error) {
+            console.error('Erro ao buscar cartas:', error);
+            cardList.innerHTML = '<p class="text-center text-danger">Erro ao carregar as cartas. Tente novamente mais tarde.</p>';
+        } finally {
+            loader.remove();
+        }
+    };
+
+    const syncModalChipsFromFilters = (filters) => {
+        if (!filtersModal) return;
+        filtersModal.querySelectorAll('.filter-group-modal').forEach(group => {
+            const key = group.querySelector('.filter-chip')?.dataset.filterKey;
+            if (!key) return;
+            const chips = group.querySelectorAll('.filter-chip');
+            chips.forEach(chip => chip.classList.remove('active'));
+
+            const selectedValues = multiSelectKeys.has(key)
+                ? getFilterArray(filters, key)
+                : [filters[key]].filter(Boolean);
+
+            if (!selectedValues.length) {
+                const allChip = group.querySelector('.filter-chip[data-filter-value=""]');
+                if (allChip) allChip.classList.add('active');
+                return;
+            }
+
+            selectedValues.forEach(value => {
+                const chip = group.querySelector(`.filter-chip[data-filter-key="${key}"][data-filter-value="${value}"]`);
+                if (chip) chip.classList.add('active');
+            });
+        });
+    };
 
     const openModal = () => {
-        // Copy current filters to temp filters
-        tempFilters = { ...currentFilters };
+        tempFilters = JSON.parse(JSON.stringify(currentFilters));
         delete tempFilters.page;
         delete tempFilters.q;
-        
-        // Update modal chip states based on current filters
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-            const key = chip.dataset.filterKey;
-            const value = chip.dataset.filterValue;
-            chip.classList.toggle('active', tempFilters[key] === value);
-        });
-        
+        syncModalChipsFromFilters(tempFilters);
         filtersModal.style.display = 'block';
         document.body.style.overflow = 'hidden';
     };
@@ -216,19 +274,10 @@ const updatePagination = (currentPage, hasMore, totalPages) => {
     };
 
     const applyFilters = () => {
-        // Apply temp filters to current filters
-        Object.keys(tempFilters).forEach(key => {
-            currentFilters[key] = tempFilters[key];
-        });
-        
-        // Remove filters that were cleared
-        const tempKeys = Object.keys(tempFilters);
+        currentFilters = { ...currentFilters, ...tempFilters };
         Object.keys(currentFilters).forEach(key => {
-            if (key !== 'page' && key !== 'q' && !tempKeys.includes(key)) {
-                delete currentFilters[key];
-            }
+            if (key !== 'page' && key !== 'q' && !(key in tempFilters)) delete currentFilters[key];
         });
-        
         currentFilters.page = 1;
         closeModal();
         fetchCards();
@@ -236,55 +285,61 @@ const updatePagination = (currentPage, hasMore, totalPages) => {
 
     const clearFilters = () => {
         tempFilters = {};
-        document.querySelectorAll('.filter-chip').forEach(chip => {
-            chip.classList.remove('active');
-        });
+        syncModalChipsFromFilters(tempFilters);
     };
 
-    // --- EVENT LISTENERS ---
-
-    // Modal controls
     openFiltersBtn.addEventListener('click', openModal);
     closeFiltersBtn.addEventListener('click', closeModal);
     modalOverlay.addEventListener('click', closeModal);
     applyFiltersBtn.addEventListener('click', applyFilters);
     clearFiltersBtn.addEventListener('click', clearFilters);
 
-    // Filter chip clicks
     filtersModal.addEventListener('click', (e) => {
-        if (e.target.classList.contains('filter-chip')) {
-            const key = e.target.dataset.filterKey;
-            const value = e.target.dataset.filterValue;
-            
-            // If clicking "Todas", remove filter
-            if (value === 'all') {
+        if (!e.target.classList.contains('filter-chip')) return;
+
+        const key = e.target.dataset.filterKey;
+        const value = e.target.dataset.filterValue;
+        const group = e.target.closest('.filter-group-modal');
+        const siblings = group.querySelectorAll('.filter-chip');
+        const allChip = group.querySelector('.filter-chip[data-filter-value=""]');
+
+        if (multiSelectKeys.has(key)) {
+            if (value === '') {
+                siblings.forEach(chip => chip.classList.remove('active'));
+                e.target.classList.add('active');
                 delete tempFilters[key];
-                // Remove active from all chips in this group
-                const groupChips = filtersModal.querySelectorAll(`.filter-chip[data-filter-key="${key}"]`);
-                groupChips.forEach(chip => chip.classList.remove('active'));
-                e.target.classList.add('active');
             } else {
-                // Set filter and update chip states
-                tempFilters[key] = value;
-                // Remove active from all chips in this group
-                const groupChips = filtersModal.querySelectorAll(`.filter-chip[data-filter-key="${key}"]`);
-                groupChips.forEach(chip => chip.classList.remove('active'));
-                e.target.classList.add('active');
+                e.target.classList.toggle('active');
+                if (allChip) allChip.classList.remove('active');
+                const selected = Array.from(siblings)
+                    .filter(chip => chip.classList.contains('active') && chip.dataset.filterValue !== '')
+                    .map(chip => chip.dataset.filterValue);
+                if (!selected.length) {
+                    if (allChip) allChip.classList.add('active');
+                    delete tempFilters[key];
+                } else {
+                    setFilterArray(tempFilters, key, selected);
+                }
             }
+            return;
         }
+
+        siblings.forEach(chip => chip.classList.remove('active'));
+        e.target.classList.add('active');
+        if (value === '') delete tempFilters[key];
+        else tempFilters[key] = value;
     });
 
-    // Listener para o campo de busca com debounce
     searchInput.addEventListener('input', () => {
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
             currentFilters.q = searchInput.value;
-            currentFilters.page = 1; // Reseta para a primeira página
+            if (!currentFilters.q) delete currentFilters.q;
+            currentFilters.page = 1;
             fetchCards();
-        }, 500); // Atraso de 500ms
+        }, 500);
     });
 
-    // Listeners para a paginação
     prevPageButton.addEventListener('click', () => {
         if (currentFilters.page > 1) {
             currentFilters.page--;
@@ -297,20 +352,39 @@ const updatePagination = (currentPage, hasMore, totalPages) => {
         fetchCards();
     });
 
-    // --- INICIALIZAÇÃO ---
+    activeFiltersSummary?.addEventListener('click', (e) => {
+        const chip = e.target.closest('.active-filter-chip');
+        if (!chip) return;
+        const { key, value } = chip.dataset;
+        if (key === 'q') {
+            delete currentFilters.q;
+            if (searchInput) searchInput.value = '';
+        } else if (multiSelectKeys.has(key)) {
+            const next = getFilterArray(currentFilters, key).filter(v => v !== value);
+            setFilterArray(currentFilters, key, next);
+        } else {
+            delete currentFilters[key];
+        }
+        currentFilters.page = 1;
+        syncModalChipsFromFilters(currentFilters);
+        fetchCards();
+    });
 
-    // Função para ler os filtros da URL na carga inicial
     const initializeFilters = () => {
         const params = new URLSearchParams(window.location.search);
         params.forEach((value, key) => {
-            currentFilters[key] = value;
+            if (multiSelectKeys.has(key)) {
+                const existing = getFilterArray(currentFilters, key);
+                existing.push(value);
+                setFilterArray(currentFilters, key, existing);
+            } else {
+                currentFilters[key] = value;
+            }
+            if (key === 'q') searchInput.value = value;
         });
-        
-        // Initialize search input from URL
-        if (currentFilters.q) {
-            searchInput.value = currentFilters.q;
-        }
-        
+
+        syncModalChipsFromFilters(currentFilters);
+        renderActiveFiltersSummary();
         fetchCards();
     };
 

@@ -5,19 +5,59 @@ const User = require('../models/User');
 const onePieceService = require('../services/onepieceService');
 const { sequelize } = require('../database/connection');
 
+const normalizeFilterValues = (rawValue) => {
+  if (rawValue == null) return [];
+  const input = Array.isArray(rawValue) ? rawValue : [rawValue];
+  return input
+    .flatMap(value => String(value).split(','))
+    .map(value => value.trim())
+    .filter(Boolean);
+};
+
 const applyColorFilter = (query, colorValue) => {
-  const safeColor = String(colorValue || '').replace(/\"/g, '').trim();
-  if (!safeColor) return;
+  const safeColors = normalizeFilterValues(colorValue)
+    .map(color => color.replace(/\"/g, '').trim())
+    .filter(Boolean);
+  if (!safeColors.length) return;
 
   query[Op.and] = [
     ...(query[Op.and] || []),
     {
       [Op.or]: [
-        where(cast(col('colors'), 'text'), { [Op.iLike]: `%${safeColor}%` }),
-        { color: { [Op.iLike]: `%${safeColor}%` } }
+        ...safeColors.map(color =>
+          where(cast(col('colors'), 'text'), { [Op.iLike]: `%${color}%` })
+        ),
+        ...safeColors.map(color => ({ color: { [Op.iLike]: `%${color}%` } }))
       ]
     }
   ];
+};
+
+const applySetFilter = (query, setValue) => {
+  const setValues = normalizeFilterValues(setValue);
+  if (!setValues.length) return;
+
+  const toSetPatterns = (rawSet) => {
+    const value = String(rawSet || '').trim().toUpperCase();
+    if (!value) return [];
+    const withDash = value.replace(/^([A-Z]+)-?(\d+)$/, '$1-$2');
+    return [...new Set([value, withDash])];
+  };
+
+  query[Op.and] = [
+    ...(query[Op.and] || []),
+    {
+      [Op.or]: setValues.flatMap(rawSet =>
+        toSetPatterns(rawSet).map(pattern => ({ set_name: { [Op.iLike]: `%${pattern}%` } }))
+      )
+    }
+  ];
+};
+
+const applyExactInFilter = (query, field, rawValue) => {
+  const values = normalizeFilterValues(rawValue);
+  if (!values.length) return;
+  query[field] = values.length === 1 ? values[0] : { [Op.in]: values };
 };
 
 const applyVariantFilter = (query, variantFilter) => {
@@ -50,6 +90,22 @@ const buildVariantFilter = (variantValue) => {
   };
 };
 
+const buildCombinedVariantFilter = (rawVariantValue) => {
+  const variantValues = normalizeFilterValues(rawVariantValue)
+    .map(value => parseInt(value, 10))
+    .filter(value => Number.isInteger(value));
+
+  if (!variantValues.length) return null;
+  if (variantValues.length === 1) return buildVariantFilter(variantValues[0]);
+
+  const filters = variantValues.map(buildVariantFilter).filter(Boolean);
+  if (!filters.length) return null;
+
+  return {
+    [Op.or]: filters
+  };
+};
+
 // --- FUNÃ‡ÃƒO ÃšNICA PARA A PÃGINA DE BUSCA ---
 const showCardsPage = async (req, res) => {
   try {
@@ -58,20 +114,15 @@ const showCardsPage = async (req, res) => {
     
     const cardMatchQuery = { game: 'onepiece' };
 
-    if (req.query.rarity && req.query.rarity !== '') cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color && req.query.color !== '') applyColorFilter(cardMatchQuery, req.query.color);
-    if (req.query.type && req.query.type !== '') cardMatchQuery.type_line = req.query.type;
-    if (req.query.set && req.query.set !== '') {
-      const setCode = req.query.set.replace(/-/g, '-?');
-      cardMatchQuery.set_name = { [Op.iLike]: `%${setCode}%` };
-    }
+    applyExactInFilter(cardMatchQuery, 'rarity', req.query.rarity);
+    applyColorFilter(cardMatchQuery, req.query.color);
+    applyExactInFilter(cardMatchQuery, 'type_line', req.query.type);
+    applySetFilter(cardMatchQuery, req.query.set);
     if (req.query.q && req.query.q !== '') cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
-    if (req.query.variant && req.query.variant !== '') {
-      const variantValue = parseInt(req.query.variant, 10);
-      const variantFilter = buildVariantFilter(variantValue);
+    const variantFilter = buildCombinedVariantFilter(req.query.variant);
+    if (variantFilter) {
       applyVariantFilter(cardMatchQuery, variantFilter);
-    }
-    if (!req.query.variant || req.query.variant === '') {
+    } else {
       const baseFilter = buildVariantFilter(0);
       applyVariantFilter(cardMatchQuery, baseFilter);
     }
@@ -384,16 +435,14 @@ const getAllCards = async (req, res) => {
         literal('length(name) > 0'),
       ]
     };
-    if (req.query.rarity) filterQuery.rarity = req.query.rarity;
-    if (req.query.color) applyColorFilter(filterQuery, req.query.color);
-    if (req.query.type) filterQuery.type_line = req.query.type;
-    if (req.query.set) filterQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
-    if (req.query.variant) {
-      const variantValue = parseInt(req.query.variant, 10);
-      const variantFilter = buildVariantFilter(variantValue);
+    applyExactInFilter(filterQuery, 'rarity', req.query.rarity);
+    applyColorFilter(filterQuery, req.query.color);
+    applyExactInFilter(filterQuery, 'type_line', req.query.type);
+    applySetFilter(filterQuery, req.query.set);
+    const variantFilter = buildCombinedVariantFilter(req.query.variant);
+    if (variantFilter) {
       applyVariantFilter(filterQuery, variantFilter);
-    }
-    if (!req.query.variant || req.query.variant === '') {
+    } else {
       const baseFilter = buildVariantFilter(0);
       applyVariantFilter(filterQuery, baseFilter);
     }
@@ -451,17 +500,15 @@ const getAvailableCards = async (req, res) => {
     const limit = 50;
     
     const cardMatchQuery = { game: 'onepiece' };
-    if (req.query.rarity) cardMatchQuery.rarity = req.query.rarity;
-    if (req.query.color) applyColorFilter(cardMatchQuery, req.query.color);
-    if (req.query.type) cardMatchQuery.type_line = req.query.type;
-    if (req.query.set) cardMatchQuery.set_name = { [Op.iLike]: `%${req.query.set}%` };
+    applyExactInFilter(cardMatchQuery, 'rarity', req.query.rarity);
+    applyColorFilter(cardMatchQuery, req.query.color);
+    applyExactInFilter(cardMatchQuery, 'type_line', req.query.type);
+    applySetFilter(cardMatchQuery, req.query.set);
     if (req.query.q) cardMatchQuery.name = { [Op.iLike]: `%${req.query.q}%` };
-    if (req.query.variant) {
-      const variantValue = parseInt(req.query.variant, 10);
-      const variantFilter = buildVariantFilter(variantValue);
+    const variantFilter = buildCombinedVariantFilter(req.query.variant);
+    if (variantFilter) {
       applyVariantFilter(cardMatchQuery, variantFilter);
-    }
-    if (!req.query.variant || req.query.variant === '') {
+    } else {
       const baseFilter = buildVariantFilter(0);
       applyVariantFilter(cardMatchQuery, baseFilter);
     }

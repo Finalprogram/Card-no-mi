@@ -19,9 +19,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Inicialização ---
     function initialize() {
+        const importedDeck = sessionStorage.getItem('importedDeck');
+        if (importedDeck) {
+            try {
+                const parsedDeck = JSON.parse(importedDeck);
+                const normalizedMain = Array.isArray(parsedDeck?.main)
+                    ? parsedDeck.main.filter(item => item && item.card)
+                    : [];
+
+                if (parsedDeck && (parsedDeck.leader || normalizedMain.length > 0)) {
+                    deck = {
+                        leader: parsedDeck.leader || null,
+                        main: normalizedMain,
+                    };
+                    const deckTitleInput = document.getElementById('deck-title');
+                    if (deckTitleInput && !deckTitleInput.value) {
+                        deckTitleInput.value = 'Deck importado';
+                    }
+                    showToast('Deck importado com sucesso!');
+                } else {
+                    showToast('Importação vazia. Verifique o formato e tente novamente.');
+                }
+            } catch (e) {
+                console.error('Erro ao parsear deck importado do sessionStorage:', e);
+                showToast('Erro ao carregar deck importado.');
+            } finally {
+                sessionStorage.removeItem('importedDeck');
+            }
+        }
+
         // Checa se um líder foi pré-selecionado em outra página
         const storedLeader = sessionStorage.getItem('selectedLeader');
-        if (storedLeader) {
+        if (storedLeader && !deck.leader) {
             try {
                 const selectedLeader = JSON.parse(storedLeader);
                 deck.leader = { card: selectedLeader, quantity: 1 };
@@ -48,6 +77,8 @@ document.addEventListener('DOMContentLoaded', () => {
         
         const saveDeckBtn = document.getElementById('save-deck-btn');
         if (saveDeckBtn) saveDeckBtn.addEventListener('click', saveDeck);
+        const exportDeckBtn = document.getElementById('export-deck-btn');
+        if (exportDeckBtn) exportDeckBtn.addEventListener('click', exportDeck);
 
         deckViewContainer.addEventListener('click', handleDeckActions);
 
@@ -81,7 +112,6 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
 
-        // Listeners de import/export e modais... (mantidos do original)
     }
 
     // ---------------------- Image Zoom Preview Logic -----------------------
@@ -274,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const detailsHTML = `
             <div class="leader-content">
                 <div class="leader-card-image-wrapper" style="--glow-color: ${glowColor};">
-                    <img src="${card.image_url}" alt="${card.name}" class="leader-card-image">
+                    <img src="${card.image_url}" alt="${card.name}" class="leader-card-image" loading="lazy">
                 </div>
                 <div class="leader-details-panel">
                     <h2>${card.name}</h2>
@@ -437,7 +467,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 gridItem.classList.add('deck-grid-item');
                 gridItem.dataset.card = JSON.stringify(card);
                 gridItem.innerHTML = `
-                    <img src="${card.image_url}" alt="${card.name}" title="${card.name}">
+                    <img src="${card.image_url}" alt="${card.name}" title="${card.name}" loading="lazy">
                     <div class="grid-hover-overlay">Clique para detalhes</div>
                     <span class="card-quantity-indicator">${item.quantity}x</span>
                 `;
@@ -560,7 +590,7 @@ document.addEventListener('DOMContentLoaded', () => {
             cardElement.classList.add('card-result');
             cardElement.dataset.card = JSON.stringify(c);
             cardElement.innerHTML = `
-                <img src="${c.image_url}" alt="${c.name}" tabindex="0" class="search-thumb">
+                <img src="${c.image_url}" alt="${c.name}" tabindex="0" class="search-thumb" loading="lazy">
                 <div class="card-info">
                     <p><strong>${c.name}</strong></p>
                     <p style="font-size:0.85rem;color:var(--text-secondary);">${c.rarity} • Código: <strong style="color:var(--text-primary);">${c.code || 'N/A'}</strong></p>
@@ -686,6 +716,36 @@ document.addEventListener('DOMContentLoaded', () => {
         setTimeout(() => {
             toastNotification.classList.remove('show');
         }, 3000);
+    }
+
+    function buildDeckExportText() {
+        const lines = [];
+        if (deck.leader?.card) {
+            const leaderCode = deck.leader.card.api_id || deck.leader.card.code || deck.leader.card.name;
+            lines.push(`1x${leaderCode}`);
+        }
+        (deck.main || []).forEach(item => {
+            if (!item?.card || !item?.quantity) return;
+            const code = item.card.api_id || item.card.code || item.card.name;
+            lines.push(`${item.quantity}x${code}`);
+        });
+        return lines.join('\n');
+    }
+
+    async function exportDeck() {
+        const deckText = buildDeckExportText();
+        if (!deckText) {
+            showToast('Deck vazio para exportar.');
+            return;
+        }
+
+        try {
+            await navigator.clipboard.writeText(deckText);
+            showToast('Deck copiado para a área de transferência!');
+        } catch (error) {
+            console.error('Erro ao copiar deck:', error);
+            showToast('Não foi possível copiar automaticamente.');
+        }
     }
     
     function handleTabViewChange(e) {

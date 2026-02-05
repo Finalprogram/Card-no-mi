@@ -10,6 +10,15 @@ const { getCreatorsLatestVideos } = require('../services/youtubeService');
 const { Op, fn, col } = require('sequelize');
 const { sequelize } = require('../database/connection');
 
+const normalizeFilterValues = (rawValue) => {
+  if (rawValue == null) return [];
+  const input = Array.isArray(rawValue) ? rawValue : [rawValue];
+  return input
+    .flatMap(value => String(value).split(','))
+    .map(value => value.trim())
+    .filter(Boolean);
+};
+
 const applyVariantFilter = (query, variantFilter) => {
   if (!variantFilter) return;
   if (variantFilter[Op.and]) {
@@ -17,6 +26,22 @@ const applyVariantFilter = (query, variantFilter) => {
   } else {
     query[Op.and] = [...(query[Op.and] || []), variantFilter];
   }
+};
+
+const buildCombinedVariantFilter = (rawVariantValue) => {
+  const variantValues = normalizeFilterValues(rawVariantValue)
+    .map(value => parseInt(value, 10))
+    .filter(value => Number.isInteger(value));
+
+  if (!variantValues.length) return null;
+  if (variantValues.length === 1) return buildVariantFilter(variantValues[0]);
+
+  const filters = variantValues.map(buildVariantFilter).filter(Boolean);
+  if (!filters.length) return null;
+
+  return {
+    [Op.or]: filters
+  };
 };
 
 const buildVariantFilter = (variantValue) => {
@@ -419,21 +444,46 @@ const getEncyclopediaPage = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = 50;
     const queryFilters = { ...baseFilter };
-    if (req.query.rarity && req.query.rarity !== '') queryFilters.rarity = req.query.rarity;
-    if (req.query.color && req.query.color !== '') queryFilters.color = { [Op.iLike]: `%${req.query.color}%` };
-    if (req.query.type && req.query.type !== '') queryFilters.type_line = req.query.type;
-    if (req.query.set && req.query.set !== '') queryFilters.set_name = { [Op.iLike]: `%${req.query.set}%` };
-    if (req.query.q && req.query.q !== '') queryFilters.name = { [Op.iLike]: `%${req.query.q}%` };
-    if (req.query.variant && req.query.variant !== '') {
-      const variantValue = parseInt(req.query.variant, 10);
-      const variantFilter = buildVariantFilter(variantValue);
-      applyVariantFilter(queryFilters, variantFilter);
+    const rarityValues = normalizeFilterValues(req.query.rarity);
+    if (rarityValues.length) queryFilters.rarity = rarityValues.length === 1 ? rarityValues[0] : { [Op.in]: rarityValues };
+
+    const colorValues = normalizeFilterValues(req.query.color);
+    if (colorValues.length) {
+      queryFilters[Op.and] = [
+        ...(queryFilters[Op.and] || []),
+        { [Op.or]: colorValues.map(color => ({ color: { [Op.iLike]: `%${color}%` } })) }
+      ];
     }
-    if (!req.query.variant || req.query.variant === '') {
+
+    const typeValues = normalizeFilterValues(req.query.type);
+    if (typeValues.length) queryFilters.type_line = typeValues.length === 1 ? typeValues[0] : { [Op.in]: typeValues };
+
+    const setValues = normalizeFilterValues(req.query.set);
+    if (setValues.length) {
+      const setPatterns = setValues.flatMap(rawSet => {
+        const value = String(rawSet || '').trim().toUpperCase();
+        if (!value) return [];
+        const withDash = value.replace(/^([A-Z]+)-?(\d+)$/, '$1-$2');
+        return [...new Set([value, withDash])];
+      });
+      queryFilters[Op.and] = [
+        ...(queryFilters[Op.and] || []),
+        { [Op.or]: setPatterns.map(pattern => ({ set_name: { [Op.iLike]: `%${pattern}%` } })) }
+      ];
+    }
+
+    if (req.query.q && req.query.q !== '') queryFilters.name = { [Op.iLike]: `%${req.query.q}%` };
+    const variantFilter = buildCombinedVariantFilter(req.query.variant);
+    if (variantFilter) {
+      applyVariantFilter(queryFilters, variantFilter);
+    } else {
       const baseFilter = buildVariantFilter(0);
       applyVariantFilter(queryFilters, baseFilter);
     }
-    if (req.query.don && req.query.don !== '' && Card.rawAttributes.don) queryFilters.don = req.query.don;
+    const donValues = normalizeFilterValues(req.query.don);
+    if (donValues.length && Card.rawAttributes.don) {
+      queryFilters.don = donValues.length === 1 ? donValues[0] : { [Op.in]: donValues };
+    }
 
     // Busca as opções de filtro dinamicamente do banco de dados
     const rarities = await distinctValues('rarity', baseFilter);
