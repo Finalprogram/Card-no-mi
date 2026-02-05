@@ -8,6 +8,9 @@ const ForumCategory = require('./ForumCategory');
 const ForumThread = require('./ForumThread');
 const ForumPost = require('./ForumPost');
 const ModerationLog = require('./ModerationLog');
+const Tournament = require('./Tournament');
+const TournamentParticipant = require('./TournamentParticipant');
+const TournamentMatch = require('./TournamentMatch');
 
 Listing.belongsTo(Card, { as: 'card', foreignKey: 'cardId' });
 Listing.belongsTo(User, { as: 'seller', foreignKey: 'sellerId' });
@@ -45,3 +48,17 @@ ForumPost.belongsTo(ForumPost, { as: 'quotedPost', foreignKey: 'quotedPostId' })
 ModerationLog.belongsTo(User, { as: 'moderator', foreignKey: 'moderatorId' });
 ModerationLog.belongsTo(User, { as: 'targetUser', foreignKey: 'targetUserId' });
 ModerationLog.belongsTo(User, { as: 'reporter', foreignKey: 'reporterId' });
+
+Tournament.belongsTo(User, { as: 'organizer', foreignKey: 'createdById' });
+User.hasMany(Tournament, { as: 'organizedTournaments', foreignKey: 'createdById' });
+
+TournamentParticipant.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(TournamentParticipant, { as: 'participants', foreignKey: 'tournamentId' });
+TournamentParticipant.belongsTo(User, { as: 'user', foreignKey: 'userId' });
+User.hasMany(TournamentParticipant, { as: 'tournamentEntries', foreignKey: 'userId' });
+
+TournamentMatch.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(TournamentMatch, { as: 'matches', foreignKey: 'tournamentId' });
+TournamentMatch.belongsTo(TournamentParticipant, { as: 'playerA', foreignKey: 'playerAId' });
+TournamentMatch.belongsTo(TournamentParticipant, { as: 'playerB', foreignKey: 'playerBId' });
+TournamentMatch.belongsTo(TournamentParticipant, { as: 'winner', foreignKey: 'winnerId' });

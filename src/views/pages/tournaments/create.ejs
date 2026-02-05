@@ -1,0 +1,101 @@
+<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="tournaments-page container">
+  <header class="tournaments-header">
+    <div>
+      <h1>Criar Torneio</h1>
+      <p>Crie torneios oficiais (admin) ou da comunidade.</p>
+    </div>
+    <a href="/tournaments" class="btn btn-secondary">Voltar</a>
+  </header>
+
+  <section class="form-card">
+    <form action="/tournaments/create" method="POST" class="tournament-form" enctype="multipart/form-data">
+      <label>Título
+        <input type="text" name="title" required maxlength="120" />
+      </label>
+
+      <label>Descrição
+        <textarea name="description" rows="3" maxlength="600"></textarea>
+      </label>
+
+      <label>Banner do torneio (upload ou URL)
+        <input type="file" name="bannerFile" id="bannerFile" accept="image/*" />
+        <input type="url" name="bannerUrl" id="bannerUrl" placeholder="https://..." />
+        <small class="field-help">Se enviar arquivo, ele terá prioridade sobre a URL.</small>
+      </label>
+
+      <div class="banner-preview-wrap">
+        <p class="preview-title">Prévia do banner</p>
+        <div class="banner-preview" id="bannerPreview">
+          <div class="banner-preview-overlay">
+            <span class="badge">Prévia</span>
+            <strong>Nome do torneio</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid">
+        <label>Formato
+          <select name="format">
+            <option value="swiss">Suíço</option>
+            <option value="single_elimination">Eliminação simples</option>
+          </select>
+        </label>
+
+        <label>Escopo
+          <select name="scope">
+            <option value="community">Comunidade</option>
+            <% if (user && user.accountType === 'admin') { %>
+              <option value="official">Oficial Card no Mi</option>
+            <% } %>
+          </select>
+        </label>
+
+        <label>Máximo de jogadores
+          <input type="number" name="maxPlayers" min="4" max="512" value="16" />
+        </label>
+
+        <label>Início
+          <input type="datetime-local" name="startAt" required />
+        </label>
+      </div>
+
+      <label>Regras
+        <textarea name="rules" rows="5" placeholder="Ex: BO1, 35 min por rodada, top cut no top 8..."></textarea>
+      </label>
+
+      <button type="submit" class="btn btn-primary">Criar Torneio</button>
+    </form>
+  </section>
+</main>
+
+<script>
+  const bannerFileInput = document.getElementById('bannerFile');
+  const bannerUrlInput = document.getElementById('bannerUrl');
+  const bannerPreview = document.getElementById('bannerPreview');
+
+  function setPreview(url) {
+    if (!bannerPreview) return;
+    if (!url) {
+      bannerPreview.style.backgroundImage = '';
+      return;
+    }
+    bannerPreview.style.backgroundImage = `linear-gradient(145deg, rgba(18,21,31,.32), rgba(18,21,31,.72)), url('${url}')`;
+  }
+
+  bannerFileInput?.addEventListener('change', (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const blobUrl = URL.createObjectURL(file);
+    setPreview(blobUrl);
+  });
+
+  bannerUrlInput?.addEventListener('input', () => {
+    if (bannerFileInput?.files?.length) return;
+    setPreview(bannerUrlInput.value.trim());
+  });
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,174 @@
+<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+<%- include('../../partials/navbar') %>
+<%
+  const statusLabel = (status) => {
+    const map = {
+      draft: 'Rascunho',
+      open: 'Aberto',
+      in_progress: 'Em andamento',
+      finished: 'Finalizado',
+      cancelled: 'Cancelado'
+    };
+    return map[status] || status;
+  };
+%>
+
+<main class="tournaments-page container">
+  <% if (tournament.bannerUrl) { %>
+    <section class="detail-banner" style="--tournament-banner: url('<%= tournament.bannerUrl.replace(/'/g, "%27") %>')"></section>
+  <% } %>
+  <header class="tournaments-header">
+    <div>
+      <h1><%= tournament.title %></h1>
+      <p><%= tournament.description || 'Sem descrição.' %></p>
+    </div>
+    <a href="/tournaments" class="btn btn-secondary">Todos os torneios</a>
+  </header>
+
+  <section class="summary-grid">
+    <div class="summary-card">
+      <h3>Informações</h3>
+      <ul>
+        <li><strong>Escopo:</strong> <%= tournament.scope === 'official' ? 'Oficial' : 'Comunidade' %></li>
+        <li><strong>Status:</strong> <%= statusLabel(tournament.status) %></li>
+        <li><strong>Formato:</strong> <%= tournament.format === 'swiss' ? 'Suíço' : 'Eliminação simples' %></li>
+        <li><strong>Máx. jogadores:</strong> <%= tournament.maxPlayers %></li>
+        <li><strong>Organizador:</strong> <%= tournament.organizer?.username || '---' %></li>
+      </ul>
+      <% if (tournament.rules) { %>
+        <div class="rules-box"><%= tournament.rules %></div>
+      <% } %>
+    </div>
+
+    <div class="summary-card">
+      <h3>Ações</h3>
+      <% if (!myEntry && user) { %>
+        <button class="btn btn-primary" id="joinBtn" data-id="<%= tournament.id %>">Entrar no torneio</button>
+      <% } else if (myEntry) { %>
+        <p>Você está inscrito como <strong><%= myEntry.displayName %></strong>.</p>
+      <% } else { %>
+        <p>Faça login para participar.</p>
+      <% } %>
+      <% if (canManage) { %>
+        <button class="btn btn-secondary" id="startRoundBtn" data-id="<%= tournament.id %>">Gerar próxima rodada</button>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="table-card">
+    <h2>Classificação</h2>
+    <table>
+      <thead>
+        <tr><th>#</th><th>Jogador</th><th>Pts</th><th>W</th><th>L</th><th>D</th></tr>
+      </thead>
+      <tbody>
+        <% if (!participants.length) { %>
+          <tr><td colspan="6">Sem participantes.</td></tr>
+        <% } %>
+        <% participants.forEach((p, idx) => { %>
+          <tr>
+            <td><%= idx + 1 %></td>
+            <td><%= p.displayName %></td>
+            <td><%= p.points %></td>
+            <td><%= p.wins %></td>
+            <td><%= p.losses %></td>
+            <td><%= p.draws %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="table-card">
+    <h2>Rodadas</h2>
+    <% const rounds = Object.keys(groupedMatches || {}).sort((a,b)=>Number(b)-Number(a)); %>
+    <% if (!rounds.length) { %>
+      <p>Nenhuma rodada gerada.</p>
+    <% } %>
+    <% rounds.forEach((round) => { %>
+      <h3>Rodada <%= round %></h3>
+      <table>
+        <thead>
+          <tr><th>Mesa</th><th>Jogador A</th><th>Jogador B</th><th>Status</th><th>Resultado</th></tr>
+        </thead>
+        <tbody>
+          <% groupedMatches[round].forEach((m) => { %>
+            <tr>
+              <td><%= m.tableNumber %></td>
+              <td><%= m.playerA?.displayName || '---' %></td>
+              <td><%= m.playerB?.displayName || 'BYE' %></td>
+              <td><%= m.status %></td>
+              <td>
+                <% if (m.status === 'confirmed') { %>
+                  <% if (m.isDraw) { %>
+                    Empate
+                  <% } else { %>
+                    <%= m.winner?.displayName || '---' %>
+                  <% } %>
+                <% } else { %>
+                  <% if (user) { %>
+                    <div class="report-row">
+                      <button class="btn-link reportBtn" data-id="<%= m.id %>" data-result="a">A venceu</button>
+                      <% if (m.playerBId) { %>
+                        <button class="btn-link reportBtn" data-id="<%= m.id %>" data-result="b">B venceu</button>
+                        <button class="btn-link reportBtn" data-id="<%= m.id %>" data-result="draw">Empate</button>
+                      <% } %>
+                    </div>
+                  <% } else { %>
+                    Pendente
+                  <% } %>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% }) %>
+  </section>
+</main>
+
+<script>
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.message || 'Erro na ação.');
+    return data;
+  }
+
+  document.getElementById('joinBtn')?.addEventListener('click', async (e) => {
+    try {
+      await postJson(`/tournaments/${e.currentTarget.dataset.id}/join`);
+      window.location.reload();
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  document.getElementById('startRoundBtn')?.addEventListener('click', async (e) => {
+    try {
+      await postJson(`/tournaments/${e.currentTarget.dataset.id}/start-round`);
+      window.location.reload();
+    } catch (error) {
+      alert(error.message);
+    }
+  });
+
+  document.querySelectorAll('.reportBtn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      try {
+        await postJson(`/tournaments/matches/${e.currentTarget.dataset.id}/report`, {
+          result: e.currentTarget.dataset.result
+        });
+        window.location.reload();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  });
+</script>
+
+<%- include('../../partials/footer') %>

@@ -1,0 +1,139 @@
+<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+<%- include('../../partials/navbar') %>
+<%
+  const statusLabel = (status) => {
+    const map = {
+      draft: 'Rascunho',
+      open: 'Aberto',
+      in_progress: 'Em andamento',
+      finished: 'Finalizado',
+      cancelled: 'Cancelado'
+    };
+    return map[status] || status;
+  };
+  const allTournaments = [...(official || []), ...(community || [])];
+  const openCount = allTournaments.filter((t) => t.status === 'open').length;
+  const inProgressCount = allTournaments.filter((t) => t.status === 'in_progress').length;
+  const finishedCount = allTournaments.filter((t) => t.status === 'finished').length;
+  const spotlight = official?.[0] || community?.[0] || null;
+%>
+
+<main class="tournaments-page container">
+  <header class="tournaments-header hero">
+    <div>
+      <h1>Torneios</h1>
+      <p>Participe dos campeonatos oficiais da Card no Mi e dos eventos organizados pela comunidade.</p>
+      <div class="hero-stats">
+        <span class="hero-chip open">Abertos: <strong><%= openCount %></strong></span>
+        <span class="hero-chip progress">Em andamento: <strong><%= inProgressCount %></strong></span>
+        <span class="hero-chip finished">Finalizados: <strong><%= finishedCount %></strong></span>
+      </div>
+    </div>
+    <div class="hero-actions">
+      <% if (user) { %>
+        <a href="/tournaments/create" class="btn btn-primary">Criar Torneio</a>
+      <% } %>
+      <% if (spotlight) { %>
+        <a href="/tournaments/<%= spotlight.id %>" class="btn btn-secondary">Ver Destaque</a>
+      <% } %>
+    </div>
+  </header>
+
+  <% if (spotlight) { %>
+    <section class="spotlight-card <%= spotlight.bannerUrl ? 'has-banner' : '' %>" <%= spotlight.bannerUrl ? `style="--tournament-banner: url('${spotlight.bannerUrl.replace(/'/g, "%27")}')"` : '' %>>
+      <div>
+        <span class="badge <%= spotlight.scope === 'official' ? '' : 'community' %>">
+          <%= spotlight.scope === 'official' ? 'Destaque Oficial' : 'Destaque da Comunidade' %>
+        </span>
+        <h2><%= spotlight.title %></h2>
+        <p><%= spotlight.description || 'Sem descrição.' %></p>
+      </div>
+      <div class="meta">
+        <span>Formato: <%= spotlight.format === 'swiss' ? 'Suíço' : 'Eliminação' %></span>
+        <span>Status: <%= statusLabel(spotlight.status) %></span>
+      </div>
+    </section>
+  <% } %>
+
+  <section class="toolbar-card">
+    <input type="search" id="tournamentSearch" placeholder="Buscar torneio por nome..." />
+    <select id="scopeFilter">
+      <option value="all">Todos os escopos</option>
+      <option value="official">Oficial</option>
+      <option value="community">Comunidade</option>
+    </select>
+  </section>
+
+  <section class="scope-block">
+    <h2>Oficiais Card no Mi</h2>
+    <div class="tournament-grid">
+      <% if (!official || official.length === 0) { %>
+        <p class="empty-msg">Nenhum torneio oficial no momento.</p>
+      <% } %>
+      <% (official || []).forEach((t) => { %>
+        <a href="/tournaments/<%= t.id %>" class="tournament-card official <%= t.bannerUrl ? 'has-banner' : '' %>" data-title="<%= (t.title || '').toLowerCase() %>" data-scope="official">
+          <% if (t.bannerUrl) { %>
+            <div class="card-banner">
+              <img src="<%= t.bannerUrl %>" alt="Banner do torneio <%= t.title %>" loading="lazy" />
+            </div>
+          <% } %>
+          <span class="badge">Oficial</span>
+          <h3><%= t.title %></h3>
+          <p><%= t.description || 'Sem descrição.' %></p>
+          <div class="meta">
+            <span>Formato: <%= t.format === 'swiss' ? 'Suíço' : 'Eliminação' %></span>
+            <span>Status: <%= statusLabel(t.status) %></span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+
+  <section class="scope-block">
+    <h2>Comunidade</h2>
+    <div class="tournament-grid">
+      <% if (!community || community.length === 0) { %>
+        <p class="empty-msg">Nenhum torneio da comunidade ainda.</p>
+      <% } %>
+      <% (community || []).forEach((t) => { %>
+        <a href="/tournaments/<%= t.id %>" class="tournament-card <%= t.bannerUrl ? 'has-banner' : '' %>" data-title="<%= (t.title || '').toLowerCase() %>" data-scope="community">
+          <% if (t.bannerUrl) { %>
+            <div class="card-banner">
+              <img src="<%= t.bannerUrl %>" alt="Banner do torneio <%= t.title %>" loading="lazy" />
+            </div>
+          <% } %>
+          <span class="badge community">Comunidade</span>
+          <h3><%= t.title %></h3>
+          <p><%= t.description || 'Sem descrição.' %></p>
+          <div class="meta">
+            <span>Formato: <%= t.format === 'swiss' ? 'Suíço' : 'Eliminação' %></span>
+            <span>Org: <%= t.organizer?.username || '---' %></span>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  </section>
+</main>
+
+<script>
+  const searchInput = document.getElementById('tournamentSearch');
+  const scopeFilter = document.getElementById('scopeFilter');
+  const cards = [...document.querySelectorAll('.tournament-card')];
+
+  function applyFilters() {
+    const q = (searchInput?.value || '').toLowerCase().trim();
+    const scope = scopeFilter?.value || 'all';
+    cards.forEach((card) => {
+      const title = card.dataset.title || '';
+      const cardScope = card.dataset.scope || '';
+      const byText = !q || title.includes(q);
+      const byScope = scope === 'all' || scope === cardScope;
+      card.style.display = byText && byScope ? '' : 'none';
+    });
+  }
+
+  searchInput?.addEventListener('input', applyFilters);
+  scopeFilter?.addEventListener('change', applyFilters);
+</script>
+
+<%- include('../../partials/footer') %>

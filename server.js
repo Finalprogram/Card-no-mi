@@ -71,6 +71,7 @@ const couponRoutes = require('./src/routes/couponRoutes');
 const deckRoutes = require('./src/routes/deckRoutes');
 const deckPagesRoutes = require('./src/routes/deckPagesRoutes');
 const forumRoutes = require('./src/routes/forumRoutes');
+const tournamentRoutes = require('./src/routes/tournamentRoutes');
 const profileRoutes = require('./src/routes/profileRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
 const reportCounter = require('./src/middleware/reportCounter');
@@ -222,6 +223,7 @@ app.use('/forum', require('./src/routes/reactionRoutes'));
 app.use('/forum', profileRoutes);
 app.use('/forum', notificationRoutes);
 app.use('/forum', reportCounter, forumRoutes);
+app.use('/tournaments', tournamentRoutes);
 app.use('/admin', adminRoutes);
 app.use('/welcome', welcomeRoutes);
 
