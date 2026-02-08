@@ -119,6 +119,128 @@
     gap: 0.85rem;
   }
 
+  .partner-stores-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.85rem;
+  }
+
+  .partner-store-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+    border-radius: 14px;
+    padding: 0.95rem;
+    background: #181c27;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #fff;
+    text-decoration: none;
+    transition: transform 180ms ease, border-color 180ms ease, background-color 180ms ease;
+  }
+
+  .partner-store-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(245, 185, 66, 0.55);
+    background: #1e2331;
+  }
+
+  .partner-store-top {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+
+  .partner-store-logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 12px;
+    background: #0f1115;
+    object-fit: cover;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .partner-store-name {
+    margin: 0;
+    font-weight: 700;
+    font-size: 0.98rem;
+  }
+
+  .partner-store-meta {
+    margin-top: 0.1rem;
+    font-size: 0.8rem;
+    color: #adb5c9;
+  }
+
+  .partner-store-links {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .partner-store-links a {
+    font-size: 0.75rem;
+    color: #f5b942;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .partner-store-links a:hover {
+    text-decoration: underline;
+  }
+
+  .partner-store-form {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 14px;
+    background: #171b26;
+    border: 1px dashed rgba(255, 255, 255, 0.08);
+  }
+
+  .partner-store-form h3 {
+    margin: 0 0 0.6rem;
+    color: #fff;
+    font-size: 1rem;
+  }
+
+  .partner-store-form .form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .partner-store-form input,
+  .partner-store-form textarea {
+    width: 100%;
+    padding: 0.6rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: #0f1115;
+    color: #e6e8ee;
+    font-size: 0.9rem;
+  }
+
+  .partner-store-form textarea {
+    min-height: 90px;
+    resize: vertical;
+  }
+
+  .partner-store-form button {
+    margin-top: 0.75rem;
+    padding: 0.65rem 1.2rem;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    background: #f5b942;
+    color: #1b1f2b;
+    cursor: pointer;
+    transition: transform 160ms ease, filter 160ms ease;
+  }
+
+  .partner-store-form button:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.05);
+  }
+
   .community-link-card {
     display: block;
     text-decoration: none;
@@ -211,6 +333,40 @@
         <span class="creator-cta">Ver canal</span>
       </a> -->
     </div>
+  </section>
+
+  <section class="community-section">
+    <h2>Lojas Parceiras</h2>
+    <p class="section-desc">Lojas oficiais e parceiras que apoiam a comunidade. Clique para conhecer.</p>
+    <div class="partner-stores-grid">
+      <% if (partnerStores && partnerStores.length) { %>
+        <% partnerStores.forEach((store) => { %>
+          <div class="partner-store-card">
+            <div class="partner-store-top">
+              <img src="<%= store.logoUrl || '/images/default-avatar.png' %>" alt="Logo da loja <%= store.storeName %>" class="partner-store-logo">
+              <div>
+                <p class="partner-store-name"><%= store.storeName %></p>
+                <div class="partner-store-meta"><%= [store.city, store.state].filter(Boolean).join(' • ') || 'Loja Parceira' %></div>
+              </div>
+            </div>
+            <div class="partner-store-links">
+              <% if (store.websiteUrl) { %>
+                <a href="<%= store.websiteUrl %>" target="_blank" rel="noopener noreferrer">Site</a>
+              <% } %>
+              <% if (store.instagramUrl) { %>
+                <a href="<%= store.instagramUrl %>" target="_blank" rel="noopener noreferrer">Instagram</a>
+              <% } %>
+              <% if (store.whatsappUrl) { %>
+                <a href="<%= store.whatsappUrl %>" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+              <% } %>
+            </div>
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="section-desc">Em breve novas lojas parceiras por aqui.</p>
+      <% } %>
+    </div>
+
   </section>
 
   <section class="community-section">

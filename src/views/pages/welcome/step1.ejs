@@ -1,77 +1,264 @@
 <!DOCTYPE html>
+
 <html lang="pt-br">
+
 <head>
+
     <%- include('../../partials/header') %>
+
     <title>Bem-vindo ao Card-no-mi!</title>
+
     <style>
+
         .progress-container {
+
             width: 100%;
+
             background-color: #e0e0e0;
+
             border-radius: 5px;
+
             margin: 1rem 0;
+
         }
+
         .progress-bar {
+
             width: 0;
+
             height: 10px;
+
             background-color: #6a0dad; /* Roxo */
+
             border-radius: 5px;
+
             transition: width 0.5s ease-in-out;
+
         }
+
         .step-label {
+
             text-align: center;
+
             font-size: 0.9rem;
+
             color: #666;
+
         }
+
     </style>
+
 </head>
+
 <body class="auth-body">
+
     <div class="container">
+
         <%- include('../../partials/navbar') %>
+
     </div>
+
     <main class="container">
+
         <div class="glass-panel">
+
             <h1>Bem-vindo(a)!</h1>
+
             <div class="progress-container">
-                <div class="progress-bar" style="width: 50%;"></div>
+
+                <div class="progress-bar" style="width: <%= isStore ? '33%' : '50%' %>;"></div>
+
             </div>
-            <p class="step-label">Passo 1 de 2</p>
-            <p class="subtitle">Vamos comeÃ§ar configurando seu perfil.</p>
+
+            <p class="step-label">Passo 1 de <%= isStore ? 3 : 2 %></p>
+
+            <p class="subtitle">Vamos começar configurando seu perfil.</p>
+
+
 
             <form action="/welcome/step1" method="POST">
+
                 <div class="form-group">
+
                     <label for="fullName">Nome Completo</label>
+
                     <input type="text" name="fullName" id="fullName" class="form-control" placeholder="Digite seu nome completo" required>
+
                 </div>
 
+
+
                 <div class="form-group">
+
                     <label for="phone">Telefone</label>
+
                     <input type="text" name="phone" id="phone" class="form-control" placeholder="(00) 00000-0000">
+
                 </div>
+
+
 
                 <div class="form-group">
-                    <label for="documentNumber">CPF</label>
-                    <input type="text" name="documentNumber" id="documentNumber" class="form-control" placeholder="Digite seu CPF" required>
+
+                    <label for="documentNumber" id="documentLabel"><%= isStore ? 'CNPJ' : 'CPF' %></label>
+
+                    <input type="text" name="documentNumber" id="documentNumber" class="form-control" placeholder="<%= isStore ? '00.000.000/0000-00' : '000.000.000-00' %>" required>
+
                 </div>
 
-                <button type="submit" class="btn-primary btn-submit-full">PrÃ³ximo</button>
+
+
+                <button type="submit" class="btn-primary btn-submit-full">Próximo</button>
+
             </form>
+
         </div>
+
     </main>
+
     <script src="/js/main.js"></script>
+
     <script>
+
         document.addEventListener('DOMContentLoaded', () => {
+
             const urlParams = new URLSearchParams(window.location.search);
+
             const error = urlParams.get('error');
+
             if (error) {
+
                 let message = 'Ocorreu um erro.';
+
                 if (error === 'cpfInvalid') {
-                    message = 'CPF invÃ¡lido. Por favor, verifique os dados e tente novamente.';
+
+                    message = 'CPF inválido. Por favor, verifique os dados e tente novamente.';
+
                 } else if (error === 'cpfRequired') {
-                    message = 'O CPF Ã© obrigatÃ³rio.';
+
+                    message = 'O CPF é obrigatório.';
+
+                } else if (error === 'cnpjInvalid') {
+
+                    message = 'CNPJ inválido. Por favor, verifique os dados e tente novamente.';
+
+                } else if (error === 'cnpjRequired') {
+
+                    message = 'O CNPJ é obrigatório.';
+
+                } else if (error === 'phoneInvalid') {
+
+                    message = 'Telefone inválido.';
+
                 }
+
                 window.showToast(message, 'error');
+
             }
+
+
+
+            const phoneInput = document.getElementById('phone');
+
+            const documentInput = document.getElementById('documentNumber');
+
+            const isStore = <%= isStore ? 'true' : 'false' %>;
+
+
+
+            phoneInput.addEventListener('input', (e) => {
+
+                let value = e.target.value.replace(/\D/g, '');
+
+                value = value.substring(0, 11);
+
+                if (value.length > 7) {
+
+                    e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
+
+                } else if (value.length > 2) {
+
+                    e.target.value = `(${value.slice(0, 2)}) ${value.slice(2)}`;
+
+                } else if (value.length > 0) {
+
+                    e.target.value = `(${value.slice(0)}`;
+
+                } else {
+
+                    e.target.value = '';
+
+                }
+
+            });
+
+
+
+            const applyMask = () => {
+
+                let value = documentInput.value.replace(/\D/g, '');
+
+                value = value.substring(0, isStore ? 14 : 11);
+
+                if (isStore) {
+
+                    if (value.length > 12) {
+
+                        documentInput.value = `${value.slice(0, 2)}.${value.slice(2, 5)}.${value.slice(5, 8)}/${value.slice(8, 12)}-${value.slice(12)}`;
+
+                    } else if (value.length > 8) {
+
+                        documentInput.value = `${value.slice(0, 2)}.${value.slice(2, 5)}.${value.slice(5, 8)}/${value.slice(8)}`;
+
+                    } else if (value.length > 5) {
+
+                        documentInput.value = `${value.slice(0, 2)}.${value.slice(2, 5)}.${value.slice(5)}`;
+
+                    } else if (value.length > 2) {
+
+                        documentInput.value = `${value.slice(0, 2)}.${value.slice(2)}`;
+
+                    } else {
+
+                        documentInput.value = value;
+
+                    }
+
+                } else {
+
+                    if (value.length > 9) {
+
+                        documentInput.value = `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6, 9)}-${value.slice(9)}`;
+
+                    } else if (value.length > 6) {
+
+                        documentInput.value = `${value.slice(0, 3)}.${value.slice(3, 6)}.${value.slice(6)}`;
+
+                    } else if (value.length > 3) {
+
+                        documentInput.value = `${value.slice(0, 3)}.${value.slice(3)}`;
+
+                    } else {
+
+                        documentInput.value = value;
+
+                    }
+
+                }
+
+            };
+
+
+
+            documentInput.addEventListener('input', applyMask);
+
         });
+
     </script>
+
 </body>
+
 </html>
+
+
+

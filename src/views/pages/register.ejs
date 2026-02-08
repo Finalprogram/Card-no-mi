@@ -15,7 +15,13 @@
 
             <form id="register-form" action="/auth/register" method="POST">
 
-
+                <div class="form-group">
+                    <label for="personType">Tipo de cadastro</label>
+                    <select name="personType" id="personType" class="form-control" required>
+                        <option value="PF">Pessoa FÌsica</option>
+                        <option value="PJ">Pessoa JurÌdica</option>
+                    </select>
+                </div>
 
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -23,14 +29,16 @@
                 </div>
 
                 <div class="form-group">
-                    <label for="username">Nome de Usu√°rio</label>
-                    <input type="text" name="username" id="username" class="form-control" placeholder="Crie um nome de usu√°rio" required>
+                    <label for="username">Nome de Usu·rio</label>
+                    <input type="text" name="username" id="username" class="form-control" placeholder="Crie um Nome de Usu·rio" required>
                 </div>
 
                 <div class="form-group">
                     <label for="phone">Telefone</label>
                     <input type="text" name="phone" id="phone" class="form-control" placeholder="(00) 00000-0000">
                 </div>
+
+                <p class="subtitle" style="margin-top: 0.5rem;">Documento ser· solicitado no onboarding.</p>
                 
                 <div class="form-group">
                     <label for="password">Senha</label>
@@ -52,10 +60,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             const registerForm = document.getElementById('register-form');
             const phoneInput = document.getElementById('phone');
+            const personType = document.getElementById('personType');
 
             phoneInput.addEventListener('input', (e) => {
                 let value = e.target.value.replace(/\D/g, '');
-                value = value.substring(0, 11); // Limita a 11 d√≠gitos (DD + 9 d√≠gitos)
+                value = value.substring(0, 11); // Limita a 11 dÌgitos (DD + 9 d√≠gitos)
 
                 if (value.length > 7) {
                     e.target.value = `(${value.slice(0, 2)}) ${value.slice(2, 7)}-${value.slice(7)}`;
@@ -68,14 +77,21 @@
                 }
             });
 
+            personType.addEventListener('change', () => {
+                // placeholder para futuras mudanÁas no formul·rio
+            });
+
             registerForm.addEventListener('submit', async (event) => {
                 event.preventDefault();
 
                 const formData = new FormData(registerForm);
                 const data = Object.fromEntries(formData.entries());
 
-                // Remove a m√°scara antes de enviar para o backend
+                // Remove a m·scara antes de enviar para o backend
                 data.phone = data.phone.replace(/\D/g, '');
+                if (data.documentNumber) {
+                    data.documentNumber = data.documentNumber.replace(/\D/g, '');
+                }
 
                 const submitButton = registerForm.querySelector('button[type="submit"]');
                 submitButton.disabled = true;
@@ -104,7 +120,7 @@
                     }
                 } catch (error) {
                     console.error('Erro no fetch:', error);
-                    window.showToast('Ocorreu um erro de conex√£o. Tente novamente.', 'error');
+                    window.showToast('Ocorreu um erro de conex„o. Tente novamente.', 'error');
                 } finally {
                     submitButton.disabled = false;
                     submitButton.textContent = 'Cadastrar';
@@ -115,3 +131,4 @@
 
 </body>
 </html>
+

@@ -63,7 +63,7 @@ async function listUsers(req, res) {
   try {
     const users = await User.findAll({ attributes: { exclude: ['password'] } });
     const defaultFees = {};
-    const accountTypes = ['individual', 'shop'];
+    const accountTypes = ['individual', 'shop', 'store', 'partner_store'];
     for (const type of accountTypes) {
       const setting = await Setting.findOne({ where: { key: `fee_${type}_percentage` } });
       defaultFees[type] = setting ? setting.value : 8.0;

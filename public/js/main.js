@@ -343,41 +343,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const toastContainer = document.getElementById('toast-container') || (() => {
       const div = document.createElement('div');
       div.id = 'toast-container';
-      Object.assign(div.style, {
-        position: 'fixed',
-        top: '20px',
-        right: '20px',
-        zIndex: '9999',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '10px'
-      });
       document.body.appendChild(div);
       return div;
     })();
 
     const toast = document.createElement('div');
-    toast.classList.add('toast', `toast-${type}`);
+    const normalizedType = ['success', 'error', 'info'].includes(type) ? type : 'info';
+    toast.classList.add('toast', normalizedType);
     toast.textContent = message;
-    Object.assign(toast.style, {
-      backgroundColor: type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#007bff',
-      color: 'white',
-      padding: '10px 20px',
-      borderRadius: '5px',
-      boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
-      opacity: '0',
-      transition: 'opacity 0.5s ease-in-out'
-    });
 
     toastContainer.appendChild(toast);
 
     setTimeout(() => {
-      toast.style.opacity = '1';
-    }, 100);
-
-    setTimeout(() => {
-      toast.style.opacity = '0';
-      toast.addEventListener('transitionend', () => toast.remove());
+      toast.classList.add('hiding');
+      toast.addEventListener('animationend', () => toast.remove(), { once: true });
     }, 3000);
   };
 });

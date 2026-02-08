@@ -1,7 +1,6 @@
-const mongoose = require('mongoose');
 const onepieceService = require('../src/services/onepieceService');
 const Card = require('../src/models/Card');
-const connectDB = require('../src/database/connection');
+const { connectDB, sequelize } = require('../src/database/connection'); // Import sequelize instance
 
 const BATCH_SIZE = 500; // Lotes de 500 para salvar no banco
 
@@ -20,46 +19,36 @@ async function syncAllOnePieceCards() {
     // --- FASE 2: SALVAR TUDO NO BANCO DE DADOS EM LOTES ---
     console.log('🔄 Iniciando sincronização com o banco de dados...');
     
-    const initialCount = await Card.countDocuments({ game: 'onepiece' });
-    let operations = [];
-
+    const initialCount = await Card.count({ where: { game: 'onepiece' } });
+    let cardsProcessed = 0;
     for (const cardData of allCardsFromAPI) {
-      console.log('Processing cardData:', cardData);
       const optimizedCard = {
         api_id: cardData.card_set_id,
         game: 'onepiece', // Define o jogo
         name: cardData.card_name,
         set_name: cardData.set_name,
         image_url: cardData.card_image,
-        // (Adicione outros campos que você padronizou, como raridade, cores, etc.)
         rarity: cardData.rarity,
-        colors: cardData.card_color, // Corrected field
-        type_line: cardData.card_type, // Corrected field
-        ability: cardData.card_text || '', // Corrected field
+        colors: cardData.card_color,
+        type_line: cardData.card_type,
+        ability: cardData.card_text || '',
+        // Add other fields you standardized as needed
       };
 
-      operations.push({
-        updateOne: {
-          filter: { api_id: optimizedCard.api_id, game: 'onepiece' },
-          update: { $set: optimizedCard },
-          upsert: true
-        }
-      });
+      await Card.upsert(optimizedCard);
+      cardsProcessed++;
 
-      if (operations.length >= BATCH_SIZE) {
-        await Card.bulkWrite(operations);
-        console.log(`... ${operations.length} registros salvos...`);
-        operations = []; // Limpa o lote
+      if (cardsProcessed % BATCH_SIZE === 0) {
+        console.log(`... ${cardsProcessed} registros processados...`);
       }
     }
 
-    // Salva o lote final restante
-    if (operations.length > 0) {
-      await Card.bulkWrite(operations);
-      console.log(`... ${operations.length} registros salvos...`);
+    // Log final count
+    if (cardsProcessed % BATCH_SIZE !== 0) {
+      console.log(`... ${cardsProcessed} registros processados...`);
     }
 
-    const finalCount = await Card.countDocuments({ game: 'onepiece' });
+    const finalCount = await Card.count({ where: { game: 'onepiece' } });
     console.log('\n---');
     console.log('📄 RESUMO DA SINCRONIZAÇÃO DE ONE PIECE 📄');
     console.log(`Total inicial: ${initialCount}`);
@@ -70,8 +59,8 @@ async function syncAllOnePieceCards() {
   } catch (error) {
     console.error('Ocorreu um erro durante a sincronização de One Piece:', error);
   } finally {
-    await mongoose.connection.close();
-    console.log('Conexão com o MongoDB fechada.');
+    await sequelize.close();
+    console.log('Conexão com o Banco de Dados (PostgreSQL) fechada.');
     process.exit(0);
   }
 }

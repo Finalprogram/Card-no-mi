@@ -2992,6 +2992,12 @@
   box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
 }
 
+.creator-badge {
+  background: linear-gradient(135deg, #7C6CFF, #5A4DFF);
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(124, 108, 255, 0.35);
+}
+
 /* Badges de Facção */
 .faction-badge {
   padding: 0.25rem 0.75rem;
@@ -4160,6 +4166,11 @@
 
 .user-role-badge.seller {
   background: linear-gradient(135deg, #3b82f6, #2563eb);
+  color: white;
+}
+
+.user-role-badge.creator {
+  background: linear-gradient(135deg, #7C6CFF, #5A4DFF);
   color: white;
 }
 

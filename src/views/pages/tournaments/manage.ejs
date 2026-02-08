@@ -1,0 +1,464 @@
+﻿<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+<%- include('../../partials/navbar') %>
+
+<% 
+  const now = Date.now();
+  const regOpenAt = tournament.registrationOpenAt ? new Date(tournament.registrationOpenAt).getTime() : null;
+  const regCloseAt = tournament.registrationCloseAt ? new Date(tournament.registrationCloseAt).getTime() : null;
+  const checkInWindowOpen = regOpenAt && regCloseAt ? (now >= regOpenAt && now < regCloseAt) : false;
+  const checkInWindowClosed = regCloseAt ? now >= regCloseAt : false;
+  const isDraft = tournament.status === 'draft';
+  const isOpen = tournament.status === 'open';
+  const isRunning = tournament.status === 'in_progress';
+  const isSwiss = (tournament.formatType || tournament.format) === 'SWISS_TOP_CUT';
+  const statusLabelPt = (value) => {
+    const map = {
+      CONFIRMED: 'Confirmado',
+      PENDING: 'Pendente',
+      WAITING_LIST: 'Lista de espera',
+      CHECKED_IN: 'Check-in',
+      CANCELLED: 'Cancelado',
+      NO_SHOW: 'No-show',
+      DROPPED: 'Drop'
+    };
+    return map[value] || value;
+  };
+%>
+
+<main class="tournaments-page container">
+  <header class="tournaments-header">
+    <div>
+      <h1>Gerenciar torneio</h1>
+      <p><strong><%= tournament.title %></strong> • Status: <%= tournament.status %></p>
+    </div>
+    <a href="/tournaments/<%= tournament.id %>" class="btn btn-secondary">Ver página pública</a>
+  </header>
+
+  <section class="summary-grid">
+    <div class="summary-card">
+      <h3>Ações rápidas</h3>
+      <div class="report-row">
+        <% if (isDraft) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/publish">Publicar</button>
+        <% } %>
+        <% if (isOpen && (!regOpenAt || now < regOpenAt)) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/registration/open">Abrir inscrições</button>
+        <% } %>
+        <% if (isOpen && regCloseAt && now < regCloseAt) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/registration/close">Fechar inscrições</button>
+        <% } %>
+      </div>
+      <div class="report-row">
+        <% if (isOpen && checkInWindowOpen) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/checkin/open">Abrir check-in</button>
+        <% } %>
+        <% if (isRunning && checkInWindowClosed) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/checkin/close">Fechar check-in</button>
+        <% } %>
+        <% if (isRunning) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/start">Iniciar torneio</button>
+        <% } %>
+      </div>
+      <div class="report-row">
+        <% if (isRunning && isSwiss) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/rounds/swiss">Gerar rodada Swiss</button>
+        <% } %>
+        <% if (isRunning && isSwiss) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/topcut/generate" data-body='{"size":8}'>Gerar Top 8</button>
+        <% } %>
+        <% if (isRunning) { %>
+          <button class="btn btn-secondary js-action" data-url="/tournaments/<%= tournament.id %>/finish">Finalizar</button>
+        <% } %>
+      </div>
+      <p id="actionResult"></p>
+    </div>
+
+    <div class="summary-card">
+      <h3>Configuração</h3>
+      <ul>
+        <li><strong>Formato:</strong> <%= tournament.formatType || tournament.format %></li>
+        <li><strong>Capacidade:</strong> <%= tournament.capacity || tournament.maxPlayers %></li>
+        <li><strong>Inscrição:</strong> <%= tournament.entryType %> <% if (tournament.entryType === 'PAID') { %>- R$ <%= ((tournament.entryFeeCents || 0)/100).toFixed(2) %><% } %></li>
+        <li><strong>Início:</strong> <%= tournament.startAt ? new Date(tournament.startAt).toLocaleString('pt-BR') : '-' %></li>
+        <li><strong>Abertura inscrição:</strong> <%= tournament.registrationOpenAt ? new Date(tournament.registrationOpenAt).toLocaleString('pt-BR') : '-' %></li>
+        <li><strong>Fechamento inscrição:</strong> <%= tournament.registrationCloseAt ? new Date(tournament.registrationCloseAt).toLocaleString('pt-BR') : '-' %></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="table-card participants-card">
+    <div class="participants-header">
+      <h2>Participantes (<%= registrations.length %>)</h2>
+      <span class="participants-hint">Clique para ver detalhes</span>
+    </div>
+    <% if (!registrations.length) { %>
+      <p>Sem participantes no momento.</p>
+    <% } else { %>
+      <div class="participants-grid">
+        <% registrations.forEach((p) => { %>
+          <% const displayName = p?.displayName || p?.user?.username || (p?.userId ? `Jogador ${p.userId}` : 'Jogador'); %>
+          <button class="participant-card" type="button" data-participant-id="<%= p.id %>">
+            <img src="<%= p?.user?.avatar || '/images/default-avatar.png' %>" alt="<%= displayName %>">
+            <span><%= displayName %></span>
+          </button>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
+  <section class="table-card">
+    <h2>Editar torneio</h2>
+    <form id="editTournamentForm" class="tournament-form">
+      <div class="form-grid">
+        <label>Título
+          <input type="text" name="title" value="<%= tournament.title || '' %>" maxlength="120" required>
+        </label>
+
+        <label>Formato
+          <select name="formatType">
+            <option value="SWISS_TOP_CUT" <%= tournament.formatType === 'SWISS_TOP_CUT' ? 'selected' : '' %>>Swiss + Top Cut</option>
+            <option value="SINGLE_ELIM" <%= tournament.formatType === 'SINGLE_ELIM' ? 'selected' : '' %>>Eliminação simples</option>
+            <option value="DOUBLE_ELIM" <%= tournament.formatType === 'DOUBLE_ELIM' ? 'selected' : '' %>>Eliminação dupla</option>
+            <option value="ROUND_ROBIN" <%= tournament.formatType === 'ROUND_ROBIN' ? 'selected' : '' %>>Round Robin</option>
+            <option value="LEAGUE" <%= tournament.formatType === 'LEAGUE' ? 'selected' : '' %>>Liga</option>
+          </select>
+        </label>
+
+        <label>Capacidade
+          <input type="number" name="capacity" min="4" max="512" value="<%= tournament.capacity || 16 %>">
+        </label>
+
+        <label>Tipo de inscrição
+          <select name="entryType" id="editEntryType">
+            <option value="FREE" <%= tournament.entryType === 'FREE' ? 'selected' : '' %>>Gratuita</option>
+            <option value="PAID" <%= tournament.entryType === 'PAID' ? 'selected' : '' %>>Paga</option>
+          </select>
+        </label>
+
+        <label>Taxa (R$)
+          <input type="number" id="editEntryFeeReais" name="entryFeeReais" step="0.01" min="0" value="<%= ((tournament.entryFeeCents || 0) / 100).toFixed(2) %>">
+        </label>
+
+        <label>Início
+          <input type="datetime-local" name="startAt" value="<%= tournament.startAt ? new Date(tournament.startAt).toISOString().slice(0,16) : '' %>">
+        </label>
+
+        <label>Fim
+          <input type="datetime-local" name="endAt" value="<%= tournament.endAt ? new Date(tournament.endAt).toISOString().slice(0,16) : '' %>">
+        </label>
+
+        <label>Abertura das inscrições
+          <input type="datetime-local" name="registrationOpenAt" value="<%= tournament.registrationOpenAt ? new Date(tournament.registrationOpenAt).toISOString().slice(0,16) : '' %>">
+        </label>
+
+        <label>Fechamento das inscrições
+          <input type="datetime-local" name="registrationCloseAt" value="<%= tournament.registrationCloseAt ? new Date(tournament.registrationCloseAt).toISOString().slice(0,16) : '' %>">
+        </label>
+      </div>
+
+      <label>Descrição
+        <textarea name="description" rows="3"><%= tournament.description || '' %></textarea>
+      </label>
+
+      <label>Regras
+        <textarea name="rulesText" rows="4"><%= tournament.rulesText || tournament.rules || '' %></textarea>
+      </label>
+
+      <label>Prêmios
+        <div class="format-picker">
+          <input type="hidden" name="prizesText" id="editPrizesText" value="<%= tournament.prizesText || tournament.prizes || '' %>" />
+          <input type="hidden" name="storeCreditReais" id="editStoreCreditReais" value="<%= ((tournament.storeCreditPrizeCents || 0) / 100).toFixed(2) %>" />
+          <input type="hidden" name="storeCreditNotes" id="editStoreCreditNotes" value="<%= tournament.storeCreditNotes || '' %>" />
+          <input type="hidden" name="storeCreditStoreId" id="editStoreCreditStoreId" value="<%= tournament.storeCreditStoreId || '' %>" />
+          <button type="button" class="btn btn-secondary format-open" id="editPrizesPickerBtn">
+            <span id="editPrizesPickerLabel"><%= (tournament.prizesText || tournament.prizes || (tournament.storeCreditPrizeCents || 0) > 0) ? 'Prêmios definidos' : 'Adicionar prêmios' %></span>
+            <span class="format-picker-hint">Selecionar</span>
+          </button>
+        </div>
+      </label>
+
+      <label>Contato
+        <textarea name="contactText" rows="2"><%= tournament.contactText || '' %></textarea>
+      </label>
+
+      <button type="submit" class="btn btn-primary">Salvar alterações</button>
+      <p id="editResult"></p>
+</form>
+
+<div class="format-modal" id="editPrizesModal" aria-hidden="true">
+  <div class="format-modal-backdrop" data-close="editPrizes"></div>
+  <div class="format-modal-card" role="dialog" aria-modal="true" aria-labelledby="editPrizesModalTitle">
+    <header>
+      <h2 id="editPrizesModalTitle">Definir prêmios</h2>
+      <button type="button" class="btn-icon" data-close="editPrizes" aria-label="Fechar">&times;</button>
+    </header>
+    <p class="format-modal-subtitle">Atualize os prêmios e o crédito na loja.</p>
+    <label style="display:block; margin-bottom: 0.75rem;">Prêmios
+      <textarea id="editPrizesTextInput" rows="4" placeholder="Ex: Store credit, boosters, playmat..."></textarea>
+    </label>
+    <div class="form-grid" style="margin-bottom: 0.75rem;">
+      <label>Loja do crédito
+        <select id="editStoreCreditStoreInput">
+          <option value="">Selecione uma loja</option>
+          <% if (storeCreditStores && storeCreditStores.length) { %>
+            <% storeCreditStores.forEach(store => { %>
+              <option value="<%= store.id %>" <%= String(store.id) === String(tournament.storeCreditStoreId || '') ? 'selected' : '' %>>
+                <%= store.businessName || store.username %>
+              </option>
+            <% }) %>
+          <% } %>
+        </select>
+      </label>
+      <label>Crédito na loja (R$)
+        <input type="number" id="editStoreCreditInput" min="0" step="0.01" value="0.00" />
+      </label>
+      <label>Observações do crédito
+        <input type="text" id="editStoreCreditNotesInput" placeholder="Ex: válido por 30 dias, uso apenas na loja parceira" />
+      </label>
+    </div>
+    <div class="format-modal-actions">
+      <button type="button" class="btn btn-secondary" data-close="editPrizes">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmEditPrizesBtn">Salvar prêmios</button>
+    </div>
+  </div>
+</div>
+  </section>
+
+  <section class="table-card">
+    <h2>Inscrições (<%= registrations.length %>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Jogador</th>
+          <th>Status</th>
+          <th>Tipo</th>
+          <th>Criado em</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% registrations.forEach((r) => { %>
+          <tr>
+            <td><%= r.id %></td>
+            <td><%= r.displayName %></td>
+            <td><%= statusLabelPt(r.status) %></td>
+            <td><%= r.type %></td>
+            <td><%= new Date(r.createdAt).toLocaleString('pt-BR') %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+
+  <section class="table-card">
+    <h2>Pagamentos (<%= payments.length %>)</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Inscrição</th>
+          <th>Status</th>
+          <th>Provedor</th>
+          <th>Valor</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% payments.forEach((p) => { %>
+          <tr>
+            <td><%= p.id %></td>
+            <td><%= p.registrationId %></td>
+            <td><%= p.status %></td>
+            <td><%= p.provider %></td>
+            <td>R$ <%= ((p.amountCents || 0) / 100).toFixed(2) %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  </section>
+</main>
+
+<div class="participant-modal" id="participantModal" aria-hidden="true">
+  <div class="participant-modal-backdrop" data-close="true"></div>
+  <div class="participant-modal-card">
+    <button class="participant-modal-close" type="button" data-close="true">×</button>
+    <div class="participant-modal-header">
+      <img id="participantModalAvatar" src="/images/default-avatar.png" alt="Participante">
+      <div>
+        <h3 id="participantModalName">Participante</h3>
+        <p id="participantModalUser">@usuario</p>
+      </div>
+    </div>
+    <div class="participant-modal-section">
+      <h4>Deck usado</h4>
+      <p id="participantModalDeck">Decklist não enviada.</p>
+    </div>
+    <div class="participant-modal-section">
+      <h4>Últimos campeonatos</h4>
+      <ul id="participantModalRecent" class="participant-modal-list"></ul>
+    </div>
+  </div>
+</div>
+
+<script>
+  async function postJson(url, body) {
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || 'Falha na ação');
+    return data;
+  }
+
+  async function patchJson(url, body) {
+    const response = await fetch(url, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) throw new Error(data.message || 'Falha na edição');
+    return data;
+  }
+
+  document.querySelectorAll('.js-action').forEach((button) => {
+    button.addEventListener('click', async () => {
+      const resultEl = document.getElementById('actionResult');
+      resultEl.textContent = 'Processando...';
+      try {
+        const body = button.dataset.body ? JSON.parse(button.dataset.body) : {};
+        await postJson(button.dataset.url, body);
+        resultEl.textContent = 'Ação executada com sucesso. Atualize a página para ver os dados mais recentes.';
+      } catch (error) {
+        resultEl.textContent = error.message;
+      }
+    });
+  });
+
+  const editEntryType = document.getElementById('editEntryType');
+  const editEntryFeeReais = document.getElementById('editEntryFeeReais');
+  function syncEditFeeField() {
+    if (!editEntryType || !editEntryFeeReais) return;
+    if (editEntryType.value === 'FREE') {
+      editEntryFeeReais.value = '0.00';
+      editEntryFeeReais.setAttribute('readonly', 'readonly');
+    } else {
+      editEntryFeeReais.removeAttribute('readonly');
+    }
+  }
+  editEntryType?.addEventListener('change', syncEditFeeField);
+  syncEditFeeField();
+
+  const editPrizesModal = document.getElementById('editPrizesModal');
+  const editPrizesBtn = document.getElementById('editPrizesPickerBtn');
+  const editPrizesLabel = document.getElementById('editPrizesPickerLabel');
+  const editPrizesHidden = document.getElementById('editPrizesText');
+  const editStoreCreditHidden = document.getElementById('editStoreCreditReais');
+  const editStoreCreditNotesHidden = document.getElementById('editStoreCreditNotes');
+  const editStoreCreditStoreHidden = document.getElementById('editStoreCreditStoreId');
+  const editPrizesTextInput = document.getElementById('editPrizesTextInput');
+  const editStoreCreditInput = document.getElementById('editStoreCreditInput');
+  const editStoreCreditNotesInput = document.getElementById('editStoreCreditNotesInput');
+  const editStoreCreditStoreInput = document.getElementById('editStoreCreditStoreInput');
+  const confirmEditPrizesBtn = document.getElementById('confirmEditPrizesBtn');
+
+  const openEditPrizesModal = () => {
+    if (editPrizesHidden && editPrizesTextInput) editPrizesTextInput.value = editPrizesHidden.value || '';
+    if (editStoreCreditHidden && editStoreCreditInput) editStoreCreditInput.value = editStoreCreditHidden.value || '0.00';
+    if (editStoreCreditNotesHidden && editStoreCreditNotesInput) editStoreCreditNotesInput.value = editStoreCreditNotesHidden.value || '';
+    if (editStoreCreditStoreHidden && editStoreCreditStoreInput) editStoreCreditStoreInput.value = editStoreCreditStoreHidden.value || '';
+    editPrizesModal?.classList.add('is-open');
+    editPrizesModal?.setAttribute('aria-hidden', 'false');
+  };
+  const closeEditPrizesModal = () => {
+    editPrizesModal?.classList.remove('is-open');
+    editPrizesModal?.setAttribute('aria-hidden', 'true');
+  };
+  editPrizesBtn?.addEventListener('click', openEditPrizesModal);
+  editPrizesModal?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target?.dataset?.close === 'editPrizes') closeEditPrizesModal();
+  });
+  confirmEditPrizesBtn?.addEventListener('click', () => {
+    if (editPrizesHidden && editPrizesTextInput) editPrizesHidden.value = editPrizesTextInput.value.trim();
+    if (editStoreCreditHidden && editStoreCreditInput) editStoreCreditHidden.value = editStoreCreditInput.value || '0.00';
+    if (editStoreCreditNotesHidden && editStoreCreditNotesInput) editStoreCreditNotesHidden.value = editStoreCreditNotesInput.value.trim();
+    if (editStoreCreditStoreHidden && editStoreCreditStoreInput) editStoreCreditStoreHidden.value = editStoreCreditStoreInput.value || '';
+    const hasPrize = editPrizesHidden?.value || Number(editStoreCreditHidden?.value || 0) > 0;
+    if (editPrizesLabel) editPrizesLabel.textContent = hasPrize ? 'Prêmios definidos' : 'Adicionar prêmios';
+    closeEditPrizesModal();
+  });
+
+  document.getElementById('editTournamentForm')?.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const resultEl = document.getElementById('editResult');
+    resultEl.textContent = 'Salvando...';
+
+    const formData = new FormData(event.currentTarget);
+    const payload = Object.fromEntries(formData.entries());
+
+    try {
+      await patchJson('/tournaments/<%= tournament.id %>', payload);
+      resultEl.textContent = 'Torneio atualizado com sucesso.';
+      setTimeout(() => window.location.reload(), 600);
+    } catch (error) {
+      resultEl.textContent = error.message;
+    }
+  });
+
+  const modal = document.getElementById('participantModal');
+  const modalAvatar = document.getElementById('participantModalAvatar');
+  const modalName = document.getElementById('participantModalName');
+  const modalUser = document.getElementById('participantModalUser');
+  const modalDeck = document.getElementById('participantModalDeck');
+  const modalRecent = document.getElementById('participantModalRecent');
+
+  const closeModal = () => {
+    modal?.classList.remove('is-open');
+    modal?.setAttribute('aria-hidden', 'true');
+  };
+
+  modal?.addEventListener('click', (event) => {
+    if (event.target?.dataset?.close) closeModal();
+  });
+
+  document.querySelectorAll('.participant-card').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`/tournaments/<%= tournament.id %>/participants/${btn.dataset.participantId}/profile`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        const contentType = res.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await res.json() : { message: 'Resposta inválida do servidor.' };
+        if (!res.ok) throw new Error(data.message || 'Erro ao carregar perfil.');
+        const name = data.participant?.displayName || data.participant?.username || 'Participante';
+        modalName.textContent = name;
+        modalUser.textContent = data.participant?.username ? `@${data.participant.username}` : '';
+        modalAvatar.src = data.participant?.avatar || '/images/default-avatar.png';
+        modalDeck.textContent = data.decklist?.leaderCode
+          ? `Leader: ${data.decklist.leaderCode}`
+          : 'Decklist não enviada.';
+        modalRecent.innerHTML = '';
+        if (data.recentTournaments?.length) {
+          data.recentTournaments.forEach((row) => {
+            const li = document.createElement('li');
+            const date = row.startAt ? new Date(row.startAt).toLocaleDateString('pt-BR') : '-';
+            li.textContent = `${row.title} • ${date}`;
+            modalRecent.appendChild(li);
+          });
+        } else {
+          const li = document.createElement('li');
+          li.textContent = 'Sem histórico recente.';
+          modalRecent.appendChild(li);
+        }
+        modal?.classList.add('is-open');
+        modal?.setAttribute('aria-hidden', 'false');
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  });
+</script>
+
+<%- include('../../partials/footer') %>

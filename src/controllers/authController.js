@@ -4,7 +4,7 @@ const logger = require('../config/logger');
 const crypto = require('crypto');
 const { Op } = require('sequelize');
 const { sendVerificationEmail, sendPasswordResetEmail } = require('../services/emailService');
-const { validateCPF } = require('../utils/validation');
+const { validateCPF, validateCNPJ, validateEmail, validatePhoneBR } = require('../utils/validation');
 
 // Função para MOSTRAR a página de registro
 const showRegisterPage = (req, res) => {
@@ -14,7 +14,7 @@ const showRegisterPage = (req, res) => {
 // Função para PROCESSAR o formulário de registro
 const registerUser = async (req, res) => {
   try {
-    let { email, username, phone, password, confirmPassword, documentType, documentNumber } = req.body;
+    let { email, username, phone, password, confirmPassword, documentNumber, personType } = req.body;
     const errors = {};
 
     // Limpar o número de telefone no backend
@@ -33,6 +33,16 @@ const registerUser = async (req, res) => {
     }
     if (password !== confirmPassword) {
       errors.confirmPassword = 'As senhas não coincidem.';
+    }
+
+    const normalizedPersonType = personType === 'PJ' ? 'PJ' : 'PF';
+    const resolvedDocumentType = normalizedPersonType === 'PJ' ? 'CNPJ' : 'CPF';
+    if (documentNumber) {
+      if (resolvedDocumentType === 'CPF' && !validateCPF(documentNumber)) {
+        errors.documentNumber = 'CPF inválido.';
+      } else if (resolvedDocumentType === 'CNPJ' && !validateCNPJ(documentNumber)) {
+        errors.documentNumber = 'CNPJ inválido.';
+      }
     }
 
 
@@ -65,12 +75,12 @@ const registerUser = async (req, res) => {
       email,
       phone: cleanedPhone, // Usar o número de telefone limpo
       password: hashedPassword,
-      accountType: 'individual', // Definido como 'individual' diretamente
+      accountType: normalizedPersonType === 'PJ' ? 'store' : 'individual',
       isVerified: false,
       verificationToken,
       verificationTokenExpires,
-      documentType: documentType || 'CPF', // Default to CPF if not provided
-      documentNumber,
+      documentType: resolvedDocumentType,
+      documentNumber: documentNumber || null
     });
 
     logger.info(`New user created: ${newUser.username} (ID: ${newUser.id}, Email: ${newUser.email})`);

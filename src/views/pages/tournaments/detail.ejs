@@ -1,4 +1,4 @@
-<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+﻿<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
 <%- include('../../partials/navbar') %>
 <%
   const statusLabel = (status) => {
@@ -11,23 +11,110 @@
     };
     return map[status] || status;
   };
+
+  const formatDateTime = (value) => {
+    if (!value) return '-';
+    return new Date(value).toLocaleString('pt-BR');
+  };
+
+  const statusLabelPt = (value) => {
+    const map = {
+      confirmed: 'Confirmado',
+      pending: 'Pendente',
+      reported: 'Reportado',
+      disputed: 'Em disputa',
+      void: 'Anulado',
+      CONFIRMED: 'Confirmado',
+      PENDING: 'Pendente',
+      WAITING_LIST: 'Lista de espera',
+      CHECKED_IN: 'Check-in',
+      CANCELLED: 'Cancelado',
+      NO_SHOW: 'No-show',
+      DROPPED: 'Drop'
+    };
+    return map[value] || value;
+  };
+
+  const now = Date.now();
+  const openAtMs = tournament.registrationOpenAt ? new Date(tournament.registrationOpenAt).getTime() : null;
+  const closeAtMs = tournament.registrationCloseAt ? new Date(tournament.registrationCloseAt).getTime() : null;
+
+  let regWindowStatus = 'always_open';
+  let regWindowLabel = 'Sem janela definida';
+  if (openAtMs && now < openAtMs) {
+    regWindowStatus = 'not_open_yet';
+    regWindowLabel = 'Ainda não abriu';
+  } else if (closeAtMs && now > closeAtMs) {
+    regWindowStatus = 'closed';
+    regWindowLabel = 'Encerrada';
+  } else {
+    regWindowStatus = 'open';
+    regWindowLabel = 'Aberta';
+  }
+
+  const canJoinNow = regWindowStatus === 'open' || regWindowStatus === 'always_open';
 %>
 
 <main class="tournaments-page container">
   <% if (tournament.bannerUrl) { %>
     <section class="detail-banner" style="--tournament-banner: url('<%= tournament.bannerUrl.replace(/'/g, "%27") %>')"></section>
   <% } %>
+
   <header class="tournaments-header">
     <div>
       <h1><%= tournament.title %></h1>
       <p><%= tournament.description || 'Sem descrição.' %></p>
     </div>
-    <a href="/tournaments" class="btn btn-secondary">Todos os torneios</a>
+    <div class="report-row">
+      <a href="/tournaments" class="btn btn-secondary">Todos os torneios</a>
+      <% if (canManage) { %>
+        <a href="/tournaments/<%= tournament.id %>/manage" class="btn btn-primary">Editar torneio</a>
+      <% } %>
+    </div>
   </header>
+
+  <section class="summary-card registration-window-card">
+    <h3>Janela de inscrição</h3>
+    <div class="report-row registration-window-meta">
+      <span class="badge <%= regWindowStatus === 'open' ? '' : 'community' %>"><%= regWindowLabel %></span>
+      <span><strong>Abre:</strong> <%= formatDateTime(tournament.registrationOpenAt) %></span>
+      <span><strong>Fecha:</strong> <%= formatDateTime(tournament.registrationCloseAt) %></span>
+      <span id="registrationCountdown"
+            data-open-at="<%= tournament.registrationOpenAt || '' %>"
+            data-close-at="<%= tournament.registrationCloseAt || '' %>"></span>
+    </div>
+  </section>
 
   <section class="summary-grid">
     <div class="summary-card">
-      <h3>Informações</h3>
+      <h3>Ações</h3>
+      <% if (!myEntry && user) { %>
+        <% if (canJoinNow) { %>
+          <button class="btn btn-primary" id="joinBtn" data-id="<%= tournament.id %>">Entrar no torneio</button>
+        <% } else { %>
+          <button class="btn btn-secondary" disabled>Inscrições indisponíveis no momento</button>
+        <% } %>
+      <% } else if (myEntry) { %>
+        <p>Você está inscrito como <strong><%= myEntry.displayName %></strong>.</p>
+      <% } else { %>
+        <p>Faça login para participar.</p>
+      <% } %>
+      <% if (canManage) { %>
+        <button class="btn btn-secondary" id="startRoundBtn" data-id="<%= tournament.id %>">Gerar próxima rodada</button>
+      <% } %>
+    </div>
+  </section>
+
+  <section class="summary-card tournament-tabs">
+    <div class="tab-header">
+      <button class="tab-btn is-active" data-tab="info">Informações</button>
+      <button class="tab-btn" data-tab="details">Detalhes</button>
+      <button class="tab-btn" data-tab="calendar">Calendário</button>
+      <button class="tab-btn" data-tab="contact">Contato</button>
+      <button class="tab-btn" data-tab="prizes">Prêmios</button>
+    </div>
+
+    <div class="tab-panel is-active" data-panel="info">
       <ul>
         <li><strong>Escopo:</strong> <%= tournament.scope === 'official' ? 'Oficial' : 'Comunidade' %></li>
         <li><strong>Status:</strong> <%= statusLabel(tournament.status) %></li>
@@ -40,39 +127,104 @@
       <% } %>
     </div>
 
-    <div class="summary-card">
-      <h3>Ações</h3>
-      <% if (!myEntry && user) { %>
-        <button class="btn btn-primary" id="joinBtn" data-id="<%= tournament.id %>">Entrar no torneio</button>
-      <% } else if (myEntry) { %>
-        <p>Você está inscrito como <strong><%= myEntry.displayName %></strong>.</p>
-      <% } else { %>
-        <p>Faça login para participar.</p>
-      <% } %>
-      <% if (canManage) { %>
-        <button class="btn btn-secondary" id="startRoundBtn" data-id="<%= tournament.id %>">Gerar próxima rodada</button>
+    <div class="tab-panel" data-panel="details">
+      <ul>
+        <li><strong>Local:</strong> <%= tournament.locationType === 'ONLINE' ? 'Online' : 'Presencial' %> <% if (tournament.locationText) { %>- <%= tournament.locationText %><% } %></li>
+        <li><strong>Formato:</strong> <%= tournament.formatType || tournament.format %></li>
+        <li><strong>Rodadas:</strong> <%= tournament.swissRounds || '-' %></li>
+        <li><strong>Top Cut:</strong> <%= tournament.topCutSize || 0 %></li>
+        <li><strong>Taxa:</strong> <%= tournament.entryType === 'PAID' ? `R$ ${((tournament.entryFeeCents || 0)/100).toFixed(2)}` : 'Gratuito' %></li>
+      </ul>
+    </div>
+
+    <div class="tab-panel" data-panel="calendar">
+      <ul>
+        <li><strong>Início:</strong> <%= formatDateTime(tournament.startAt) %></li>
+        <li><strong>Fim:</strong> <%= formatDateTime(tournament.endAt) %></li>
+        <li><strong>Abertura inscrições:</strong> <%= formatDateTime(tournament.registrationOpenAt) %></li>
+        <li><strong>Fechamento inscrições:</strong> <%= formatDateTime(tournament.registrationCloseAt) %></li>
+      </ul>
+    </div>
+
+    <div class="tab-panel" data-panel="contact">
+      <p><strong>Organizador:</strong> <%= tournament.organizer?.username || '---' %></p>
+      <p><%= tournament.contactText || 'Entre em contato com o organizador pelo chat do site.' %></p>
+    </div>
+
+    <div class="tab-panel" data-panel="prizes">
+      <p><%= tournament.prizesText || tournament.prizes || 'Ainda não informado.' %></p>
+      <% if ((tournament.storeCreditPrizeCents || 0) > 0) { %>
+        <div class="prize-credit">
+          <strong>Crédito na loja:</strong>
+          R$ <%= ((tournament.storeCreditPrizeCents || 0) / 100).toFixed(2) %>
+          <% if (tournament.storeCreditStore) { %>
+            <span class="muted">· Loja: <%= tournament.storeCreditStore.businessName || tournament.storeCreditStore.username %></span>
+          <% } %>
+        </div>
+        <% if (tournament.storeCreditNotes) { %>
+          <p class="muted"><%= tournament.storeCreditNotes %></p>
+        <% } %>
       <% } %>
     </div>
   </section>
 
+  <section class="table-card participants-card">
+    <div class="participants-header">
+      <h2>Participantes (<%= participantsList.length %>)</h2>
+      <span class="participants-hint">Clique para ver detalhes</span>
+    </div>
+    <% if (!participantsList.length) { %>
+      <p>Sem participantes no momento.</p>
+    <% } else { %>
+      <div class="participants-grid">
+        <% participantsList.forEach((p) => { %>
+          <% const displayName = p?.displayName || p?.user?.username || (p?.userId ? `Jogador ${p.userId}` : 'Jogador'); %>
+          <% if (p?.id) { %>
+          <button class="participant-card" type="button" data-participant-id="<%= p.id %>">
+            <img src="<%= p?.user?.avatar || '/images/default-avatar.png' %>" alt="<%= displayName %>">
+            <span><%= displayName %></span>
+          </button>
+          <% } %>
+        <% }) %>
+      </div>
+    <% } %>
+  </section>
+
   <section class="table-card">
-    <h2>Classificação</h2>
+    <div class="participants-header">
+      <h2>Classificação</h2>
+      <span class="participants-hint"><%= standingsUpdatedAt ? `Atualizado em ${new Date(standingsUpdatedAt).toLocaleString('pt-BR')}` : 'Sem atualização recente' %></span>
+    </div>
     <table>
       <thead>
-        <tr><th>#</th><th>Jogador</th><th>Pts</th><th>W</th><th>L</th><th>D</th></tr>
+        <tr>
+          <th>#</th>
+          <th>Jogador</th>
+          <th>Pts</th>
+          <th>W</th>
+          <th>L</th>
+          <th>D</th>
+          <th><span class="tooltip" data-tooltip="OMW% = mÃ©dia do Match Win % dos seus oponentes. Ex.: (0,80+0,60+0,40)/3 = 0,60">OMW</span></th>
+          <th><span class="tooltip" data-tooltip="GW% = Game Win %. Total de games vencidos / total de games jogados.">GW</span></th>
+          <th><span class="tooltip" data-tooltip="OGW% = mÃ©dia do Game Win % dos seus oponentes.">OGW</span></th>
+        </tr>
       </thead>
       <tbody>
         <% if (!participants.length) { %>
           <tr><td colspan="6">Sem participantes.</td></tr>
         <% } %>
         <% participants.forEach((p, idx) => { %>
+          <% const displayName = p?.displayName || p?.user?.username || (p?.userId ? `Jogador ${p.userId}` : 'Jogador'); %>
           <tr>
             <td><%= idx + 1 %></td>
-            <td><%= p.displayName %></td>
+            <td><%= displayName %></td>
             <td><%= p.points %></td>
             <td><%= p.wins %></td>
             <td><%= p.losses %></td>
             <td><%= p.draws %></td>
+            <td><%= (p.omw || 0).toFixed ? p.omw.toFixed(4) : (p.omw || 0) %></td>
+            <td><%= (p.gw || 0).toFixed ? p.gw.toFixed(4) : (p.gw || 0) %></td>
+            <td><%= (p.ogw || 0).toFixed ? p.ogw.toFixed(4) : (p.ogw || 0) %></td>
           </tr>
         <% }) %>
       </tbody>
@@ -86,18 +238,29 @@
       <p>Nenhuma rodada gerada.</p>
     <% } %>
     <% rounds.forEach((round) => { %>
-      <h3>Rodada <%= round %></h3>
-      <table>
+      <% 
+        const roundMatches = groupedMatches[round];
+        const allConfirmed = roundMatches.every((m) => m.status === 'confirmed');
+        const anyReported = roundMatches.some((m) => m.resultStatus === 'REPORTED');
+        const roundStatus = allConfirmed ? 'completed' : (anyReported ? 'reporting' : 'running');
+        const roundLabel = allConfirmed ? 'Concluída' : (anyReported ? 'Em confirmação' : 'Em andamento');
+      %>
+      <details class="round-card <%= roundStatus %>" <%= roundStatus === 'running' ? 'open' : '' %>>
+        <summary class="round-summary">
+          <span class="round-title">Rodada <%= round %></span>
+          <span class="round-badge <%= roundStatus %>"><%= roundLabel %></span>
+        </summary>
+        <table>
         <thead>
           <tr><th>Mesa</th><th>Jogador A</th><th>Jogador B</th><th>Status</th><th>Resultado</th></tr>
         </thead>
         <tbody>
-          <% groupedMatches[round].forEach((m) => { %>
-            <tr>
+          <% roundMatches.forEach((m) => { %>
+            <tr class="match-row <%= m.status %>">
               <td><%= m.tableNumber %></td>
               <td><%= m.playerA?.displayName || '---' %></td>
               <td><%= m.playerB?.displayName || 'BYE' %></td>
-              <td><%= m.status %></td>
+              <td><span class="match-status <%= m.status %>"><%= statusLabelPt(m.status) %></span></td>
               <td>
                 <% if (m.status === 'confirmed') { %>
                   <% if (m.isDraw) { %>
@@ -105,6 +268,50 @@
                   <% } else { %>
                     <%= m.winner?.displayName || '---' %>
                   <% } %>
+                  <% 
+                    const confirmedByA = m.resultConfirmedByRegistrationId && m.resultConfirmedByRegistrationId === m.playerAId;
+                    const confirmedByB = m.resultConfirmedByRegistrationId && m.resultConfirmedByRegistrationId === m.playerBId;
+                    const confirmerName = confirmedByA
+                      ? (m.playerA?.displayName || 'Jogador A')
+                      : confirmedByB
+                        ? (m.playerB?.displayName || 'Jogador B')
+                        : (m.resultConfirmedByUserId ? 'Organizador' : 'Sistema');
+                  %>
+                  <div class="confirm-meta">
+                    <span><strong>Confirmado por:</strong> <%= confirmerName %></span>
+                    <span><strong>Confirmado em:</strong> <%= formatDateTime(m.resultConfirmedAt) %></span>
+                  </div>
+                <% } else if (m.resultStatus === 'REPORTED') { %>
+                  <% 
+                    const reportedByA = m.resultReportedByRegistrationId && m.resultReportedByRegistrationId === m.playerAId;
+                    const reportedByB = m.resultReportedByRegistrationId && m.resultReportedByRegistrationId === m.playerBId;
+                    const reporterName = reportedByA
+                      ? (m.playerA?.displayName || 'Jogador A')
+                      : reportedByB
+                        ? (m.playerB?.displayName || 'Jogador B')
+                        : 'Organizador';
+                    const awaitingName = reportedByA
+                      ? (m.playerB?.displayName || 'Oponente')
+                      : reportedByB
+                        ? (m.playerA?.displayName || 'Oponente')
+                        : 'Oponente';
+                  %>
+                  <div class="report-row">
+                    <span class="report-pill">Aguardando confirmação</span>
+                    <% if (user) { %>
+                      <% const canConfirmAsPlayer = myEntry && [m.playerAId, m.playerBId].includes(myEntry.id) && myEntry.id !== m.resultReportedByRegistrationId; %>
+                      <% if (canManage || canConfirmAsPlayer) { %>
+                        <button class="btn-link confirmBtn" data-id="<%= m.id %>">Confirmar resultado</button>
+                      <% } %>
+                      <% if (myEntry && [m.playerAId, m.playerBId].includes(myEntry.id) && myEntry.id !== m.resultReportedByRegistrationId) { %>
+                        <button class="btn-link disputeBtn" data-id="<%= m.id %>">Disputar</button>
+                      <% } %>
+                    <% } %>
+                  </div>
+                  <div class="report-meta">
+                    <span><strong>Reportado por:</strong> <%= reporterName %></span>
+                    <span><strong>Aguardando:</strong> <%= awaitingName %></span>
+                  </div>
                 <% } else { %>
                   <% if (user) { %>
                     <div class="report-row">
@@ -122,10 +329,33 @@
             </tr>
           <% }) %>
         </tbody>
-      </table>
+        </table>
+      </details>
     <% }) %>
   </section>
 </main>
+
+<div class="participant-modal" id="participantModal" aria-hidden="true">
+  <div class="participant-modal-backdrop" data-close="true"></div>
+  <div class="participant-modal-card">
+    <button class="participant-modal-close" type="button" data-close="true">×</button>
+    <div class="participant-modal-header">
+      <img id="participantModalAvatar" src="/images/default-avatar.png" alt="Participante">
+      <div>
+        <h3 id="participantModalName">Participante</h3>
+        <p id="participantModalUser">@usuario</p>
+      </div>
+    </div>
+    <div class="participant-modal-section">
+      <h4>Deck usado</h4>
+      <p id="participantModalDeck">Decklist não enviada.</p>
+    </div>
+    <div class="participant-modal-section">
+      <h4>Últimos campeonatos</h4>
+      <ul id="participantModalRecent" class="participant-modal-list"></ul>
+    </div>
+  </div>
+</div>
 
 <script>
   async function postJson(url, body) {
@@ -138,6 +368,42 @@
     if (!res.ok) throw new Error(data.message || 'Erro na ação.');
     return data;
   }
+
+  function formatDuration(ms) {
+    if (ms <= 0) return 'agora';
+    const totalMinutes = Math.floor(ms / 60000);
+    const days = Math.floor(totalMinutes / (60 * 24));
+    const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+    const minutes = totalMinutes % 60;
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    return `${minutes}m`;
+  }
+
+  function updateRegistrationCountdown() {
+    const el = document.getElementById('registrationCountdown');
+    if (!el) return;
+    const openAt = el.dataset.openAt ? new Date(el.dataset.openAt).getTime() : null;
+    const closeAt = el.dataset.closeAt ? new Date(el.dataset.closeAt).getTime() : null;
+    const now = Date.now();
+
+    if (openAt && now < openAt) {
+      el.textContent = `Abre em ${formatDuration(openAt - now)}`;
+      return;
+    }
+    if (closeAt && now < closeAt) {
+      el.textContent = `Encerra em ${formatDuration(closeAt - now)}`;
+      return;
+    }
+    if (closeAt && now >= closeAt) {
+      el.textContent = 'Inscrições encerradas';
+      return;
+    }
+    el.textContent = '';
+  }
+
+  updateRegistrationCountdown();
+  setInterval(updateRegistrationCountdown, 30000);
 
   document.getElementById('joinBtn')?.addEventListener('click', async (e) => {
     try {
@@ -164,6 +430,91 @@
           result: e.currentTarget.dataset.result
         });
         window.location.reload();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  });
+
+  document.querySelectorAll('.confirmBtn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      try {
+        await postJson(`/tournaments/<%= tournament.id %>/matches/${e.currentTarget.dataset.id}/confirm`);
+        window.location.reload();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  });
+
+  document.querySelectorAll('.disputeBtn').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      try {
+        await postJson(`/tournaments/<%= tournament.id %>/matches/${e.currentTarget.dataset.id}/dispute`);
+        window.location.reload();
+      } catch (error) {
+        alert(error.message);
+      }
+    });
+  });
+
+  document.querySelectorAll('.tab-btn').forEach((button) => {
+    button.addEventListener('click', () => {
+      const target = button.dataset.tab;
+      document.querySelectorAll('.tab-btn').forEach((btn) => btn.classList.remove('is-active'));
+      document.querySelectorAll('.tab-panel').forEach((panel) => panel.classList.remove('is-active'));
+      button.classList.add('is-active');
+      document.querySelector(`.tab-panel[data-panel='${target}']`)?.classList.add('is-active');
+    });
+  });
+
+  const modal = document.getElementById('participantModal');
+  const modalAvatar = document.getElementById('participantModalAvatar');
+  const modalName = document.getElementById('participantModalName');
+  const modalUser = document.getElementById('participantModalUser');
+  const modalDeck = document.getElementById('participantModalDeck');
+  const modalRecent = document.getElementById('participantModalRecent');
+
+  const closeModal = () => {
+    modal?.classList.remove('is-open');
+    modal?.setAttribute('aria-hidden', 'true');
+  };
+
+  modal?.addEventListener('click', (event) => {
+    if (event.target?.dataset?.close) closeModal();
+  });
+
+  document.querySelectorAll('.participant-card').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      try {
+        const res = await fetch(`/tournaments/<%= tournament.id %>/participants/${btn.dataset.participantId}/profile`, {
+          headers: { 'Accept': 'application/json' }
+        });
+        const contentType = res.headers.get('content-type') || '';
+        const data = contentType.includes('application/json') ? await res.json() : { message: 'Resposta inválida do servidor.' };
+        if (!res.ok) throw new Error(data.message || 'Erro ao carregar perfil.');
+        const name = data.participant?.displayName || data.participant?.username || 'Participante';
+        modalName.textContent = name;
+        modalUser.textContent = data.participant?.username ? `@${data.participant.username}` : '';
+        modalAvatar.src = data.participant?.avatar || '/images/default-avatar.png';
+        modalDeck.textContent = data.decklist?.leaderCode
+          ? `Leader: ${data.decklist.leaderCode}`
+          : 'Decklist não enviada.';
+        modalRecent.innerHTML = '';
+        if (data.recentTournaments?.length) {
+          data.recentTournaments.forEach((row) => {
+            const li = document.createElement('li');
+            const date = row.startAt ? new Date(row.startAt).toLocaleDateString('pt-BR') : '-';
+            li.textContent = `${row.title} • ${date}`;
+            modalRecent.appendChild(li);
+          });
+        } else {
+          const li = document.createElement('li');
+          li.textContent = 'Sem histórico recente.';
+          modalRecent.appendChild(li);
+        }
+        modal?.classList.add('is-open');
+        modal?.setAttribute('aria-hidden', 'false');
       } catch (error) {
         alert(error.message);
       }

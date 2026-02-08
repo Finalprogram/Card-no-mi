@@ -92,13 +92,13 @@ const Card = sequelize.define('Card', {
   }
 }, {
   tableName: 'cards',
-  timestamps: true
-});
-
-Object.defineProperty(Card.prototype, '_id', {
-  get() {
-    return this.id;
-  }
+  timestamps: true,
+  indexes: [
+    {
+      unique: true,
+      fields: ['api_id', 'game']
+    }
+  ]
 });
 
 module.exports = Card;

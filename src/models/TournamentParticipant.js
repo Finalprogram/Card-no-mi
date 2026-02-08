@@ -11,6 +11,10 @@ const TournamentParticipant = sequelize.define('TournamentParticipant', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  registrationId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false
@@ -20,9 +24,38 @@ const TournamentParticipant = sequelize.define('TournamentParticipant', {
     allowNull: false
   },
   status: {
-    type: DataTypes.ENUM('registered', 'checked_in', 'dropped'),
+    type: DataTypes.STRING,
     allowNull: false,
-    defaultValue: 'registered'
+    defaultValue: 'PENDING',
+    validate: {
+      isIn: [[
+        'PENDING',
+        'CONFIRMED',
+        'WAITING_LIST',
+        'CHECKED_IN',
+        'CANCELLED',
+        'NO_SHOW',
+        'DROPPED'
+      ]]
+    }
+  },
+  type: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'FREE',
+    validate: { isIn: [['FREE', 'PAID']] }
+  },
+  seatNumber: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  seed: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  checkInAt: {
+    type: DataTypes.DATE,
+    allowNull: true
   },
   wins: {
     type: DataTypes.INTEGER,
@@ -45,7 +78,7 @@ const TournamentParticipant = sequelize.define('TournamentParticipant', {
     defaultValue: 0
   }
 }, {
-  tableName: 'tournament_participants',
+  tableName: 'registrations',
   timestamps: true,
   indexes: [
     {
@@ -62,4 +95,3 @@ Object.defineProperty(TournamentParticipant.prototype, '_id', {
 });
 
 module.exports = TournamentParticipant;
-

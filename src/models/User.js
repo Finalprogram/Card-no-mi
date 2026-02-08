@@ -79,7 +79,7 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE
   },
   accountType: {
-    type: DataTypes.ENUM('individual', 'shop', 'admin'),
+    type: DataTypes.ENUM('individual', 'shop', 'store', 'partner_store', 'admin'),
     allowNull: false
   },
   businessName: {
@@ -126,6 +126,10 @@ const User = sequelize.define('User', {
   firstLogin: {
     type: DataTypes.BOOLEAN,
     defaultValue: true
+  },
+  isCreator: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   }
 }, {
   tableName: 'users',

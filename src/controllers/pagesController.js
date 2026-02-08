@@ -6,6 +6,10 @@ const Order = require('../models/Order');
 const Review = require('../models/Review');
 const Deck = require('../models/Deck');
 const Setting = require('../models/Setting');
+const Tournament = require('../models/Tournament');
+const StoreCredit = require('../models/StoreCredit');
+const PartnerStore = require('../models/PartnerStore');
+const { ensurePartnerStoreSchema } = require('../services/partnerStoreBootstrap');
 const { getCreatorsLatestVideos } = require('../services/youtubeService');
 const { Op, fn, col } = require('sequelize');
 const { sequelize } = require('../database/connection');
@@ -262,7 +266,7 @@ const showProfilePage = async (req, res) => {
     // Buscar informaÃ§Ãµes da taxa do vendedor (se for vendedor)
     let sellerFeePercentage = null;
     let defaultFeePercentage = null;
-    if (profileUser.accountType === 'shop' || profileUser.accountType === 'individual') {
+    if (['shop', 'store', 'partner_store', 'individual'].includes(profileUser.accountType)) {
       sellerFeePercentage = profileUser.fee_override_percentage;
       const settingKey = `fee_${profileUser.accountType}_percentage`;
       const defaultFeeSetting = await Setting.findOne({ where: { key: settingKey } });
@@ -276,6 +280,22 @@ const showProfilePage = async (req, res) => {
     // garante que sellerFeePercentage exista para a view (previne ReferenceError)
     res.locals = res.locals || {};
     if (typeof res.locals.sellerFeePercentage === "undefined") res.locals.sellerFeePercentage = null;
+    let partnerStoreApplication = null;
+    let storeCredits = [];
+    const isOwnProfile = req.session.user && req.session.user.id === profileUser.id.toString();
+    if (isOwnProfile && profileUser.accountType === 'store') {
+      partnerStoreApplication = await PartnerStore.findOne({ where: { userId: profileUser.id } });
+    }
+    if (isOwnProfile) {
+      storeCredits = await StoreCredit.findAll({
+        where: { playerId: profileUser.id },
+        include: [
+          { model: User, as: 'store', attributes: ['id', 'username', 'businessName'] },
+          { model: Tournament, as: 'tournament', attributes: ['id', 'title'] }
+        ],
+        order: [['createdAt', 'DESC']]
+      });
+    }
     res.render('pages/profile', { 
       profileUser: toPlainWithId(profileUser),
       listings: listings.map(listing => {
@@ -292,6 +312,8 @@ const showProfilePage = async (req, res) => {
       error: errorMessage, // Passa a mensagem de erro para a view
       sellerFeePercentage, // Pass seller fee
       defaultFeePercentage, // Pass default fee
+      partnerStoreApplication,
+      storeCredits,
       user: req.session.user // Passa o usuÃ¡rio logado para o template
     });
 
@@ -599,10 +621,118 @@ const showTimelinePage = async (req, res) => {
   }
 };
 
-const showCommunityPage = (req, res) => {
-  res.render('pages/community', {
-    title: 'Comunidade'
-  });
+const showCommunityPage = async (req, res) => {
+  try {
+    await ensurePartnerStoreSchema();
+    const partnerStores = await PartnerStore.findAll({
+      where: { status: 'APPROVED' },
+      order: [['approvedAt', 'DESC'], ['createdAt', 'DESC']]
+    });
+    res.render('pages/community', {
+      title: 'Comunidade',
+      partnerStores
+    });
+  } catch (error) {
+    logger.error('Erro ao carregar pÃ¡gina de comunidade:', error);
+    res.render('pages/community', {
+      title: 'Comunidade',
+      partnerStores: []
+    });
+  }
+};
+
+const submitPartnerStoreApplication = async (req, res) => {
+  try {
+    const userId = req.session?.user?.id;
+    if (!userId) return res.status(401).json({ message: 'Faça login para enviar o formulário.' });
+
+    const {
+      storeName,
+      logoUrl,
+      websiteUrl,
+      instagramUrl,
+      whatsappUrl,
+      contactEmail,
+      legalName,
+      primaryLink,
+      operatingTime,
+      salesPlatforms,
+      physicalAddress,
+      focusOnePiece,
+      eventsHosted,
+      eventsDetails,
+      bannerUrl,
+      city,
+      state,
+      description
+    } = req.body;
+
+    if (!storeName || String(storeName).trim().length < 2) {
+      return res.status(400).json({ message: 'Nome da loja é obrigatório.' });
+    }
+    if (!primaryLink && !websiteUrl && !instagramUrl) {
+      return res.status(400).json({ message: 'Informe um link principal (site ou Instagram).' });
+    }
+
+    await ensurePartnerStoreSchema();
+    const [record, created] = await PartnerStore.findOrCreate({
+      where: { userId },
+      defaults: {
+        storeName: String(storeName).trim(),
+        logoUrl: logoUrl || null,
+        websiteUrl: websiteUrl || null,
+        instagramUrl: instagramUrl || null,
+        whatsappUrl: whatsappUrl || null,
+        contactEmail: contactEmail || null,
+        legalName: legalName || null,
+        primaryLink: primaryLink || null,
+        operatingTime: operatingTime || null,
+        salesPlatforms: salesPlatforms || null,
+        physicalAddress: physicalAddress || null,
+        focusOnePiece: focusOnePiece === 'true' || focusOnePiece === true,
+        eventsHosted: eventsHosted === 'true' || eventsHosted === true,
+        eventsDetails: eventsDetails || null,
+        bannerUrl: bannerUrl || null,
+        city: city || null,
+        state: state || null,
+        description: description || null,
+        status: 'PENDING'
+      }
+    });
+
+    if (!created) {
+      if (record.status === 'APPROVED') {
+        return res.status(400).json({ message: 'Sua loja já está aprovada.' });
+      }
+      await record.update({
+        storeName: String(storeName).trim(),
+        logoUrl: logoUrl || null,
+        websiteUrl: websiteUrl || null,
+        instagramUrl: instagramUrl || null,
+        whatsappUrl: whatsappUrl || null,
+        contactEmail: contactEmail || null,
+        legalName: legalName || null,
+        primaryLink: primaryLink || null,
+        operatingTime: operatingTime || null,
+        salesPlatforms: salesPlatforms || null,
+        physicalAddress: physicalAddress || null,
+        focusOnePiece: focusOnePiece === 'true' || focusOnePiece === true,
+        eventsHosted: eventsHosted === 'true' || eventsHosted === true,
+        eventsDetails: eventsDetails || null,
+        bannerUrl: bannerUrl || null,
+        city: city || null,
+        state: state || null,
+        description: description || null,
+        status: 'PENDING'
+      });
+    }
+
+    logger.info(`[community] Partner store application submitted by user ${userId}`);
+    res.json({ message: 'Solicitação enviada. Vamos analisar e avisar você.' });
+  } catch (error) {
+    logger.error('Erro ao enviar solicitação de loja parceira:', error);
+    res.status(500).json({ message: 'Erro ao enviar solicitação.' });
+  }
 };
 
 const showAboutPage = (req, res) => {
@@ -790,4 +920,8 @@ module.exports = {
   showDeckBuilderPage,
   showMyDecksPage,
   showDeckAnalyticsPage,
+  submitPartnerStoreApplication,
 };
+
+
+

@@ -138,7 +138,7 @@
                     <% } else { %>
                       <%= sellerName %>
                     <% } %>
-                    <% if (v.seller && v.seller.accountType === 'shop') { %>
+                    <% if (v.seller && ['shop', 'store', 'partner_store'].includes(v.seller.accountType)) { %>
                       <span class="shop-badge">LOJA</span>
                     <% } %>
                   </span>

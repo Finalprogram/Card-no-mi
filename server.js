@@ -74,6 +74,7 @@ const forumRoutes = require('./src/routes/forumRoutes');
 const tournamentRoutes = require('./src/routes/tournamentRoutes');
 const profileRoutes = require('./src/routes/profileRoutes');
 const notificationRoutes = require('./src/routes/notificationRoutes');
+const storeCreditRoutes = require('./src/routes/storeCreditRoutes');
 const reportCounter = require('./src/middleware/reportCounter');
 const Card = require('./src/models/Card'); // Import the Card model
 const lastActivityUpdate = {};
@@ -224,6 +225,7 @@ app.use('/forum', profileRoutes);
 app.use('/forum', notificationRoutes);
 app.use('/forum', reportCounter, forumRoutes);
 app.use('/tournaments', tournamentRoutes);
+app.use('/', storeCreditRoutes);
 app.use('/admin', adminRoutes);
 app.use('/welcome', welcomeRoutes);
 
@@ -253,6 +255,8 @@ app.use((err, req, res, next) => {
 const cron = require('node-cron');
 const { recordPriceHistory } = require('./src/services/priceTracker');
 const { performance } = require('perf_hooks');
+const { autoSyncTournamentWindows } = require('./src/services/tournaments/tournamentService');
+const { ensureUserAccountTypes, ensureUserColumns } = require('./src/services/userSchemaBootstrap');
 
 // Schedule to run once a day at midnight
 cron.schedule('0 0 * * *', async () => {
@@ -263,9 +267,21 @@ cron.schedule('0 0 * * *', async () => {
   logger.info(`Price history recording finished in ${(endTime - startTime).toFixed(2)}ms`);
 });
 
+// Auto-sync tournament windows (registration/check-in) every 5 minutes
+cron.schedule('*/5 * * * *', async () => {
+  try {
+    const count = await autoSyncTournamentWindows();
+    logger.info(`[tournaments] Auto-sync windows executed for ${count} tournaments.`);
+  } catch (error) {
+    logger.error('[tournaments] Auto-sync windows failed:', error);
+  }
+});
+
 const startServer = async () => {
   try {
     await connectDB();
+    await ensureUserAccountTypes();
+    await ensureUserColumns();
     await syncSessionStore();
     app.listen(port, () => {
       logger.info(`Servidor rodando em http://localhost:${port}`);

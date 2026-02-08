@@ -774,6 +774,17 @@
 .glass-panel .form-control { background: rgba(var(--bg-main), 0.2); border: 2px solid #A259FF; }
 .glass-panel .form-control::placeholder { color: var(--text-secondary); }
 .glass-panel .form-control:focus { border-color: #A259FF; box-shadow: 0 0 0 3px rgba(162, 89, 255, 0.1); }
+.glass-panel select.form-control {
+  color: var(--text-primary);
+  background-color: rgba(21, 25, 35, 0.85);
+  background-image: linear-gradient(45deg, transparent 50%, #c7cbe0 50%),
+    linear-gradient(135deg, #c7cbe0 50%, transparent 50%);
+  background-position: calc(100% - 18px) calc(50% - 3px), calc(100% - 12px) calc(50% - 3px);
+  background-size: 6px 6px, 6px 6px;
+  background-repeat: no-repeat;
+  padding-right: 36px;
+  appearance: none;
+}
 .social-login { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
 .btn-social { flex: 1; padding: 0.75rem; border-radius: 8px; border: 1px solid var(--border); background: transparent; color: var(--text-primary); font-weight: 500; cursor: pointer; transition: background-color 0.2s; }
 .btn-social:hover { background-color: rgba(var(--text-primary), 0.1); }
@@ -2406,6 +2417,52 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   margin-bottom: 2.5rem;
 }
 
+.profile-store-credits {
+  display: grid;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.store-credit-item {
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--bg-surface-2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: var(--text-primary);
+}
+
+.store-credit-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+}
+
+.store-credit-status {
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.store-credit-status.available {
+  background: rgba(95, 210, 135, 0.18);
+  color: #7de2a4;
+}
+
+.store-credit-status.redeemed {
+  background: rgba(124, 108, 255, 0.18);
+  color: #b0a6ff;
+}
+
+.store-credit-status.cancelled {
+  background: rgba(255, 122, 122, 0.18);
+  color: #ff9a9a;
+}
+
 /* Font Awesome for icons */
 @import url('https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css');
 
@@ -2552,3 +2609,48 @@ td.action, td:last-child { white-space: nowrap; }.vendor-actions { display:inlin
   max-width: 200px;
   margin-bottom: 20px;
 }
+
+/* Toast Notifications */
+#toast-container {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast {
+  padding: 12px 20px;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  opacity: 0;
+  transform: translateX(100%);
+  animation: toast-slide-in 0.5s forwards;
+}
+
+.toast.success { background-color: var(--ok, #43A047); }
+.toast.error { background-color: var(--danger, #E53935); }
+.toast.info { background-color: var(--brand, #A259FF); }
+
+@keyframes toast-slide-in {
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toast-slide-out {
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.toast.hiding {
+  animation: toast-slide-out 0.5s forwards;
+}
+

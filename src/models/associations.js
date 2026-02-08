@@ -11,6 +11,13 @@ const ModerationLog = require('./ModerationLog');
 const Tournament = require('./Tournament');
 const TournamentParticipant = require('./TournamentParticipant');
 const TournamentMatch = require('./TournamentMatch');
+const TournamentStage = require('./TournamentStage');
+const TournamentPayment = require('./TournamentPayment');
+const DecklistSnapshot = require('./DecklistSnapshot');
+const TournamentStanding = require('./TournamentStanding');
+const AuditLog = require('./AuditLog');
+const PartnerStore = require('./PartnerStore');
+const StoreCredit = require('./StoreCredit');
 
 Listing.belongsTo(Card, { as: 'card', foreignKey: 'cardId' });
 Listing.belongsTo(User, { as: 'seller', foreignKey: 'sellerId' });
@@ -49,8 +56,10 @@ ModerationLog.belongsTo(User, { as: 'moderator', foreignKey: 'moderatorId' });
 ModerationLog.belongsTo(User, { as: 'targetUser', foreignKey: 'targetUserId' });
 ModerationLog.belongsTo(User, { as: 'reporter', foreignKey: 'reporterId' });
 
-Tournament.belongsTo(User, { as: 'organizer', foreignKey: 'createdById' });
-User.hasMany(Tournament, { as: 'organizedTournaments', foreignKey: 'createdById' });
+Tournament.belongsTo(User, { as: 'organizer', foreignKey: 'organizerId' });
+User.hasMany(Tournament, { as: 'organizedTournaments', foreignKey: 'organizerId' });
+Tournament.belongsTo(User, { as: 'storeCreditStore', foreignKey: 'storeCreditStoreId' });
+User.hasMany(Tournament, { as: 'storeCreditTournaments', foreignKey: 'storeCreditStoreId' });
 
 TournamentParticipant.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
 Tournament.hasMany(TournamentParticipant, { as: 'participants', foreignKey: 'tournamentId' });
@@ -61,4 +70,41 @@ TournamentMatch.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamen
 Tournament.hasMany(TournamentMatch, { as: 'matches', foreignKey: 'tournamentId' });
 TournamentMatch.belongsTo(TournamentParticipant, { as: 'playerA', foreignKey: 'playerAId' });
 TournamentMatch.belongsTo(TournamentParticipant, { as: 'playerB', foreignKey: 'playerBId' });
-TournamentMatch.belongsTo(TournamentParticipant, { as: 'winner', foreignKey: 'winnerId' });
+TournamentMatch.belongsTo(TournamentParticipant, { as: 'winner', foreignKey: 'winnerRegistrationId' });
+
+TournamentStage.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(TournamentStage, { as: 'stages', foreignKey: 'tournamentId' });
+
+TournamentMatch.belongsTo(TournamentStage, { as: 'stage', foreignKey: 'stageId' });
+TournamentStage.hasMany(TournamentMatch, { as: 'matches', foreignKey: 'stageId' });
+
+TournamentPayment.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(TournamentPayment, { as: 'payments', foreignKey: 'tournamentId' });
+TournamentPayment.belongsTo(TournamentParticipant, { as: 'registration', foreignKey: 'registrationId' });
+TournamentParticipant.hasMany(TournamentPayment, { as: 'payments', foreignKey: 'registrationId' });
+TournamentPayment.belongsTo(User, { as: 'player', foreignKey: 'playerId' });
+User.hasMany(TournamentPayment, { as: 'tournamentPayments', foreignKey: 'playerId' });
+
+DecklistSnapshot.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(DecklistSnapshot, { as: 'decklists', foreignKey: 'tournamentId' });
+DecklistSnapshot.belongsTo(TournamentParticipant, { as: 'registration', foreignKey: 'registrationId' });
+DecklistSnapshot.belongsTo(User, { as: 'player', foreignKey: 'playerId' });
+
+TournamentStanding.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(TournamentStanding, { as: 'standings', foreignKey: 'tournamentId' });
+TournamentStanding.belongsTo(TournamentStage, { as: 'stage', foreignKey: 'stageId' });
+TournamentStanding.belongsTo(TournamentParticipant, { as: 'registration', foreignKey: 'registrationId' });
+TournamentStanding.belongsTo(User, { as: 'player', foreignKey: 'playerId' });
+
+AuditLog.belongsTo(User, { as: 'actor', foreignKey: 'actorId' });
+User.hasMany(AuditLog, { as: 'auditLogs', foreignKey: 'actorId' });
+
+PartnerStore.belongsTo(User, { as: 'owner', foreignKey: 'userId' });
+User.hasMany(PartnerStore, { as: 'partnerStores', foreignKey: 'userId' });
+
+StoreCredit.belongsTo(Tournament, { as: 'tournament', foreignKey: 'tournamentId' });
+Tournament.hasMany(StoreCredit, { as: 'storeCredits', foreignKey: 'tournamentId' });
+StoreCredit.belongsTo(User, { as: 'store', foreignKey: 'storeId' });
+User.hasMany(StoreCredit, { as: 'storeCredits', foreignKey: 'storeId' });
+StoreCredit.belongsTo(User, { as: 'player', foreignKey: 'playerId' });
+User.hasMany(StoreCredit, { as: 'playerCredits', foreignKey: 'playerId' });

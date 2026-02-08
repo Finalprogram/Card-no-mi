@@ -1,4 +1,4 @@
-<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+﻿<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
 <%- include('../../partials/navbar') %>
 
 <main class="tournaments-page container">
@@ -37,28 +37,54 @@
       </div>
 
       <div class="form-grid">
-        <label>Formato
-          <select name="format">
-            <option value="swiss">Suíço</option>
-            <option value="single_elimination">Eliminação simples</option>
-          </select>
+        <label>Formato do torneio
+          <div class="format-picker">
+            <input type="hidden" name="formatType" id="formatType" value="SWISS_TOP_CUT" />
+            <button type="button" class="btn btn-secondary format-open" id="formatPickerBtn">
+              <span id="formatPickerLabel">Swiss + Top Cut</span>
+              <span class="format-picker-hint">Selecionar</span>
+            </button>
+          </div>
         </label>
 
         <label>Escopo
-          <select name="scope">
-            <option value="community">Comunidade</option>
-            <% if (user && user.accountType === 'admin') { %>
-              <option value="official">Oficial Card no Mi</option>
-            <% } %>
-          </select>
+          <div class="format-picker">
+            <input type="hidden" name="scope" id="scopeType" value="community" />
+            <button type="button" class="btn btn-secondary format-open" id="scopePickerBtn">
+              <span id="scopePickerLabel">Comunidade</span>
+              <span class="format-picker-hint">Selecionar</span>
+            </button>
+          </div>
         </label>
 
         <label>Máximo de jogadores
           <input type="number" name="maxPlayers" min="4" max="512" value="16" />
         </label>
 
+        <label>Tipo de inscrição
+          <div class="format-picker">
+            <input type="hidden" name="entryType" id="entryType" value="FREE" />
+            <button type="button" class="btn btn-secondary format-open" id="entryTypePickerBtn">
+              <span id="entryTypePickerLabel">Gratuita</span>
+              <span class="format-picker-hint">Selecionar</span>
+            </button>
+          </div>
+        </label>
+
+        <label>Taxa (R$)
+          <input type="number" name="entryFeeReais" id="entryFeeReais" min="0" step="0.01" value="0.00" />
+        </label>
+
         <label>Início
-          <input type="datetime-local" name="startAt" required />
+          <input type="datetime-local" name="startAt" required min="2020-01-01T00:00" max="2099-12-31T23:59" />
+        </label>
+
+        <label>Abertura das inscrições
+          <input type="datetime-local" name="registrationOpenAt" min="2020-01-01T00:00" max="2099-12-31T23:59" />
+        </label>
+
+        <label>Fechamento das inscrições
+          <input type="datetime-local" name="registrationCloseAt" min="2020-01-01T00:00" max="2099-12-31T23:59" />
         </label>
       </div>
 
@@ -66,10 +92,164 @@
         <textarea name="rules" rows="5" placeholder="Ex: BO1, 35 min por rodada, top cut no top 8..."></textarea>
       </label>
 
+      <label>Prêmios
+        <div class="format-picker">
+          <input type="hidden" name="prizesText" id="prizesText" value="" />
+          <input type="hidden" name="storeCreditReais" id="storeCreditReais" value="0.00" />
+          <input type="hidden" name="storeCreditNotes" id="storeCreditNotes" value="" />
+          <input type="hidden" name="storeCreditStoreId" id="storeCreditStoreId" value="" />
+          <button type="button" class="btn btn-secondary format-open" id="prizesPickerBtn">
+            <span id="prizesPickerLabel">Adicionar prêmios</span>
+            <span class="format-picker-hint">Selecionar</span>
+          </button>
+        </div>
+      </label>
+
+      <label>Contato
+        <textarea name="contactText" rows="2" placeholder="Ex: Discord, WhatsApp ou e-mail do organizador."></textarea>
+      </label>
+
       <button type="submit" class="btn btn-primary">Criar Torneio</button>
     </form>
   </section>
 </main>
+
+<div class="format-modal" id="formatModal" aria-hidden="true">
+  <div class="format-modal-backdrop" data-close="format"></div>
+  <div class="format-modal-card" role="dialog" aria-modal="true" aria-labelledby="formatModalTitle">
+    <header>
+      <h2 id="formatModalTitle">Escolha o modelo do torneio</h2>
+      <button type="button" class="btn-icon" data-close="format" aria-label="Fechar">&times;</button>
+    </header>
+    <p class="format-modal-subtitle">Selecione o formato que melhor representa o seu evento. Você pode ajustar as regras depois.</p>
+    <div class="format-grid">
+      <button type="button" class="format-card is-selected" data-value="SWISS_TOP_CUT" data-label="Swiss + Top Cut">
+        <strong>Swiss + Top Cut</strong>
+        <span>Rodadas suíças com classificação + Top 4/8/16 eliminatório.</span>
+      </button>
+      <button type="button" class="format-card" data-value="SINGLE_ELIM" data-label="Eliminação simples">
+        <strong>Eliminação simples</strong>
+        <span>Perdeu, sai. Rápido e direto para eventos curtos.</span>
+      </button>
+      <button type="button" class="format-card" data-value="DOUBLE_ELIM" data-label="Eliminação dupla">
+        <strong>Eliminação dupla</strong>
+        <span>Todos têm uma segunda chance antes da eliminação final.</span>
+      </button>
+      <button type="button" class="format-card" data-value="ROUND_ROBIN" data-label="Round Robin">
+        <strong>Round Robin</strong>
+        <span>Todos jogam contra todos. Ideal para grupos pequenos.</span>
+      </button>
+      <button type="button" class="format-card" data-value="LEAGUE" data-label="Liga">
+        <strong>Liga</strong>
+        <span>Formato contínuo com rodadas ao longo de várias semanas.</span>
+      </button>
+      <button type="button" class="format-card" data-value="GAUNTLET" data-label="Escalada">
+        <strong>Escalada</strong>
+        <span>Um defensor enfrenta desafiantes em sequência.</span>
+      </button>
+      <button type="button" class="format-card" data-value="GROUP_BRACKETS" data-label="Grupos de chaves">
+        <strong>Grupos de chaves</strong>
+        <span>Fase de grupos seguida de classificação para mata-mata.</span>
+      </button>
+      <button type="button" class="format-card" data-value="CUSTOM_BRACKET" data-label="Chave personalizada">
+        <strong>Chave personalizada</strong>
+        <span>Controle manual dos confrontos e seeds.</span>
+      </button>
+    </div>
+    <div class="format-modal-actions">
+      <button type="button" class="btn btn-secondary" data-close="format">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmFormatBtn">Selecionar formato</button>
+    </div>
+  </div>
+</div>
+
+<div class="format-modal" id="scopeModal" aria-hidden="true">
+  <div class="format-modal-backdrop" data-close="scope"></div>
+  <div class="format-modal-card" role="dialog" aria-modal="true" aria-labelledby="scopeModalTitle">
+    <header>
+      <h2 id="scopeModalTitle">Definir escopo do torneio</h2>
+      <button type="button" class="btn-icon" data-close="scope" aria-label="Fechar">&times;</button>
+    </header>
+    <p class="format-modal-subtitle">Escolha se este torneio será da comunidade ou oficial (admin).</p>
+    <div class="format-grid">
+      <button type="button" class="format-card is-selected" data-value="community" data-label="Comunidade">
+        <strong>Comunidade</strong>
+        <span>Torneio aberto para criadores e organizadores da comunidade.</span>
+      </button>
+      <% if (user && user.accountType === 'admin') { %>
+        <button type="button" class="format-card" data-value="official" data-label="Oficial Card no Mi">
+          <strong>Oficial Card no Mi</strong>
+          <span>Eventos oficiais da plataforma com destaque.</span>
+        </button>
+      <% } %>
+    </div>
+    <div class="format-modal-actions">
+      <button type="button" class="btn btn-secondary" data-close="scope">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmScopeBtn">Selecionar escopo</button>
+    </div>
+  </div>
+</div>
+
+<div class="format-modal" id="entryTypeModal" aria-hidden="true">
+  <div class="format-modal-backdrop" data-close="entryType"></div>
+  <div class="format-modal-card" role="dialog" aria-modal="true" aria-labelledby="entryTypeModalTitle">
+    <header>
+      <h2 id="entryTypeModalTitle">Definir tipo de inscrição</h2>
+      <button type="button" class="btn-icon" data-close="entryType" aria-label="Fechar">&times;</button>
+    </header>
+    <p class="format-modal-subtitle">Escolha se o torneio será gratuito ou pago.</p>
+    <div class="format-grid">
+      <button type="button" class="format-card is-selected" data-value="FREE" data-label="Gratuita">
+        <strong>Gratuita</strong>
+        <span>Sem cobrança de inscrição para os jogadores.</span>
+      </button>
+      <button type="button" class="format-card" data-value="PAID" data-label="Paga">
+        <strong>Paga</strong>
+        <span>Jogadores pagam para participar (PIX/cartão).</span>
+      </button>
+    </div>
+    <div class="format-modal-actions">
+      <button type="button" class="btn btn-secondary" data-close="entryType">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmEntryTypeBtn">Selecionar tipo</button>
+    </div>
+  </div>
+</div>
+
+<div class="format-modal" id="prizesModal" aria-hidden="true">
+  <div class="format-modal-backdrop" data-close="prizes"></div>
+  <div class="format-modal-card" role="dialog" aria-modal="true" aria-labelledby="prizesModalTitle">
+    <header>
+      <h2 id="prizesModalTitle">Definir prêmios</h2>
+      <button type="button" class="btn-icon" data-close="prizes" aria-label="Fechar">&times;</button>
+    </header>
+    <p class="format-modal-subtitle">Descreva os prêmios e o crédito na loja (se houver).</p>
+    <label style="display:block; margin-bottom: 0.75rem;">Prêmios
+      <textarea id="prizesTextInput" rows="4" placeholder="Ex: Store credit, boosters, playmat..."></textarea>
+    </label>
+    <div class="form-grid" style="margin-bottom: 0.75rem;">
+      <label>Loja do crédito
+        <select id="storeCreditStoreInput">
+          <option value="">Selecione uma loja</option>
+          <% if (storeCreditStores && storeCreditStores.length) { %>
+            <% storeCreditStores.forEach(store => { %>
+              <option value="<%= store.id %>"><%= store.businessName || store.username %></option>
+            <% }) %>
+          <% } %>
+        </select>
+      </label>
+      <label>Crédito na loja (R$)
+        <input type="number" id="storeCreditInput" min="0" step="0.01" value="0.00" />
+      </label>
+      <label>Observações do crédito
+        <input type="text" id="storeCreditNotesInput" placeholder="Ex: válido por 30 dias, uso apenas na loja parceira" />
+      </label>
+    </div>
+    <div class="format-modal-actions">
+      <button type="button" class="btn btn-secondary" data-close="prizes">Cancelar</button>
+      <button type="button" class="btn btn-primary" id="confirmPrizesBtn">Salvar prêmios</button>
+    </div>
+  </div>
+</div>
 
 <script>
   const bannerFileInput = document.getElementById('bannerFile');
@@ -95,6 +275,161 @@
   bannerUrlInput?.addEventListener('input', () => {
     if (bannerFileInput?.files?.length) return;
     setPreview(bannerUrlInput.value.trim());
+  });
+
+  const entryType = document.getElementById('entryType');
+  const entryFee = document.getElementById('entryFeeReais');
+  const syncEntryFee = () => {
+    if (entryType?.value === 'FREE') {
+      entryFee.value = '0.00';
+      entryFee.setAttribute('readonly', 'readonly');
+    } else {
+      entryFee.removeAttribute('readonly');
+      if (entryFee.value === '0.00' || entryFee.value === '0') entryFee.value = '10.00';
+    }
+  };
+  syncEntryFee();
+
+  const formatModal = document.getElementById('formatModal');
+  const formatBtn = document.getElementById('formatPickerBtn');
+  const formatLabel = document.getElementById('formatPickerLabel');
+  const formatHidden = document.getElementById('formatType');
+  const confirmFormatBtn = document.getElementById('confirmFormatBtn');
+  let selectedFormat = formatHidden?.value || 'SWISS_TOP_CUT';
+
+  const openFormatModal = () => {
+    formatModal?.classList.add('is-open');
+    formatModal?.setAttribute('aria-hidden', 'false');
+  };
+  const closeFormatModal = () => {
+    formatModal?.classList.remove('is-open');
+    formatModal?.setAttribute('aria-hidden', 'true');
+  };
+
+  formatBtn?.addEventListener('click', openFormatModal);
+  formatModal?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target?.dataset?.close === 'format') closeFormatModal();
+  });
+
+  document.querySelectorAll('.format-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.format-card').forEach((btn) => btn.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      selectedFormat = card.dataset.value;
+      formatLabel.textContent = card.dataset.label;
+    });
+  });
+
+  confirmFormatBtn?.addEventListener('click', () => {
+    if (formatHidden) formatHidden.value = selectedFormat;
+    closeFormatModal();
+  });
+
+  const scopeModal = document.getElementById('scopeModal');
+  const scopeBtn = document.getElementById('scopePickerBtn');
+  const scopeLabel = document.getElementById('scopePickerLabel');
+  const scopeHidden = document.getElementById('scopeType');
+  const confirmScopeBtn = document.getElementById('confirmScopeBtn');
+  let selectedScope = scopeHidden?.value || 'community';
+
+  const openScopeModal = () => {
+    scopeModal?.classList.add('is-open');
+    scopeModal?.setAttribute('aria-hidden', 'false');
+  };
+  const closeScopeModal = () => {
+    scopeModal?.classList.remove('is-open');
+    scopeModal?.setAttribute('aria-hidden', 'true');
+  };
+  scopeBtn?.addEventListener('click', openScopeModal);
+  scopeModal?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target?.dataset?.close === 'scope') closeScopeModal();
+  });
+  scopeModal?.querySelectorAll('.format-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      scopeModal.querySelectorAll('.format-card').forEach((btn) => btn.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      selectedScope = card.dataset.value;
+      scopeLabel.textContent = card.dataset.label;
+    });
+  });
+  confirmScopeBtn?.addEventListener('click', () => {
+    if (scopeHidden) scopeHidden.value = selectedScope;
+    closeScopeModal();
+  });
+
+  const entryTypeModal = document.getElementById('entryTypeModal');
+  const entryTypeBtn = document.getElementById('entryTypePickerBtn');
+  const entryTypeLabel = document.getElementById('entryTypePickerLabel');
+  const confirmEntryTypeBtn = document.getElementById('confirmEntryTypeBtn');
+  let selectedEntryType = entryType?.value || 'FREE';
+
+  const openEntryTypeModal = () => {
+    entryTypeModal?.classList.add('is-open');
+    entryTypeModal?.setAttribute('aria-hidden', 'false');
+  };
+  const closeEntryTypeModal = () => {
+    entryTypeModal?.classList.remove('is-open');
+    entryTypeModal?.setAttribute('aria-hidden', 'true');
+  };
+  entryTypeBtn?.addEventListener('click', openEntryTypeModal);
+  entryTypeModal?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target?.dataset?.close === 'entryType') closeEntryTypeModal();
+  });
+  entryTypeModal?.querySelectorAll('.format-card').forEach((card) => {
+    card.addEventListener('click', () => {
+      entryTypeModal.querySelectorAll('.format-card').forEach((btn) => btn.classList.remove('is-selected'));
+      card.classList.add('is-selected');
+      selectedEntryType = card.dataset.value;
+      entryTypeLabel.textContent = card.dataset.label;
+    });
+  });
+  confirmEntryTypeBtn?.addEventListener('click', () => {
+    if (entryType) entryType.value = selectedEntryType;
+    syncEntryFee();
+    closeEntryTypeModal();
+  });
+
+  const prizesModal = document.getElementById('prizesModal');
+  const prizesBtn = document.getElementById('prizesPickerBtn');
+  const prizesLabel = document.getElementById('prizesPickerLabel');
+  const prizesHidden = document.getElementById('prizesText');
+  const storeCreditHidden = document.getElementById('storeCreditReais');
+  const storeCreditNotesHidden = document.getElementById('storeCreditNotes');
+  const storeCreditStoreHidden = document.getElementById('storeCreditStoreId');
+  const prizesTextInput = document.getElementById('prizesTextInput');
+  const storeCreditInput = document.getElementById('storeCreditInput');
+  const storeCreditNotesInput = document.getElementById('storeCreditNotesInput');
+  const storeCreditStoreInput = document.getElementById('storeCreditStoreInput');
+  const confirmPrizesBtn = document.getElementById('confirmPrizesBtn');
+
+  const openPrizesModal = () => {
+    if (prizesHidden && prizesTextInput) prizesTextInput.value = prizesHidden.value || '';
+    if (storeCreditHidden && storeCreditInput) storeCreditInput.value = storeCreditHidden.value || '0.00';
+    if (storeCreditNotesHidden && storeCreditNotesInput) storeCreditNotesInput.value = storeCreditNotesHidden.value || '';
+    if (storeCreditStoreHidden && storeCreditStoreInput) storeCreditStoreInput.value = storeCreditStoreHidden.value || '';
+    prizesModal?.classList.add('is-open');
+    prizesModal?.setAttribute('aria-hidden', 'false');
+  };
+  const closePrizesModal = () => {
+    prizesModal?.classList.remove('is-open');
+    prizesModal?.setAttribute('aria-hidden', 'true');
+  };
+  prizesBtn?.addEventListener('click', openPrizesModal);
+  prizesModal?.addEventListener('click', (e) => {
+    const target = e.target;
+    if (target?.dataset?.close === 'prizes') closePrizesModal();
+  });
+  confirmPrizesBtn?.addEventListener('click', () => {
+    if (prizesHidden && prizesTextInput) prizesHidden.value = prizesTextInput.value.trim();
+    if (storeCreditHidden && storeCreditInput) storeCreditHidden.value = storeCreditInput.value || '0.00';
+    if (storeCreditNotesHidden && storeCreditNotesInput) storeCreditNotesHidden.value = storeCreditNotesInput.value.trim();
+    if (storeCreditStoreHidden && storeCreditStoreInput) storeCreditStoreHidden.value = storeCreditStoreInput.value || '';
+    const hasPrize = prizesHidden?.value || Number(storeCreditHidden?.value || 0) > 0;
+    if (prizesLabel) prizesLabel.textContent = hasPrize ? 'Prêmios definidos' : 'Adicionar prêmios';
+    closePrizesModal();
   });
 </script>
 

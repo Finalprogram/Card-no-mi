@@ -38,8 +38,11 @@
                         <%= profileUser.username %>
                         <% if (profileUser.role === 'admin') { %>
                             <span class="user-role-badge admin">👑 Admin</span>
-                        <% } else if (profileUser.accountType === 'shop') { %>
-                            <span class="user-role-badge seller">🏪 Loja</span>
+                        <% } else if (['shop', 'store', 'partner_store'].includes(profileUser.accountType)) { %>
+                            <span class="user-role-badge seller">🏪 <%= profileUser.accountType === 'partner_store' ? 'Loja Parceira' : 'Loja' %></span>
+                        <% } %>
+                        <% if (profileUser.isCreator) { %>
+                            <span class="user-role-badge creator">🎥 Criador</span>
                         <% } %>
                         <% if (profileUser.faction) { %>
                             <span class="user-badge faction-badge faction-<%= profileUser.faction %>">

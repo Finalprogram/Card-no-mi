@@ -31,7 +31,7 @@
                 </div>
                 <div class="seller-details">
                     <h1 class="seller-username"><%= seller.username %></h1>
-                    <% if (seller.accountType === 'shop') { %>
+                    <% if (['shop', 'store', 'partner_store'].includes(seller.accountType)) { %>
                         <span class="seller-badge shop-badge">
                             <i class="fas fa-store"></i> LOJA OFICIAL
                         </span>

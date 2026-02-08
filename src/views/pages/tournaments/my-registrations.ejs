@@ -1,0 +1,45 @@
+<%- include('../../partials/header', { page_css: 'tournaments.css' }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="tournaments-page container">
+  <header class="tournaments-header">
+    <div>
+      <h1>Minhas inscrições em torneios</h1>
+      <p>Acompanhe o status de inscrição, pagamento e check-in.</p>
+    </div>
+    <a href="/tournaments" class="btn btn-secondary">Voltar para torneios</a>
+  </header>
+
+  <section class="table-card">
+    <% if (!rows || rows.length === 0) { %>
+      <p>Você ainda não possui inscrições em torneios.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Torneio</th>
+            <th>Status</th>
+            <th>Tipo</th>
+            <th>Data</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% rows.forEach((row) => { %>
+            <tr>
+              <td><%= row.tournament?.title || `#${row.tournamentId}` %></td>
+              <td><%= row.status %></td>
+              <td><%= row.type %></td>
+              <td><%= row.createdAt ? new Date(row.createdAt).toLocaleString('pt-BR') : '-' %></td>
+              <td>
+                <a class="btn-link" href="/tournaments/<%= row.tournamentId %>">Abrir</a>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+</main>
+
+<%- include('../../partials/footer') %>

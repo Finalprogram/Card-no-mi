@@ -1,0 +1,76 @@
+<%- include('../../partials/header', { page_css: 'store-credits.css' }) %>
+<%- include('../../partials/navbar') %>
+
+<main class="store-credits-page container">
+  <header class="store-credits-header">
+    <div>
+      <h1>Créditos da Loja</h1>
+      <p>Gerencie os créditos ganhos pelos jogadores em seus torneios.</p>
+    </div>
+    <a href="/profile" class="btn btn-secondary">Voltar ao perfil</a>
+  </header>
+
+  <section class="table-card">
+    <h2>Créditos (<%= credits.length %>)</h2>
+    <% if (!credits.length) { %>
+      <p>Nenhum crédito disponível no momento.</p>
+    <% } else { %>
+      <table>
+        <thead>
+          <tr>
+            <th>Jogador</th>
+            <th>Torneio</th>
+            <th>Valor</th>
+            <th>Status</th>
+            <th>Ação</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% credits.forEach((credit) => { %>
+            <tr>
+              <td>
+                <div class="player-cell">
+                  <img src="<%= credit.player?.avatar || '/images/default-avatar.png' %>" alt="Avatar">
+                  <span><%= credit.player?.username || `Jogador #${credit.playerId}` %></span>
+                </div>
+              </td>
+              <td><%= credit.tournament?.title || `Torneio #${credit.tournamentId}` %></td>
+              <td>R$ <%= ((credit.amountCents || 0) / 100).toFixed(2) %></td>
+              <td>
+                <span class="status-pill <%= (credit.status || '').toLowerCase() %>">
+                  <%= credit.status === 'AVAILABLE' ? 'Disponível' : (credit.status === 'REDEEMED' ? 'Usado' : 'Cancelado') %>
+                </span>
+              </td>
+              <td>
+                <% if (credit.status === 'AVAILABLE') { %>
+                  <button class="btn btn-primary js-redeem" data-id="<%= credit.id %>">Marcar como usado</button>
+                <% } else { %>
+                  <span class="muted">-</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    <% } %>
+  </section>
+</main>
+
+<script>
+  document.querySelectorAll('.js-redeem').forEach((btn) => {
+    btn.addEventListener('click', async () => {
+      const creditId = btn.dataset.id;
+      btn.disabled = true;
+      try {
+        const response = await fetch(`/store/credits/${creditId}/redeem`, { method: 'POST' });
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) throw new Error(data.message || 'Erro ao atualizar crédito.');
+        window.showToast?.(data.message || 'Crédito atualizado.', 'success');
+        window.location.reload();
+      } catch (error) {
+        window.showToast?.(error.message || 'Erro ao atualizar crédito.', 'error');
+        btn.disabled = false;
+      }
+    });
+  });
+</script>

@@ -11,6 +11,16 @@
     };
     return map[status] || status;
   };
+  const statusBadgeClass = (status) => {
+    const map = {
+      draft: 'is-draft',
+      open: 'is-open',
+      in_progress: 'is-progress',
+      finished: 'is-finished',
+      cancelled: 'is-cancelled'
+    };
+    return map[status] || 'is-default';
+  };
   const allTournaments = [...(official || []), ...(community || [])];
   const openCount = allTournaments.filter((t) => t.status === 'open').length;
   const inProgressCount = allTournaments.filter((t) => t.status === 'in_progress').length;
@@ -41,16 +51,28 @@
 
   <% if (spotlight) { %>
     <section class="spotlight-card <%= spotlight.bannerUrl ? 'has-banner' : '' %>" <%= spotlight.bannerUrl ? `style="--tournament-banner: url('${spotlight.bannerUrl.replace(/'/g, "%27")}')"` : '' %>>
-      <div>
-        <span class="badge <%= spotlight.scope === 'official' ? '' : 'community' %>">
-          <%= spotlight.scope === 'official' ? 'Destaque Oficial' : 'Destaque da Comunidade' %>
-        </span>
-        <h2><%= spotlight.title %></h2>
-        <p><%= spotlight.description || 'Sem descrição.' %></p>
-      </div>
-      <div class="meta">
-        <span>Formato: <%= spotlight.format === 'swiss' ? 'Suíço' : 'Eliminação' %></span>
-        <span>Status: <%= statusLabel(spotlight.status) %></span>
+      <span class="spotlight-flag is-default">&#128293; Destaque</span>
+      <% if (spotlight.bannerUrl) { %>
+        <div class="spotlight-banner">
+          <img src="<%= spotlight.bannerUrl %>" alt="Banner do torneio <%= spotlight.title %>" loading="lazy" />
+        </div>
+      <% } %>
+      <div class="spotlight-content">
+        <div class="spotlight-main">
+          <span class="badge <%= spotlight.scope === 'official' ? '' : 'community' %>">
+            <%= spotlight.scope === 'official' ? 'Destaque Oficial' : 'Destaque da Comunidade' %>
+          </span>
+          <h2><%= spotlight.title %></h2>
+          <p><%= spotlight.description || 'Sem descricao.' %></p>
+        </div>
+        <div class="spotlight-side">
+          <div class="meta spotlight-meta">
+            <span>Formato: <%= spotlight.format === 'swiss' ? 'Suico' : 'Eliminacao' %></span>
+            <span>Status: <%= statusLabel(spotlight.status) %></span>
+            <span>Vagas: <%= spotlight.maxPlayers || '-' %></span>
+          </div>
+          <a href="/tournaments/<%= spotlight.id %>" class="btn btn-primary spotlight-btn">Abrir torneio</a>
+        </div>
       </div>
     </section>
   <% } %>
@@ -77,7 +99,10 @@
               <img src="<%= t.bannerUrl %>" alt="Banner do torneio <%= t.title %>" loading="lazy" />
             </div>
           <% } %>
-          <span class="badge">Oficial</span>
+          <div class="card-badges">
+            <span class="badge">Oficial</span>
+            <span class="status-badge <%= statusBadgeClass(t.status) %>"><%= statusLabel(t.status) %></span>
+          </div>
           <h3><%= t.title %></h3>
           <p><%= t.description || 'Sem descrição.' %></p>
           <div class="meta">
@@ -102,7 +127,10 @@
               <img src="<%= t.bannerUrl %>" alt="Banner do torneio <%= t.title %>" loading="lazy" />
             </div>
           <% } %>
-          <span class="badge community">Comunidade</span>
+          <div class="card-badges">
+            <span class="badge community">Comunidade</span>
+            <span class="status-badge <%= statusBadgeClass(t.status) %>"><%= statusLabel(t.status) %></span>
+          </div>
           <h3><%= t.title %></h3>
           <p><%= t.description || 'Sem descrição.' %></p>
           <div class="meta">

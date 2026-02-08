@@ -11,6 +11,10 @@ const TournamentMatch = sequelize.define('TournamentMatch', {
     type: DataTypes.INTEGER,
     allowNull: false
   },
+  stageId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   roundNumber: {
     type: DataTypes.INTEGER,
     allowNull: false
@@ -27,8 +31,50 @@ const TournamentMatch = sequelize.define('TournamentMatch', {
     type: DataTypes.INTEGER,
     allowNull: true
   },
+  winnerRegistrationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
   winnerId: {
     type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  scoreA: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  scoreB: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  resultStatus: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    defaultValue: 'PENDING',
+    validate: { isIn: [['PENDING', 'REPORTED', 'CONFIRMED', 'DISPUTED', 'VOID']] }
+  },
+  resultReportedByRegistrationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  resultReportedByUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  resultReportedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  resultConfirmedByRegistrationId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  resultConfirmedByUserId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  resultConfirmedAt: {
+    type: DataTypes.DATE,
     allowNull: true
   },
   isDraw: {
@@ -37,12 +83,28 @@ const TournamentMatch = sequelize.define('TournamentMatch', {
     defaultValue: false
   },
   status: {
-    type: DataTypes.ENUM('pending', 'confirmed'),
+    type: DataTypes.STRING,
     allowNull: false,
     defaultValue: 'pending'
+  },
+  startedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  finishedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  notes: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  updatedByStaffId: {
+    type: DataTypes.INTEGER,
+    allowNull: true
   }
 }, {
-  tableName: 'tournament_matches',
+  tableName: 'matches',
   timestamps: true
 });
 
@@ -53,4 +115,3 @@ Object.defineProperty(TournamentMatch.prototype, '_id', {
 });
 
 module.exports = TournamentMatch;
-

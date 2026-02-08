@@ -76,6 +76,20 @@
             text-align: right;
         }
 
+        .profile-creator-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            margin-left: 0.5rem;
+            padding: 0.2rem 0.55rem;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            background: rgba(124, 108, 255, 0.2);
+            color: #e6e8ee;
+            border: 1px solid rgba(124, 108, 255, 0.4);
+        }
+
         /* Adiciona espaçamento na tabela de anúncios do perfil */
         .user-listings .table th {
             padding-left: 15px;
@@ -87,7 +101,41 @@
             vertical-align: middle;
             text-align: center;
         }
-    </style>
+    \n        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;\n        }\n        .modal-card {
+            width: min(720px, 92vw);
+            max-height: 85vh;
+            overflow: auto;
+            background: #151923;
+            border: 1px solid rgba(255,255,255,0.08);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            box-shadow: 0 16px 40px rgba(0,0,0,0.4);\n        }\n        .modal-card h3 {
+            margin-top: 0;\n        }\n        .modal-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: none;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            font-size: 1.2rem;
+            cursor: pointer;\n        }\n        .modal-card .form-grid-2-col {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 0.9rem;\n        }\n        @media (max-width: 720px) {
+            .modal-card .form-grid-2-col {
+                grid-template-columns: 1fr;
+            }\n        }\n\n    </style>
 </head>
 <body>
     <%- include('../partials/navbar') %>
@@ -103,8 +151,15 @@
                     </form>
                     <img src="<%= profileUser.avatar || '/images/default-avatar.png' %>" alt="Avatar de <%= profileUser.fullName %>" class="profile-avatar" id="profile-avatar-img">
                     <h2 class="profile-username"><%= profileUser.fullName %></h2>
-                    <p class="profile-account-type"><%= profileUser.accountType === 'shop' ? 'Loja' : 'Pessoa Física' %></p>
-                    <% if (profileUser.accountType === 'shop' && profileUser.businessName) { %>
+                    <% const isStoreAccount = ['shop', 'store', 'partner_store'].includes(profileUser.accountType); %>
+                    <% const accountLabel = profileUser.accountType === 'partner_store' ? 'Loja Parceira' : (isStoreAccount ? 'Loja' : 'Pessoa Física'); %>
+                    <p class="profile-account-type">
+                        <%= accountLabel %>
+                        <% if (profileUser.isCreator) { %>
+                            <span class="profile-creator-badge" title="Criador de conteúdo">🎥 Criador</span>
+                        <% } %>
+                    </p>
+                    <% if (isStoreAccount && profileUser.businessName) { %>
                         <p class="profile-business-name"><strong><%= profileUser.businessName %></strong></p>
                     <% } %>
                 </div>
@@ -241,6 +296,54 @@
             </div>
             <% } %>
 
+            <% if (user && user.id.toString() === profileUser.id.toString() && profileUser.accountType === 'store') { %>
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h2>Loja Parceira</h2>
+                <% if (partnerStoreApplication && partnerStoreApplication.status === 'PENDING') { %>
+                    <p style="color: #f5b942; font-weight: 600;">Solicitacao enviada. Estamos analisando seu pedido.</p>
+                <% } else if (partnerStoreApplication && partnerStoreApplication.status === 'APPROVED') { %>
+                    <p style="color: #6de28b; font-weight: 600;">Sua loja ja e parceira. Obrigado!</p>
+                <% } else if (partnerStoreApplication && partnerStoreApplication.status === 'REJECTED') { %>
+                    <p style="color: #ff7a7a; font-weight: 600;">Solicitacao rejeitada. Entre em contato para mais detalhes.</p>
+                <% } else { %>
+                    <p>Para cadastrar sua loja, finalize o onboarding na proxima vez que entrar.</p>
+                <% } %>
+                <div style="margin-top: 1rem;">
+                    <a href="/store/credits" class="btn btn-secondary">Gerenciar creditos da loja</a>
+                </div>
+                <% if (!partnerStoreApplication || partnerStoreApplication.status !== 'APPROVED') { %>
+                <div style="margin-top: 0.6rem;">
+                    <button type="button" id="partner-store-open" class="btn btn-primary" onclick="document.getElementById('partner-store-modal').style.display='flex'">Enviar formulario de parceria</button>
+                </div>
+                <% } %>
+            </div>
+            <% } %>
+
+            <% if (user && user.id.toString() === profileUser.id.toString() && storeCredits && storeCredits.length) { %>
+
+            <div class="card" style="margin-bottom: 1.5rem;">
+                <h2>Creditos na Loja</h2>
+                <div class="profile-store-credits">
+                    <% storeCredits.forEach((credit) => { %>
+                        <div class="store-credit-item">
+                            <div>
+                                <strong>R$ <%= ((credit.amountCents || 0) / 100).toFixed(2) %></strong>
+                                <span class="store-credit-store">
+                                    � <%= credit.store?.businessName || credit.store?.username || 'Loja' %>
+                                </span>
+                            </div>
+                            <div class="store-credit-meta">
+                                <span><%= credit.tournament?.title || `Torneio #${credit.tournamentId}` %></span>
+                                <span class="store-credit-status <%= (credit.status || '').toLowerCase() %>">
+                                    <%= credit.status === 'AVAILABLE' ? 'Disponivel' : (credit.status === 'REDEEMED' ? 'Usado' : 'Cancelado') %>
+                                </span>
+                            </div>
+                        </div>
+                    <% }) %>
+                </div>
+            </div>
+            <% } %>
+
             <div class="user-listings card">
                 <h2>Anúncios</h2>
                 <% if (listings && listings.length > 0) { %>
@@ -314,7 +417,8 @@
                 <% } %>
             </div>
         </section>
-    </main>
+        
+</main>
     <div class="container">
         <%- include('../partials/footer') %>
     </div>
@@ -412,7 +516,151 @@
                     }
                 });
             }
+
+            
+            const partnerStoreModal = document.getElementById('partner-store-modal');
+            const openPartnerStoreModal = document.getElementById('partner-store-open');
+            const closePartnerStoreModal = document.getElementById('partner-store-close');
+            const cancelPartnerStoreModal = document.getElementById('partner-store-cancel');
+            if (openPartnerStoreModal && partnerStoreModal) {
+                const closeModal = () => { partnerStoreModal.style.display = 'none'; };
+                const openModal = () => { partnerStoreModal.style.display = 'flex'; };
+                openPartnerStoreModal.addEventListener('click', openModal);
+                if (closePartnerStoreModal) closePartnerStoreModal.addEventListener('click', closeModal);
+                if (cancelPartnerStoreModal) cancelPartnerStoreModal.addEventListener('click', closeModal);
+                partnerStoreModal.addEventListener('click', (event) => {
+                    if (event.target === partnerStoreModal) closeModal();
+                });
+            }
+            
+
+            const partnerStoreForm = document.getElementById('partner-store-form');
+            if (partnerStoreForm) {
+                partnerStoreForm.addEventListener('submit', async (event) => {
+                    event.preventDefault();
+                    const formData = new FormData(partnerStoreForm);
+                    try {
+                        const response = await fetch('/comunidade/lojas-parceiras', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: new URLSearchParams(formData)
+                        });
+                        const data = await response.json();
+                        if (!response.ok) throw new Error(data?.message || 'Erro ao enviar solicita��o.');
+                        window.showToast(data.message || 'Solicita��o enviada!', 'success');
+                        partnerStoreForm.reset();
+                        window.location.reload();
+                    } catch (error) {
+                        window.showToast(error.message || 'Erro ao enviar solicita��o.', 'error');
+                    }
+                });
+            }
         });
     </script>
+<div id="partner-store-modal" class="modal-overlay" style="display:none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 9999; align-items: center; justify-content: center;">
+        <div class="modal-card">
+            <button class="modal-close" type="button" id="partner-store-close" onclick="document.getElementById('partner-store-modal').style.display='none'">&times;</button>
+            <h3>Formulario de parceria</h3>
+            <p class="subtitle">Preencha os dados para avaliarmos sua loja como parceira.</p>
+            <form id="partner-store-form">
+                <div class="form-grid-2-col">
+                    <div class="form-group">
+                        <label>Nome da Loja *</label>
+                        <input class="form-control" name="storeName" value="<%= profileUser.businessName || profileUser.fullName || '' %>" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Razao Social</label>
+                        <input class="form-control" name="legalName" placeholder="Opcional">
+                    </div>
+                    <div class="form-group">
+                        <label>CNPJ</label>
+                        <input class="form-control" value="<%= profileUser.documentNumber || '' %>" readonly>
+                    </div>
+                    <div class="form-group">
+                        <label>Cidade</label>
+                        <input class="form-control" name="city" value="<%= profileUser.address?.city || '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label>Estado</label>
+                        <input class="form-control" name="state" value="<%= profileUser.address?.state || '' %>">
+                    </div>
+                    <div class="form-group">
+                        <label>WhatsApp comercial *</label>
+                        <input class="form-control" name="whatsappUrl" placeholder="(00) 00000-0000">
+                    </div>
+                    <div class="form-group">
+                        <label>E-mail de contato *</label>
+                        <input class="form-control" name="contactEmail" placeholder="contato@loja.com">
+                    </div>
+                    <div class="form-group">
+                        <label>Link principal *</label>
+                        <input class="form-control" name="primaryLink" placeholder="Site ou Instagram">
+                    </div>
+                    <div class="form-group">
+                        <label>Tempo de operacao</label>
+                        <input class="form-control" name="operatingTime" placeholder="1-2 anos">
+                    </div>
+                    <div class="form-group">
+                        <label>Plataformas de venda</label>
+                        <input class="form-control" name="salesPlatforms" placeholder="Loja fisica, Mercado Livre, Shopee">
+                    </div>
+                    <div class="form-group">
+                        <label>Endereco da loja fisica</label>
+                        <input class="form-control" name="physicalAddress" placeholder="Rua, numero, bairro">
+                    </div>
+                    <div class="form-group">
+                        <label>Foco em OP TCG?</label>
+                        <select class="form-control" name="focusOnePiece">
+                            <option value="true">Sim</option>
+                            <option value="false">Nao</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Eventos/torneios realizados?</label>
+                        <select class="form-control" name="eventsHosted">
+                            <option value="false">Nao</option>
+                            <option value="true">Sim</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Descricao breve dos eventos</label>
+                        <input class="form-control" name="eventsDetails" placeholder="Opcional">
+                    </div>
+                    <div class="form-group">
+                        <label>Logo oficial (URL)</label>
+                        <input class="form-control" name="logoUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Banner da loja (URL)</label>
+                        <input class="form-control" name="bannerUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Site</label>
+                        <input class="form-control" name="websiteUrl" placeholder="https://...">
+                    </div>
+                    <div class="form-group">
+                        <label>Instagram</label>
+                        <input class="form-control" name="instagramUrl" placeholder="https://instagram.com/...">
+                    </div>
+                </div>
+                <div class="form-group" style="margin-top: 0.8rem;">
+                    <label>Descricao da loja</label>
+                    <textarea class="form-control" name="description" rows="3" maxlength="400" placeholder="Conte um pouco sobre a loja..."></textarea>
+                </div>
+                <div style="display: flex; gap: 0.6rem; justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" id="partner-store-cancel" onclick="document.getElementById('partner-store-modal').style.display='none'">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Enviar</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
+
+
+
+
+
+
+
+

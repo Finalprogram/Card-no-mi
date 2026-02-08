@@ -249,7 +249,7 @@ function getRankProgress(faction, points) {
 
 /**
  * Adicionar pontos de facção e verificar se subiu de rank
- * @param {Object} user - Objeto do usuário (Mongoose document)
+ * @param {Object} user - Objeto do usuário
  * @param {Number} points - Pontos a adicionar
  * @param {String} reason - Razão da adição de pontos
  * @returns {Promise<Object>} Informações sobre a adição de pontos

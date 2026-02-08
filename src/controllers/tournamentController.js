@@ -1,87 +1,128 @@
+const logger = require('../config/logger');
 const Tournament = require('../models/Tournament');
-const TournamentParticipant = require('../models/TournamentParticipant');
+const Registration = require('../models/Registration');
+const TournamentPayment = require('../models/TournamentPayment');
+const DecklistSnapshot = require('../models/DecklistSnapshot');
 const TournamentMatch = require('../models/TournamentMatch');
+const TournamentStage = require('../models/TournamentStage');
+const TournamentStanding = require('../models/TournamentStanding');
 const User = require('../models/User');
-const { sequelize } = require('../database/connection');
+const {
+  createTournament,
+  updateTournament,
+  publishTournament,
+  openRegistration,
+  closeRegistration,
+  openCheckIn,
+  closeCheckIn,
+  autoSyncCheckInWindow,
+  startTournament,
+  finishTournament,
+  cancelTournament,
+  createTopCut
+} = require('../services/tournaments/tournamentService');
+const {
+  registerPlayer,
+  cancelRegistration,
+  checkInPlayer,
+  dropPlayer
+} = require('../services/tournaments/registrationService');
+const { submitDecklist, getMyDecklist } = require('../services/tournaments/decklistService');
+const { createCharge, handleWebhook, refundCharge } = require('../services/tournaments/paymentService');
+const { updateFromMatches, getStandings } = require('../services/tournaments/standingsService');
+const { generateSwissRound, generateMatchesForFormat } = require('../services/tournaments/pairingService');
+const { isPlayerInMatch, canConfirmReportedResult } = require('../services/tournaments/matchResultService');
+const { ensureTournamentSchema } = require('../services/tournaments/bootstrapService');
+const { TournamentError } = require('../services/tournaments/errors');
 
-let tournamentSchemaChecked = false;
-async function ensureTournamentSchema() {
-  if (tournamentSchemaChecked) return;
-  const qi = sequelize.getQueryInterface();
-  const table = await qi.describeTable('tournaments');
-  if (!table.bannerUrl) {
-    await qi.addColumn('tournaments', 'bannerUrl', {
-      type: require('sequelize').DataTypes.STRING,
-      allowNull: true
-    });
+function requestMeta(req) {
+  return {
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  };
+}
+
+function actor(req) {
+  return req.session?.user || null;
+}
+
+function mapLegacyFormat(format) {
+  if (!format) return undefined;
+  if (format === 'swiss') return 'SWISS_TOP_CUT';
+  if (format === 'single_elimination') return 'SINGLE_ELIM';
+  if (format === 'double_elimination') return 'DOUBLE_ELIM';
+  return format;
+}
+
+function wantsJson(req) {
+  const accept = (req.headers.accept || '').toLowerCase();
+  return accept.includes('application/json') || req.query.format === 'json';
+}
+
+function isTournamentManager(tournament, user) {
+  if (!user) return false;
+  if (user.accountType === 'admin') return true;
+  const ownerId = tournament.organizerId || tournament.createdById;
+  return ownerId === user.id;
+}
+
+function normalizeTournamentForView(tournament) {
+  const t = tournament.toJSON ? tournament.toJSON() : tournament;
+  const scope = t.scope || 'community';
+  const statusMap = {
+    DRAFT: 'draft',
+    PUBLISHED: 'open',
+    REG_OPEN: 'open',
+    REG_CLOSED: 'open',
+    CHECKIN_OPEN: 'in_progress',
+    CHECKIN_CLOSED: 'in_progress',
+    RUNNING: 'in_progress',
+    FINISHED: 'finished',
+    CANCELLED: 'cancelled',
+    draft: 'draft',
+    open: 'open',
+    in_progress: 'in_progress',
+    finished: 'finished',
+    cancelled: 'cancelled'
+  };
+  return {
+    ...t,
+    scope,
+    status: statusMap[t.status] || t.status,
+    format: t.formatType === 'SINGLE_ELIM' ? 'single_elimination' : 'swiss',
+    maxPlayers: t.capacity || t.maxPlayers || 16
+  };
+}
+
+function handleError(res, error) {
+  if (error instanceof TournamentError) {
+    return res.status(error.status).json({ message: error.message, code: error.code });
   }
-  tournamentSchemaChecked = true;
-}
-
-function isAdmin(req) {
-  return req.session?.user?.accountType === 'admin';
-}
-
-async function recalcStandings(tournamentId) {
-  const participants = await TournamentParticipant.findAll({ where: { tournamentId } });
-  const byId = new Map();
-  participants.forEach((p) => {
-    p.wins = 0;
-    p.losses = 0;
-    p.draws = 0;
-    p.points = 0;
-    byId.set(p.id, p);
-  });
-
-  const matches = await TournamentMatch.findAll({
-    where: { tournamentId, status: 'confirmed' }
-  });
-
-  matches.forEach((m) => {
-    const a = byId.get(m.playerAId);
-    const b = m.playerBId ? byId.get(m.playerBId) : null;
-    if (!a) return;
-
-    // Bye
-    if (!b) {
-      a.wins += 1;
-      a.points += 3;
-      return;
-    }
-
-    if (m.isDraw) {
-      a.draws += 1;
-      b.draws += 1;
-      a.points += 1;
-      b.points += 1;
-      return;
-    }
-
-    if (m.winnerId === a.id) {
-      a.wins += 1;
-      b.losses += 1;
-      a.points += 3;
-    } else if (m.winnerId === b.id) {
-      b.wins += 1;
-      a.losses += 1;
-      b.points += 3;
-    }
-  });
-
-  await Promise.all(participants.map((p) => p.save()));
+  logger.error('[tournaments] unexpected error', error);
+  return res.status(500).json({ message: 'Erro interno do servidor.' });
 }
 
 exports.listPage = async (req, res) => {
   await ensureTournamentSchema();
+  const where = {};
+  if (req.query.status) where.status = req.query.status;
+  if (req.query.formatType) where.formatType = req.query.formatType;
+  if (req.query.visibility) where.visibility = req.query.visibility;
+
   const tournaments = await Tournament.findAll({
+    where,
     include: [{ model: User, as: 'organizer', attributes: ['id', 'username'] }],
     order: [['createdAt', 'DESC']]
   });
 
-  const official = tournaments.filter((t) => t.scope === 'official');
-  const community = tournaments.filter((t) => t.scope === 'community');
+  if (wantsJson(req)) {
+    return res.json({ tournaments });
+  }
 
-  res.render('pages/tournaments/index', {
+  const normalized = tournaments.map(normalizeTournamentForView);
+  const official = normalized.filter((t) => t.scope === 'official');
+  const community = normalized.filter((t) => t.scope === 'community');
+  return res.render('pages/tournaments/index', {
     title: 'Torneios',
     official,
     community
@@ -90,222 +131,772 @@ exports.listPage = async (req, res) => {
 
 exports.createPage = async (req, res) => {
   await ensureTournamentSchema();
-  res.render('pages/tournaments/create', {
-    title: 'Criar Torneio'
+  const storeCreditStores = await User.findAll({
+    where: { accountType: ['store', 'partner_store'] },
+    attributes: ['id', 'username', 'businessName'],
+    order: [['businessName', 'ASC'], ['username', 'ASC']]
+  });
+  return res.render('pages/tournaments/create', {
+    title: 'Criar Torneio',
+    storeCreditStores
   });
 };
 
 exports.create = async (req, res) => {
+  await ensureTournamentSchema();
   try {
-    await ensureTournamentSchema();
-    const { title, description, format, maxPlayers, startAt, rules, scope, bannerUrl } = req.body;
-    if (!startAt) {
-      req.flash('error_msg', 'A data de início é obrigatória.');
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const startAt = req.body.startAt ? new Date(req.body.startAt) : null;
+    if (!startAt || Number.isNaN(startAt.getTime())) {
+      throw new TournamentError('Data de início é obrigatória.', 400);
+    }
+
+    const payload = {
+      ...req.body,
+      name: req.body.name || req.body.title,
+      startAt,
+      formatType: mapLegacyFormat(req.body.formatType || req.body.format),
+      bannerUrl: req.file ? `/uploads/tournaments/${req.file.filename}` : (req.body.bannerUrl || null)
+    };
+    const tournament = await createTournament(payload, currentActor, requestMeta(req));
+    req.flash('success_msg', 'Torneio criado com sucesso.');
+    if (wantsJson(req)) return res.status(201).json(tournament);
+    return res.redirect(`/tournaments/${tournament.id}`);
+  } catch (error) {
+    if (!wantsJson(req)) {
+      req.flash('error_msg', error.message || 'Erro ao criar torneio.');
       return res.redirect('/tournaments/create');
     }
-    const requestedScope = scope === 'official' ? 'official' : 'community';
-    const finalScope = requestedScope === 'official' && isAdmin(req) ? 'official' : 'community';
-    const uploadedBanner = req.file ? `/uploads/tournaments/${req.file.filename}` : null;
-    const finalBannerUrl = uploadedBanner || (bannerUrl || '').trim() || null;
+    return handleError(res, error);
+  }
+};
 
-    const tournament = await Tournament.create({
-      title: (title || '').trim(),
-      description: (description || '').trim(),
-      format: format === 'single_elimination' ? 'single_elimination' : 'swiss',
-      maxPlayers: Number(maxPlayers) > 1 ? Number(maxPlayers) : 16,
-      startAt,
-      rules: (rules || '').trim(),
-      bannerUrl: finalBannerUrl,
-      scope: finalScope,
-      status: 'open',
-      createdById: req.session.user.id
-    });
-
-    req.flash('success_msg', 'Torneio criado com sucesso.');
-    res.redirect(`/tournaments/${tournament.id}`);
+exports.update = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const payload = {
+      ...req.body,
+      formatType: mapLegacyFormat(req.body.formatType || req.body.format)
+    };
+    const tournament = await updateTournament(Number(req.params.id), payload, actor(req), requestMeta(req));
+    return res.json(tournament);
   } catch (error) {
-    console.error('Erro ao criar torneio:', error);
-    req.flash('error_msg', 'Erro ao criar torneio.');
-    res.redirect('/tournaments/create');
+    return handleError(res, error);
+  }
+};
+
+exports.publish = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await publishTournament(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.openRegistration = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await openRegistration(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.closeRegistration = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await closeRegistration(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.openCheckIn = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await openCheckIn(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.closeCheckIn = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await closeCheckIn(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.start = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await startTournament(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.finish = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await finishTournament(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.cancel = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await cancelTournament(Number(req.params.id), actor(req), requestMeta(req));
+    return res.json(tournament);
+  } catch (error) {
+    return handleError(res, error);
   }
 };
 
 exports.detailPage = async (req, res) => {
   await ensureTournamentSchema();
   const tournamentId = Number(req.params.id);
+  await autoSyncCheckInWindow(tournamentId, requestMeta(req));
   const tournament = await Tournament.findByPk(tournamentId, {
-    include: [{ model: User, as: 'organizer', attributes: ['id', 'username'] }]
+    include: [
+      { model: User, as: 'organizer', attributes: ['id', 'username'] },
+      { model: User, as: 'storeCreditStore', attributes: ['id', 'username', 'businessName'] }
+    ]
   });
-
   if (!tournament) {
+    if (wantsJson(req)) return res.status(404).json({ message: 'Torneio não encontrado.' });
     req.flash('error_msg', 'Torneio não encontrado.');
     return res.redirect('/tournaments');
   }
 
-  const participants = await TournamentParticipant.findAll({
+  if (wantsJson(req)) return res.json(tournament);
+
+  const participants = await Registration.findAll({
     where: { tournamentId },
     include: [{ model: User, as: 'user', attributes: ['id', 'username', 'avatar'] }],
     order: [['points', 'DESC'], ['wins', 'DESC'], ['displayName', 'ASC']]
   });
-
+  const participantsList = participants;
   const matches = await TournamentMatch.findAll({
     where: { tournamentId },
     include: [
-      { model: TournamentParticipant, as: 'playerA' },
-      { model: TournamentParticipant, as: 'playerB' },
-      { model: TournamentParticipant, as: 'winner' }
+      { model: Registration, as: 'playerA' },
+      { model: Registration, as: 'playerB' },
+      { model: Registration, as: 'winner' }
     ],
     order: [['roundNumber', 'DESC'], ['tableNumber', 'ASC']]
   });
-
   const groupedMatches = matches.reduce((acc, m) => {
     acc[m.roundNumber] = acc[m.roundNumber] || [];
     acc[m.roundNumber].push(m);
     return acc;
   }, {});
+  const latestMatch = matches.length ? matches[0] : null;
+  const stageId = latestMatch?.stageId || null;
+  let standings = await TournamentStanding.findAll({
+    where: { tournamentId, ...(stageId ? { stageId } : {}) },
+    order: [['rank', 'ASC']]
+  });
+  if (!standings.length && matches.length) {
+    const confirmedMatches = matches.filter((m) => m.resultStatus === 'CONFIRMED');
+    if (confirmedMatches.length) {
+      await updateFromMatches(tournamentId, stageId || null);
+      standings = await TournamentStanding.findAll({
+        where: { tournamentId, ...(stageId ? { stageId } : {}) },
+        order: [['rank', 'ASC']]
+      });
+      if (!standings.length && stageId) {
+        await updateFromMatches(tournamentId, null);
+        standings = await TournamentStanding.findAll({
+          where: { tournamentId },
+          order: [['rank', 'ASC']]
+        });
+      }
+    }
+  }
+  const standingsUpdatedAt = standings.length
+    ? standings.reduce((latest, row) => (latest && latest > row.updatedAt ? latest : row.updatedAt), standings[0].updatedAt)
+    : null;
+  const participantsById = new Map(participants.map((p) => [p.id, p]));
+  let participantsWithStandings = standings.length
+    ? standings.map((s) => {
+      const base = participantsById.get(s.registrationId);
+      const basePlain = base && typeof base.toJSON === 'function' ? base.toJSON() : base;
+      const fallback = {
+        id: s.registrationId,
+        userId: s.playerId,
+        displayName: s.playerId ? `Jogador ${s.playerId}` : 'Jogador'
+      };
+      return {
+        ...(basePlain || fallback),
+        points: s.points,
+        wins: s.wins,
+        losses: s.losses,
+        draws: s.draws,
+        omw: s.omw,
+        gw: s.gw,
+        ogw: s.ogw
+      };
+    }).filter((p) => p && p.id)
+    : participants;
 
+  if (!participantsWithStandings.length) {
+    participantsWithStandings = participants;
+  }
+
+  participantsWithStandings = participantsWithStandings.map((p) => ({
+    ...p,
+    points: Number.isFinite(p.points) ? p.points : 0,
+    wins: Number.isFinite(p.wins) ? p.wins : 0,
+    losses: Number.isFinite(p.losses) ? p.losses : 0,
+    draws: Number.isFinite(p.draws) ? p.draws : 0,
+    omw: Number.isFinite(p.omw) ? p.omw : 0,
+    gw: Number.isFinite(p.gw) ? p.gw : 0,
+    ogw: Number.isFinite(p.ogw) ? p.ogw : 0
+  }));
   const userId = req.session?.user?.id;
-  const myEntry = userId ? participants.find((p) => p.userId === userId) : null;
-  const canManage = userId && (tournament.createdById === userId || isAdmin(req));
+  const myEntry = userId ? participantsWithStandings.find((p) => p.userId === userId) : null;
+  const canManage = userId && isTournamentManager(tournament, req.session?.user);
 
-  res.render('pages/tournaments/detail', {
+  return res.render('pages/tournaments/detail', {
     title: tournament.title,
-    tournament,
-    participants,
+    tournament: normalizeTournamentForView(tournament),
+    participants: participantsWithStandings,
+    participantsList,
     groupedMatches,
     myEntry,
-    canManage
+    canManage,
+    standingsUpdatedAt
   });
 };
 
-exports.join = async (req, res) => {
+exports.register = async (req, res) => {
   await ensureTournamentSchema();
-  const tournamentId = Number(req.params.id);
-  const userId = req.session.user.id;
-  const tournament = await Tournament.findByPk(tournamentId);
-  if (!tournament) return res.status(404).json({ message: 'Torneio não encontrado.' });
-
-  if (tournament.status !== 'open') {
-    return res.status(400).json({ message: 'Inscrições encerradas para este torneio.' });
-  }
-
-  const existing = await TournamentParticipant.findOne({ where: { tournamentId, userId } });
-  if (existing) return res.status(400).json({ message: 'Você já está inscrito.' });
-
-  const count = await TournamentParticipant.count({ where: { tournamentId } });
-  if (count >= tournament.maxPlayers) {
-    return res.status(400).json({ message: 'Torneio lotado.' });
-  }
-
-  const user = await User.findByPk(userId, { attributes: ['username'] });
-  await TournamentParticipant.create({
-    tournamentId,
-    userId,
-    displayName: user?.username || `Jogador ${userId}`
-  });
-
-  return res.json({ ok: true });
-};
-
-exports.startNextRound = async (req, res) => {
-  await ensureTournamentSchema();
-  const tournamentId = Number(req.params.id);
-  const tournament = await Tournament.findByPk(tournamentId);
-  if (!tournament) return res.status(404).json({ message: 'Torneio não encontrado.' });
-
-  const userId = req.session.user.id;
-  if (!(tournament.createdById === userId || isAdmin(req))) {
-    return res.status(403).json({ message: 'Sem permissão para gerenciar torneio.' });
-  }
-
-  const pending = await TournamentMatch.count({ where: { tournamentId, status: 'pending' } });
-  if (pending > 0) return res.status(400).json({ message: 'Existem partidas pendentes.' });
-
-  await recalcStandings(tournamentId);
-
-  const participants = await TournamentParticipant.findAll({
-    where: { tournamentId, status: ['registered', 'checked_in'] },
-    order: [['points', 'DESC'], ['wins', 'DESC'], ['id', 'ASC']]
-  });
-
-  if (participants.length < 2) return res.status(400).json({ message: 'Participantes insuficientes.' });
-
-  const maxRound = await TournamentMatch.max('roundNumber', { where: { tournamentId } });
-  const nextRound = Number.isFinite(maxRound) ? maxRound + 1 : 1;
-
-  const shuffled = [...participants];
-  for (let i = shuffled.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
-  }
-
-  const ordered = shuffled.sort((a, b) => b.points - a.points || b.wins - a.wins);
-  const matches = [];
-  let tableNumber = 1;
-  for (let i = 0; i < ordered.length; i += 2) {
-    const a = ordered[i];
-    const b = ordered[i + 1] || null;
-    matches.push({
-      tournamentId,
-      roundNumber: nextRound,
-      tableNumber: tableNumber++,
-      playerAId: a.id,
-      playerBId: b ? b.id : null,
-      winnerId: b ? null : a.id,
-      isDraw: false,
-      status: b ? 'pending' : 'confirmed'
+  try {
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const result = await registerPlayer({
+      tournamentId: Number(req.params.id),
+      playerId: currentActor.id,
+      actorId: currentActor.id,
+      reqMeta: requestMeta(req)
     });
+    return res.status(201).json(result);
+  } catch (error) {
+    return handleError(res, error);
   }
+};
 
-  await TournamentMatch.bulkCreate(matches);
-  if (tournament.status === 'open') {
-    tournament.status = 'in_progress';
-    await tournament.save();
+exports.cancelMyRegistration = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const result = await cancelRegistration({
+      tournamentId: Number(req.params.id),
+      playerId: currentActor.id,
+      actorId: currentActor.id,
+      reqMeta: requestMeta(req)
+    });
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error);
   }
+};
 
-  await recalcStandings(tournamentId);
-  return res.json({ ok: true, round: nextRound, matches: matches.length });
+exports.checkIn = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const result = await checkInPlayer({
+      tournamentId: Number(req.params.id),
+      playerId: currentActor.id,
+      actorId: currentActor.id,
+      reqMeta: requestMeta(req)
+    });
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.dropRegistration = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const result = await dropPlayer({
+      tournamentId: Number(req.params.id),
+      playerId: currentActor.id,
+      actorId: currentActor.id,
+      reqMeta: requestMeta(req)
+    });
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.listRegistrations = async (req, res) => {
+  await ensureTournamentSchema();
+  const tournament = await Tournament.findByPk(Number(req.params.id));
+  if (!tournament) return res.status(404).json({ message: 'Torneio não encontrado.' });
+  const user = actor(req);
+  if (!isTournamentManager(tournament, user)) {
+    return res.status(403).json({ message: 'Sem permissão.' });
+  }
+  const rows = await Registration.findAll({ where: { tournamentId: tournament.id }, order: [['createdAt', 'ASC']] });
+  return res.json(rows);
+};
+
+exports.getParticipantProfile = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournamentId = Number(req.params.id);
+    const participantId = Number(req.params.participantId);
+    const tournament = await Tournament.findByPk(tournamentId);
+    if (!tournament) return res.status(404).json({ message: 'Torneio n??o encontrado.' });
+
+    const currentActor = actor(req);
+    const canManage = isTournamentManager(tournament, currentActor);
+    if (tournament.visibility === 'PRIVATE' && !canManage) {
+      return res.status(403).json({ message: 'Sem permiss??o.' });
+    }
+
+    const participant = await Registration.findOne({
+      where: { id: participantId, tournamentId },
+      include: [{ model: User, as: 'user', attributes: ['id', 'username', 'avatar'] }]
+    });
+    if (!participant) return res.status(404).json({ message: 'Participante n??o encontrado.' });
+
+    const decklist = await DecklistSnapshot.findOne({
+      where: { tournamentId, playerId: participant.userId }
+    });
+
+    const recentEntries = await Registration.findAll({
+      where: { userId: participant.userId },
+      include: [{ model: Tournament, as: 'tournament', attributes: ['id', 'title', 'startAt', 'status', 'formatType'] }],
+      order: [['createdAt', 'DESC']],
+      limit: 3
+    });
+
+    return res.json({
+      participant: {
+        id: participant.id,
+        userId: participant.userId,
+        displayName: participant.displayName,
+        avatar: participant.user?.avatar || null,
+        username: participant.user?.username || null
+      },
+      decklist: decklist
+        ? { leaderCode: decklist.leaderCode, lockedAt: decklist.lockedAt }
+        : null,
+      recentTournaments: recentEntries
+        .filter((entry) => entry.tournament)
+        .map((entry) => ({
+          id: entry.tournament.id,
+          title: entry.tournament.title,
+          startAt: entry.tournament.startAt,
+          status: entry.tournament.status,
+          formatType: entry.tournament.formatType
+        }))
+    });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+
+exports.myRegistrations = async (req, res) => {
+  await ensureTournamentSchema();
+  const currentActor = actor(req);
+  if (!currentActor) return res.status(401).json({ message: 'Não autenticado.' });
+  const rows = await Registration.findAll({
+    where: { userId: currentActor.id },
+    include: [{ model: Tournament, as: 'tournament' }],
+    order: [['createdAt', 'DESC']]
+  });
+  return res.json(rows);
+};
+
+exports.createPaymentCharge = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const registration = await Registration.findOne({
+      where: { tournamentId: Number(req.params.id), userId: currentActor.id, status: ['PENDING', 'WAITING_LIST'] }
+    });
+    if (!registration) throw new TournamentError('Inscrição elegível para pagamento não encontrada.', 404);
+    const payment = await createCharge({
+      tournamentId: Number(req.params.id),
+      registrationId: registration.id,
+      playerId: currentActor.id,
+      provider: req.body.provider || 'PIX',
+      actorId: currentActor.id,
+      reqMeta: requestMeta(req)
+    });
+    return res.status(201).json(payment);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.webhook = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const result = await handleWebhook(req.body, requestMeta(req));
+    return res.json({ ok: true, ...result });
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.refund = async (req, res) => {
+  await ensureTournamentSchema();
+  const user = actor(req);
+  if (!user || user.accountType !== 'admin') return res.status(403).json({ message: 'Sem permissão.' });
+  try {
+    const payment = await refundCharge({
+      paymentId: Number(req.body.paymentId),
+      amountPercent: Number(req.body.amountPercent || 100),
+      actorId: user.id,
+      reqMeta: requestMeta(req)
+    });
+    return res.json(payment);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.submitDecklist = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const currentActor = actor(req);
+    if (!currentActor) throw new TournamentError('Não autenticado.', 401);
+    const registration = await Registration.findOne({
+      where: { tournamentId: Number(req.params.id), userId: currentActor.id, status: ['CONFIRMED', 'CHECKED_IN', 'PENDING'] }
+    });
+    if (!registration) throw new TournamentError('Inscrição não encontrada.', 404);
+    const snapshot = await submitDecklist({
+      tournamentId: Number(req.params.id),
+      registrationId: registration.id,
+      playerId: currentActor.id,
+      leaderCode: req.body.leaderCode,
+      mainDeck: req.body.mainDeck,
+      donDeck: req.body.donDeck,
+      actorId: currentActor.id,
+      reqMeta: requestMeta(req)
+    });
+    return res.status(201).json(snapshot);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.getDecklists = async (req, res) => {
+  await ensureTournamentSchema();
+  const tournament = await Tournament.findByPk(Number(req.params.id));
+  if (!tournament) return res.status(404).json({ message: 'Torneio não encontrado.' });
+  const user = actor(req);
+  if (!isTournamentManager(tournament, user)) {
+    return res.status(403).json({ message: 'Sem permissão.' });
+  }
+  const rows = await DecklistSnapshot.findAll({ where: { tournamentId: tournament.id } });
+  return res.json(rows);
+};
+
+exports.getMyDecklist = async (req, res) => {
+  await ensureTournamentSchema();
+  const currentActor = actor(req);
+  if (!currentActor) return res.status(401).json({ message: 'Não autenticado.' });
+  const row = await getMyDecklist(Number(req.params.id), currentActor.id);
+  if (!row) return res.status(404).json({ message: 'Decklist não enviada.' });
+  return res.json(row);
+};
+
+exports.getMatches = async (req, res) => {
+  await ensureTournamentSchema();
+  const matches = await TournamentMatch.findAll({
+    where: { tournamentId: Number(req.params.id) },
+    include: [
+      { model: Registration, as: 'playerA' },
+      { model: Registration, as: 'playerB' },
+      { model: Registration, as: 'winner' }
+    ],
+    order: [['roundNumber', 'ASC'], ['tableNumber', 'ASC']]
+  });
+  return res.json(matches);
 };
 
 exports.reportMatch = async (req, res) => {
   await ensureTournamentSchema();
-  const matchId = Number(req.params.matchId);
-  const { result } = req.body;
+  try {
+    const match = await TournamentMatch.findByPk(Number(req.params.matchId));
+    if (!match) throw new TournamentError('Partida n?o encontrada.', 404);
 
-  const match = await TournamentMatch.findByPk(matchId, {
-    include: [{ model: Tournament, as: 'tournament' }]
+    const tournament = await Tournament.findByPk(match.tournamentId);
+    if (!tournament) throw new TournamentError('Torneio n?o encontrado.', 404);
+
+    const user = actor(req);
+    if (!user) throw new TournamentError('N?o autenticado.', 401);
+
+    const userReg = await Registration.findOne({ where: { tournamentId: tournament.id, userId: user.id } });
+    const isOrganizer = isTournamentManager(tournament, user);
+    const isPlayer = userReg && isPlayerInMatch(match, userReg.id);
+    if (!isOrganizer && !isPlayer) throw new TournamentError('Sem permiss?o.', 403);
+
+    if (!isOrganizer && match.resultStatus === 'REPORTED' && match.resultReportedByRegistrationId && match.resultReportedByRegistrationId !== userReg?.id) {
+      throw new TournamentError('Resultado já reportado. Aguarde confirmação ou abra disputa.', 409);
+    }
+
+    let scoreA = req.body.scoreA;
+    let scoreB = req.body.scoreB;
+    let isDraw = req.body.isDraw;
+    if (typeof req.body.result === 'string') {
+      if (req.body.result === 'a') {
+        scoreA = 2;
+        scoreB = 0;
+        isDraw = false;
+      } else if (req.body.result === 'b') {
+        scoreA = 0;
+        scoreB = 2;
+        isDraw = false;
+      } else if (req.body.result === 'draw') {
+        scoreA = 1;
+        scoreB = 1;
+        isDraw = true;
+      }
+    }
+
+    match.scoreA = Number(scoreA);
+    match.scoreB = Number(scoreB);
+    match.isDraw = Boolean(isDraw);
+    if (Number.isNaN(match.scoreA) || Number.isNaN(match.scoreB)) {
+      throw new TournamentError('Placar inv?lido.');
+    }
+
+    if (match.isDraw) {
+      match.winnerRegistrationId = null;
+      match.winnerId = null;
+    } else if (match.scoreA > match.scoreB) {
+      match.winnerRegistrationId = match.playerAId;
+      const playerA = await Registration.findByPk(match.playerAId);
+      match.winnerId = playerA?.userId || null;
+    } else if (match.scoreB > match.scoreA && match.playerBId) {
+      match.winnerRegistrationId = match.playerBId;
+      const playerB = await Registration.findByPk(match.playerBId);
+      match.winnerId = playerB?.userId || null;
+    } else {
+      throw new TournamentError('Placar inv?lido para definir vencedor.');
+    }
+
+    match.resultReportedByRegistrationId = userReg?.id || null;
+    match.resultReportedByUserId = user.id;
+    match.resultReportedAt = new Date();
+
+    if (isOrganizer) {
+      match.resultStatus = 'CONFIRMED';
+      match.status = 'confirmed';
+      match.resultConfirmedByRegistrationId = userReg?.id || null;
+      match.resultConfirmedByUserId = user.id;
+      match.resultConfirmedAt = new Date();
+    } else {
+      match.resultStatus = 'REPORTED';
+      match.status = 'pending';
+    }
+
+    await match.save();
+    if (match.resultStatus === 'CONFIRMED') {
+      await updateFromMatches(tournament.id, match.stageId || null);
+    }
+
+    return res.json(match);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.confirmMatch = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const user = actor(req);
+    if (!user) throw new TournamentError('N?o autenticado.', 401);
+
+    const match = await TournamentMatch.findByPk(Number(req.params.matchId));
+    if (!match) throw new TournamentError('Partida n?o encontrada.', 404);
+
+    const tournament = await Tournament.findByPk(match.tournamentId);
+    if (!tournament) throw new TournamentError('Torneio n?o encontrado.', 404);
+
+    if (match.resultStatus !== 'REPORTED') {
+      throw new TournamentError('A partida precisa estar reportada para confirmar.', 409);
+    }
+
+    const isOrganizer = isTournamentManager(tournament, user);
+    const userReg = await Registration.findOne({ where: { tournamentId: tournament.id, userId: user.id } });
+    const isPlayer = userReg && isPlayerInMatch(match, userReg.id);
+    const isOpponentConfirmer = isPlayer && userReg.id !== match.resultReportedByRegistrationId;
+
+    if (!isOrganizer && !isOpponentConfirmer) {
+      throw new TournamentError('Sem permiss?o para confirmar este resultado.', 403);
+    }
+
+    match.resultStatus = 'CONFIRMED';
+    match.status = 'confirmed';
+    match.resultConfirmedByRegistrationId = userReg?.id || null;
+    match.resultConfirmedByUserId = user.id;
+    match.resultConfirmedAt = new Date();
+
+    await match.save();
+    await updateFromMatches(tournament.id, match.stageId || null);
+    return res.json(match);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.disputeMatch = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const match = await TournamentMatch.findByPk(Number(req.params.matchId));
+    if (!match) throw new TournamentError('Partida não encontrada.', 404);
+    match.resultStatus = 'DISPUTED';
+    await match.save();
+    return res.json(match);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.getStandings = async (req, res) => {
+  await ensureTournamentSchema();
+  const standings = await getStandings(Number(req.params.id));
+  return res.json(standings);
+};
+
+exports.getStages = async (req, res) => {
+  await ensureTournamentSchema();
+  const stages = await TournamentStage.findAll({
+    where: { tournamentId: Number(req.params.id) },
+    order: [['createdAt', 'ASC']]
   });
-  if (!match) return res.status(404).json({ message: 'Partida não encontrada.' });
+  return res.json(stages);
+};
 
-  const tournament = match.tournament;
-  const userId = req.session.user.id;
+exports.generateRound = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await Tournament.findByPk(Number(req.params.id));
+    if (!tournament) throw new TournamentError('Torneio não encontrado.', 404);
+    const user = actor(req);
+    if (!(user.accountType === 'admin' || tournament.organizerId === user.id)) throw new TournamentError('Sem permissão.', 403);
+    const result = await generateMatchesForFormat(tournament);
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
 
-  const userParticipant = await TournamentParticipant.findOne({
-    where: { tournamentId: tournament.id, userId }
+exports.generateTopCut = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const result = await createTopCut(Number(req.params.id), actor(req), Number(req.body.size || 8), requestMeta(req));
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error);
+  }
+};
+
+exports.getAuditLogs = async (req, res) => {
+  await ensureTournamentSchema();
+  const user = actor(req);
+  if (!user || user.accountType !== 'admin') return res.status(403).json({ message: 'Sem permissão.' });
+  const AuditLog = require('../models/AuditLog');
+  const rows = await AuditLog.findAll({
+    limit: Number(req.query.limit || 100),
+    order: [['createdAt', 'DESC']]
   });
+  return res.json(rows);
+};
 
-  const canManage = tournament.createdById === userId || isAdmin(req);
-  const canReportAsPlayer = userParticipant && [match.playerAId, match.playerBId].includes(userParticipant.id);
-  if (!canManage && !canReportAsPlayer) {
-    return res.status(403).json({ message: 'Sem permissão para reportar esta partida.' });
+exports.getMyTournamentRegistrationsPageData = async (req, res) => {
+  await ensureTournamentSchema();
+  const currentActor = actor(req);
+  if (!currentActor) {
+    req.flash('error_msg', 'Faça login para ver suas inscrições.');
+    return res.redirect('/login');
+  }
+  const rows = await Registration.findAll({
+    where: { userId: currentActor.id },
+    include: [{ model: Tournament, as: 'tournament' }],
+    order: [['createdAt', 'DESC']]
+  });
+  return res.render('pages/tournaments/my-registrations', {
+    title: 'Minhas inscrições em torneios',
+    rows
+  });
+};
+
+exports.getTournamentDashboardData = async (req, res) => {
+  await ensureTournamentSchema();
+  const tournamentId = Number(req.params.id);
+  await autoSyncCheckInWindow(tournamentId, requestMeta(req));
+  const tournament = await Tournament.findByPk(tournamentId);
+  if (!tournament) {
+    req.flash('error_msg', 'Torneio não encontrado.');
+    return res.redirect('/tournaments');
+  }
+  const user = actor(req);
+  if (!isTournamentManager(tournament, user)) {
+    req.flash('error_msg', 'Sem permissão para gerenciar este torneio.');
+    return res.redirect('/tournaments');
   }
 
-  if (result === 'draw') {
-    match.isDraw = true;
-    match.winnerId = null;
-  } else if (result === 'a') {
-    match.isDraw = false;
-    match.winnerId = match.playerAId;
-  } else if (result === 'b' && match.playerBId) {
-    match.isDraw = false;
-    match.winnerId = match.playerBId;
-  } else {
-    return res.status(400).json({ message: 'Resultado inválido.' });
+  const registrations = await Registration.findAll({
+    where: { tournamentId },
+    include: [{ model: User, as: 'user', attributes: ['id', 'username', 'avatar'] }],
+    order: [['createdAt', 'ASC']]
+  });
+  const payments = await TournamentPayment.findAll({ where: { tournamentId }, order: [['createdAt', 'DESC']] });
+  const storeCreditStores = await User.findAll({
+    where: { accountType: ['store', 'partner_store'] },
+    attributes: ['id', 'username', 'businessName'],
+    order: [['businessName', 'ASC'], ['username', 'ASC']]
+  });
+  return res.render('pages/tournaments/manage', {
+    title: `Gerenciar ${tournament.title}`,
+    tournament: normalizeTournamentForView(tournament),
+    registrations,
+    payments,
+    storeCreditStores
+  });
+};
+
+exports.manualSwissRound = async (req, res) => {
+  await ensureTournamentSchema();
+  try {
+    const tournament = await Tournament.findByPk(Number(req.params.id));
+    if (!tournament) throw new TournamentError('Torneio não encontrado.', 404);
+    const user = actor(req);
+    if (!(user.accountType === 'admin' || tournament.organizerId === user.id)) throw new TournamentError('Sem permissão.', 403);
+    const result = await generateSwissRound(tournament);
+    return res.json(result);
+  } catch (error) {
+    return handleError(res, error);
   }
-
-  match.status = 'confirmed';
-  await match.save();
-  await recalcStandings(tournament.id);
-
-  return res.json({ ok: true });
 };

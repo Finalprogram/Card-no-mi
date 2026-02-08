@@ -58,6 +58,9 @@
       <% } else if (post.author.role === 'moderator') { %>
         <span class="user-badge mod-badge" title="Moderador"><i class="fas fa-shield-alt"></i> Mod</span>
       <% } %>
+      <% if (post.author.isCreator) { %>
+        <span class="user-badge creator-badge" title="Criador de conteúdo">🎥 Criador</span>
+      <% } %>
       <% if (post.author.faction) { %>
         <span class="user-badge faction-badge faction-<%= post.author.faction %>" title="<%= post.author.faction === 'pirate' ? 'Pirata' : 'Marinha' %>">
           <%= post.author.faction === 'pirate' ? '🏴‍☠️' : '⚓' %>

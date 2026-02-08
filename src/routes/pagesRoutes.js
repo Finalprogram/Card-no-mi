@@ -15,6 +15,7 @@ router.get('/perfil/:id', pagesController.showProfilePage);
 router.get('/encyclopedia', pagesController.getEncyclopediaPage);
 router.get('/timeline', pagesController.showTimelinePage);
 router.get('/comunidade', pagesController.showCommunityPage);
+router.post('/comunidade/lojas-parceiras', isAuthPage, pagesController.submitPartnerStoreApplication);
 router.get('/about', pagesController.showAboutPage);
 router.get('/decks', pagesController.showDecksPage);
 router.get('/deck-builder', isAuthPage, pagesController.showDeckBuilderPage);
